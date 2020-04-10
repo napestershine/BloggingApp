@@ -1,8 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controller;
 
 use App\Entity\BlogPost;
+use App\Repository\BlogPostRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -20,32 +23,45 @@ class BlogController extends AbstractController
 {
     /**
      * @Route("/{page}", name="blog_list", defaults={"page": 5}, requirements={"page"="\d+"})
-     * @param int $page
      * @param Request $request
+     * @param BlogPostRepository $blogPostRepository
+     * @param int $page
      * @return JsonResponse
      */
-    public function list(Request $request, $page = 1)
+    public function list(Request $request, BlogPostRepository $blogPostRepository, $page = 1)
     {
+        $limit = $request->get('limit', 10);
+        $blogPosts = $blogPostRepository->findAll();
+
         return new JsonResponse([
             'page' => $page,
-            'limit' => $request->get('limit')
+            'limit' => $limit,
+            'data' => \array_map(function (BlogPost $blogPost) {
+                return $this->generateUrl('blog_by_slug', ['slug' => $blogPost->getSlug()]);
+            }, $blogPosts)
         ]);
     }
 
     /**
      * @Route("/{id}", name="blog_by_id", requirements={"id"="\d+"}, methods={"GET"})
+     * @param BlogPostRepository $blogPostRepository
+     * @param $id
+     * @return JsonResponse
      */
-    public function post($id)
+    public function post(BlogPostRepository $blogPostRepository, $id)
     {
-        return $this->json([]);
+        return $this->json($blogPostRepository->find($id));
     }
 
     /**
      * @Route("/{slug}", name="blog_by_slug", methods={"GET"})
+     * @param BlogPostRepository $blogPostRepository
+     * @param $slug
+     * @return JsonResponse
      */
-    public function postBySlug($slug)
+    public function postBySlug(BlogPostRepository $blogPostRepository, $slug)
     {
-        return $this->json([]);
+        return $this->json($blogPostRepository->findBy(['slug' => $slug]));
     }
 
     /**
@@ -59,9 +75,7 @@ class BlogController extends AbstractController
     public function add(Request $request, SerializerInterface $serializer, EntityManagerInterface $entityManager)
     {
         $blogPost = $serializer->deserialize($request->getContent(), BlogPost::class, 'json');
-
         $entityManager->persist($blogPost);
-
         $entityManager->flush();
 
         return $this->json($blogPost);
