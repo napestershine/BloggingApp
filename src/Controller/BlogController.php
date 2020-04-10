@@ -10,6 +10,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Serializer\SerializerInterface;
 
@@ -43,7 +44,7 @@ class BlogController extends AbstractController
     }
 
     /**
-     * @Route("/{id}", name="blog_by_id", requirements={"id"="\d+"}, methods={"GET"})
+     * @Route("/post/{id}", name="blog_by_id", requirements={"id"="\d+"}, methods={"GET"})
      * @param BlogPostRepository $blogPostRepository
      * @param $id
      * @return JsonResponse
@@ -54,14 +55,14 @@ class BlogController extends AbstractController
     }
 
     /**
-     * @Route("/{slug}", name="blog_by_slug", methods={"GET"})
+     * @Route("/post/{slug}", name="blog_by_slug", methods={"GET"})
      * @param BlogPostRepository $blogPostRepository
      * @param $slug
      * @return JsonResponse
      */
     public function postBySlug(BlogPostRepository $blogPostRepository, $slug)
     {
-        return $this->json($blogPostRepository->findBy(['slug' => $slug]));
+        return $this->json($blogPostRepository->findOneBy(['slug' => $slug]));
     }
 
     /**
@@ -79,6 +80,20 @@ class BlogController extends AbstractController
         $entityManager->flush();
 
         return $this->json($blogPost);
+    }
+
+    /**
+     * @Route("/post/{id}", name="blog_delete", methods={"DELETE"})
+     * @param EntityManagerInterface $entityManager
+     * @param $id
+     * @return JsonResponse
+     */
+    public function delete(EntityManagerInterface $entityManager, $id)
+    {
+        $post = $entityManager->getRepository(BlogPost::class)->find($id);
+        $entityManager->remove($post);
+        $entityManager->flush();
+        return $this->json(null, Response::HTTP_NO_CONTENT);
     }
 
 }
