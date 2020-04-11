@@ -79,6 +79,9 @@ class AppFixtures extends Fixture
         $manager->flush();
     }
 
+    /**
+     * @param ObjectManager $manager
+     */
     public function loadComments(ObjectManager $manager)
     {
         for ($i = 0; $i < 100; $i++) {
