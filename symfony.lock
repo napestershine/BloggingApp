@@ -135,6 +135,9 @@
             "config/packages/fos_ckeditor.yaml"
         ]
     },
+    "fzaninotto/faker": {
+        "version": "v1.9.1"
+    },
     "helios-ag/fm-elfinder-bundle": {
         "version": "10.0",
         "recipe": {
@@ -322,10 +325,16 @@
     "symfony/orm-pack": {
         "version": "v1.0.8"
     },
+    "symfony/polyfill-intl-grapheme": {
+        "version": "v1.15.0"
+    },
     "symfony/polyfill-intl-icu": {
         "version": "v1.15.0"
     },
     "symfony/polyfill-intl-idn": {
+        "version": "v1.15.0"
+    },
+    "symfony/polyfill-intl-normalizer": {
         "version": "v1.15.0"
     },
     "symfony/polyfill-mbstring": {
@@ -388,6 +397,9 @@
         "version": "v2.0.1"
     },
     "symfony/stopwatch": {
+        "version": "v5.0.7"
+    },
+    "symfony/string": {
         "version": "v5.0.7"
     },
     "symfony/translation": {
