@@ -6,9 +6,15 @@ use ApiPlatform\Core\Annotation\ApiResource;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * @ApiResource(
- *     itemOperations={"GET"},
- *     collectionOperations={"GET"}
+ *@ApiResource(
+ *     itemOperations={
+ *     "get",
+ *     "put"={"access_control"="is_granted('IS_AUTHENTICATED_FULLY') and object.getAuthor() === user"}
+ * },
+ *     collectionOperations={
+ *     "get",
+ *     "post"={"access_control"="is_granted('IS_AUTHENTICATED_FULLY')"}
+ * }
  * )
  * @ORM\Entity(repositoryClass="App\Repository\CommentRepository")
  */
