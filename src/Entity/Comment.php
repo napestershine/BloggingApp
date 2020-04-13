@@ -5,17 +5,22 @@ namespace App\Entity;
 use ApiPlatform\Core\Annotation\ApiResource;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  *@ApiResource(
  *     itemOperations={
- *     "get",
- *     "put"={"access_control"="is_granted('IS_AUTHENTICATED_FULLY') and object.getAuthor() === user"}
- * },
+ *         "get",
+ *         "put"={"access_control"="is_granted('IS_AUTHENTICATED_FULLY') and object.getAuthor() === user"}
+ *     },
  *     collectionOperations={
- *     "get",
- *     "post"={"access_control"="is_granted('IS_AUTHENTICATED_FULLY')"}
- * }
+ *         "get",
+ *         "post"={"access_control"="is_granted('IS_AUTHENTICATED_FULLY')"}
+ *     },
+ *     denormalizationContext={
+ *         "groups"={"post"}
+ *     }
  * )
  * @ORM\Entity(repositoryClass="App\Repository\CommentRepository")
  */
@@ -30,6 +35,9 @@ class Comment implements AuthoredEntityInterface, PublishedDateEntityInterface
 
     /**
      * @ORM\Column(type="text")
+     * @Groups({"post"})
+     * @Assert\NotBlank()
+     * @Assert\Length(min="5", max="3000")
      */
     private $content;
 
