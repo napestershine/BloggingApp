@@ -61,7 +61,7 @@ class User implements UserInterface
      * @Assert\NotBlank()
      * @Assert\Length(min="6", max="255")
      */
-    private $username;
+    private ?string $username;
 
     /**
      * @ORM\Column(type="string", length=255)
@@ -72,7 +72,7 @@ class User implements UserInterface
      *     message="Password must be seven characters long and contains at least one digit, one upper case letter and one lower case letter"
      * )
      */
-    private $password;
+    private ?string $password;
 
     /**
      * @Groups({"put", "post"})
@@ -82,7 +82,7 @@ class User implements UserInterface
      *     message="Passwords does not match"
      * )
      */
-    private $retypedPassword;
+    private ?string $retypedPassword;
 
     /**
      * @ORM\Column(type="string", length=255)
@@ -90,7 +90,7 @@ class User implements UserInterface
      * @Assert\NotBlank()
      * @Assert\Length(min="1", max="255")"
      */
-    private $name;
+    private ?string $name;
 
     /**
      * @ORM\Column(type="string", length=255)
@@ -98,19 +98,19 @@ class User implements UserInterface
      * @Assert\NotBlank()
      * @Assert\Email()
      */
-    private $email;
+    private ?string $email;
 
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\BlogPost", mappedBy="author")
      * @Groups({"get"})
      */
-    private $posts;
+    private ArrayCollection $posts;
 
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\Comment", mappedBy="author")
      * @Groups({"get"})
      */
-    private $comments;
+    private ArrayCollection $comments;
 
     /**
      * User constructor.
@@ -193,7 +193,7 @@ class User implements UserInterface
     /**
      * @inheritDoc
      */
-    public function getRoles()
+    public function getRoles(): array
     {
         return ['ROLE_USER'];
     }
@@ -231,4 +231,8 @@ class User implements UserInterface
     }
 
 
+    public function getUserIdentifier(): string
+    {
+        // TODO: Implement getUserIdentifier() method.
+    }
 }
