@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\EventSubscriber;
 
-use ApiPlatform\Core\EventListener\EventPriorities;
 use App\Entity\AuthoredEntityInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -12,6 +11,7 @@ use Symfony\Component\HttpKernel\Event\ViewEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
+use ApiPlatform\Symfony\EventListener\EventPriorities;
 
 /**
  * Class AuthoredEntitySubscriber
@@ -19,7 +19,7 @@ use Symfony\Component\Security\Core\User\UserInterface;
  */
 class AuthoredEntitySubscriber implements EventSubscriberInterface
 {
-    private \Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface $tokenStorage;
+    private TokenStorageInterface $tokenStorage;
 
     /**
      * AuthoredEntitySubscriber constructor.
@@ -33,7 +33,7 @@ class AuthoredEntitySubscriber implements EventSubscriberInterface
     /**
      * @return array
      */
-    public static function getSubscribedEvents()
+    public static function getSubscribedEvents(): array
     {
         return [
             KernelEvents::VIEW => ['getAuthenticatedUser', EventPriorities::PRE_WRITE],
@@ -43,7 +43,7 @@ class AuthoredEntitySubscriber implements EventSubscriberInterface
     /**
      * @param ViewEvent $event
      */
-    public function getAuthenticatedUser(ViewEvent $event)
+    public function getAuthenticatedUser(ViewEvent $event): void
     {
         $entity = $event->getControllerResult();
         $method = $event->getRequest()->getMethod();
