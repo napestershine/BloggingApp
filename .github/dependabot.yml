@@ -1,0 +1,6 @@
+version: 2
+updates:
+  - package-ecosystem: "composer" # for PHP project
+    directory: "/" # Specify the directory where your composer.json resides
+    schedule:
+      interval: "daily" # check for updates daily
