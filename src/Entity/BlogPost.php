@@ -159,7 +159,7 @@ class BlogPost implements AuthoredEntityInterface, PublishedDateEntityInterface
      * @param UserInterface $author
      * @return BlogPost
      */
-    public function setAuthor(UserInterface $author): AuthoredEntityInterface
+    public function setAuthor(UserInterface $author): BlogPost
     {
         $this->author = $author;
 

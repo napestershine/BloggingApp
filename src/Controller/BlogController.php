@@ -29,7 +29,7 @@ class BlogController extends AbstractController
      * @param int $page
      * @return JsonResponse
      */
-    public function list(Request $request, BlogPostRepository $blogPostRepository, $page = 1)
+    public function list(Request $request, BlogPostRepository $blogPostRepository, $page = 1): JsonResponse
     {
         $limit = $request->get('limit', 10);
         $blogPosts = $blogPostRepository->findAll();
@@ -49,7 +49,7 @@ class BlogController extends AbstractController
      * @param $id
      * @return JsonResponse
      */
-    public function post(BlogPostRepository $blogPostRepository, $id)
+    public function post(BlogPostRepository $blogPostRepository, $id): JsonResponse
     {
         return $this->json($blogPostRepository->find($id));
     }
@@ -60,7 +60,7 @@ class BlogController extends AbstractController
      * @param $slug
      * @return JsonResponse
      */
-    public function postBySlug(BlogPostRepository $blogPostRepository, $slug)
+    public function postBySlug(BlogPostRepository $blogPostRepository, $slug): JsonResponse
     {
         return $this->json($blogPostRepository->findOneBy(['slug' => $slug]));
     }
@@ -73,7 +73,7 @@ class BlogController extends AbstractController
      * @param EntityManagerInterface $entityManager
      * @return JsonResponse
      */
-    public function add(Request $request, SerializerInterface $serializer, EntityManagerInterface $entityManager)
+    public function add(Request $request, SerializerInterface $serializer, EntityManagerInterface $entityManager): JsonResponse
     {
         $blogPost = $serializer->deserialize($request->getContent(), BlogPost::class, 'json');
         $entityManager->persist($blogPost);
@@ -88,7 +88,7 @@ class BlogController extends AbstractController
      * @param $id
      * @return JsonResponse
      */
-    public function delete(EntityManagerInterface $entityManager, $id)
+    public function delete(EntityManagerInterface $entityManager, $id): JsonResponse
     {
         $post = $entityManager->getRepository(BlogPost::class)->find($id);
         $entityManager->remove($post);

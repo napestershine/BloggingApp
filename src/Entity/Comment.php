@@ -127,7 +127,7 @@ class Comment implements AuthoredEntityInterface, PublishedDateEntityInterface
      * @param BlogPost $blogPost
      * @return Comment
      */
-    public function setBlogPost(BlogPost $blogPost): self
+    public function setBlogPost(BlogPost $blogPost): Comment
     {
         $this->blogPost = $blogPost;
 

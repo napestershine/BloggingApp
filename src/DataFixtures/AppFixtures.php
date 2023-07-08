@@ -9,8 +9,8 @@ use App\Entity\Comment;
 use App\Entity\User;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
+use Exception;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
-use Symfony\Component\String\Slugger\AsciiSlugger;
 use Symfony\Component\String\Slugger\SluggerInterface;
 
 /**
@@ -46,42 +46,39 @@ class AppFixtures extends Fixture
         ]
     ];
 
-    private \Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface $userPasswordEncoder;
-
-    /**
-     * @var \Faker\Factory
-     */
-    private $faker;
+    private UserPasswordEncoderInterface $userPasswordEncoder;
 
     private \Symfony\Component\String\Slugger\SluggerInterface $slugger;
 
     /**
      * AppFixtures constructor.
      * @param UserPasswordEncoderInterface $userPasswordEncoder
+     * @param SluggerInterface $slugger
      */
     public function __construct(UserPasswordEncoderInterface $userPasswordEncoder, SluggerInterface $slugger)
     {
         $this->userPasswordEncoder = $userPasswordEncoder;
-        $this->faker = \Faker\Factory::create();
         $this->slugger = $slugger;
     }
 
     /**
      * @param ObjectManager $manager
-     * @throws \Exception
+     * @throws Exception
      */
-    public function load(ObjectManager $manager)
+    public function load(ObjectManager $manager): void
     {
+        /*
         $this->loadUsers($manager);
         $this->loadBlogPosts($manager);
         $this->loadComments($manager);
+        */
     }
 
     /**
      * @param ObjectManager $manager
-     * @throws \Exception
+     * @throws Exception
      */
-    public function loadBlogPosts(ObjectManager $manager)
+   /* public function loadBlogPosts(ObjectManager $manager): void
     {
         $user = $this->getReference('user_admin');
         for ($i = 0; $i < 100; $i++) {
@@ -100,12 +97,12 @@ class AppFixtures extends Fixture
         }
 
         $manager->flush();
-    }
+    }*/
 
     /**
      * @param ObjectManager $manager
      */
-    public function loadComments(ObjectManager $manager)
+   /* public function loadComments(ObjectManager $manager): void
     {
         for ($i = 0; $i < 100; $i++) {
             for ($j = 0; $j < rand(1, 10); $j++) {
@@ -120,12 +117,12 @@ class AppFixtures extends Fixture
             }
         }
         $manager->flush();
-    }
+    }*/
 
     /**
      * @param ObjectManager $manager
      */
-    public function loadUsers(ObjectManager $manager)
+  /*  public function loadUsers(ObjectManager $manager): void
     {
         foreach (self::USERS as $userFixture) {
             $user = new User();
@@ -139,7 +136,7 @@ class AppFixtures extends Fixture
             $manager->persist($user);
         }
         $manager->flush();
-    }
+    }*/
 
     /**
      * @return object
