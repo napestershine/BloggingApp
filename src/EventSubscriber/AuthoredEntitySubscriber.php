@@ -19,10 +19,7 @@ use Symfony\Component\Security\Core\User\UserInterface;
  */
 class AuthoredEntitySubscriber implements EventSubscriberInterface
 {
-    /**
-     * @var TokenStorageInterface
-     */
-    private $tokenStorage;
+    private \Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface $tokenStorage;
 
     /**
      * AuthoredEntitySubscriber constructor.

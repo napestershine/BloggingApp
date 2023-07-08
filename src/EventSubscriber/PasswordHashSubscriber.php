@@ -19,10 +19,7 @@ use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 class PasswordHashSubscriber implements EventSubscriberInterface
 {
 
-    /**
-     * @var UserPasswordEncoderInterface
-     */
-    private $userPasswordEncoder;
+    private \Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface $userPasswordEncoder;
 
     /**
      * PasswordHashSubscriber constructor.

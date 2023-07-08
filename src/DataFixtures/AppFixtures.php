@@ -46,20 +46,14 @@ class AppFixtures extends Fixture
         ]
     ];
 
-    /**
-     * @var UserPasswordEncoderInterface
-     */
-    private $userPasswordEncoder;
+    private \Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface $userPasswordEncoder;
 
     /**
      * @var \Faker\Factory
      */
     private $faker;
 
-    /**
-     * @var SluggerInterface
-     */
-    private $slugger;
+    private \Symfony\Component\String\Slugger\SluggerInterface $slugger;
 
     /**
      * AppFixtures constructor.
