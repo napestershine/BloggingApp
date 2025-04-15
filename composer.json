@@ -29,7 +29,7 @@
     "symfony/serializer": "6.3.*",
     "symfony/string": "6.3.*",
     "symfony/twig-bundle": "6.3.*",
-    "symfony/validator": "6.3.*",
+    "symfony/validator": "6.4.*",
     "symfony/yaml": "6.3.*"
   },
   "require-dev": {
