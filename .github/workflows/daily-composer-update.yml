@@ -20,6 +20,9 @@ jobs:
         with:
           php-version: '8.2' # Adjust as per your Symfony project
           tools: composer
+      - name: Update dependencies
+        run: composer update --no-interaction
+
 
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist
