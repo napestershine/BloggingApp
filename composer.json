@@ -9,7 +9,7 @@
     "doctrine/annotations": "*",
     "doctrine/doctrine-bundle": "^2",
     "doctrine/doctrine-migrations-bundle": "^3",
-    "doctrine/orm": "^2",
+    "doctrine/orm": "^3",
     "friendsofsymfony/ckeditor-bundle": "^2.4",
     "lexik/jwt-authentication-bundle": "^2.19",
     "nelmio/cors-bundle": "^2.2",
