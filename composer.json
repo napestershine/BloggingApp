@@ -5,7 +5,7 @@
     "php": "^8.2.0",
     "ext-ctype": "*",
     "ext-iconv": "*",
-    "api-platform/core": "^3.4",
+    "api-platform/core": "^4.1",
     "doctrine/annotations": "*",
     "doctrine/doctrine-bundle": "^2",
     "doctrine/doctrine-migrations-bundle": "^3",
