@@ -209,7 +209,7 @@ class User implements UserInterface
     /**
      * @inheritDoc
      */
-    public function eraseCredentials()
+    public function eraseCredentials(): void
     {
 
     }
@@ -217,7 +217,7 @@ class User implements UserInterface
     /**
      * @return mixed
      */
-    public function getRetypedPassword()
+    public function getRetypedPassword()    
     {
         return $this->retypedPassword;
     }
