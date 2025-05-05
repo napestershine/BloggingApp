@@ -11,7 +11,7 @@
     "doctrine/doctrine-migrations-bundle": "^3",
     "doctrine/orm": "^3",
     "friendsofsymfony/ckeditor-bundle": "^2.4",
-    "lexik/jwt-authentication-bundle": "^2.19",
+    "lexik/jwt-authentication-bundle": "^3.1",
     "nelmio/cors-bundle": "^2.2",
     "phpdocumentor/reflection-docblock": "^5.3",
     "symfony/asset": "7.2.*",
