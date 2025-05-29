@@ -16,7 +16,7 @@
     "phpdocumentor/reflection-docblock": "^5.3",
     "symfony/asset": "7.2.*",
     "symfony/cache": "7.2.*",
-    "symfony/console": "6.4.*",
+    "symfony/console": "7.3.*",
     "symfony/dotenv": "7.2.*",
     "symfony/expression-language": "7.2.*",
     "symfony/flex": "^2.3.1",
