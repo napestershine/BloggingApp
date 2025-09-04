@@ -15,7 +15,7 @@
     "nelmio/cors-bundle": "^2.2",
     "phpdocumentor/reflection-docblock": "^5.3",
     "symfony/asset": "7.3.*",
-    "symfony/cache": "7.2.*",
+    "symfony/cache": "7.3.*",
     "symfony/console": "7.3.*",
     "symfony/dotenv": "7.2.*",
     "symfony/expression-language": "7.3.*",
