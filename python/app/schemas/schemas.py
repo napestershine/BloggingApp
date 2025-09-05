@@ -72,6 +72,7 @@ class CommentBase(BaseModel):
 
 class CommentCreate(CommentBase):
     blog_post_id: int
+    parent_id: Optional[int] = None  # For threaded comments
 
 class CommentUpdate(BaseModel):
     content: Optional[str] = None
@@ -81,15 +82,50 @@ class CommentInDB(CommentBase):
     published: datetime
     author_id: int
     blog_post_id: int
+    parent_id: Optional[int] = None
+    is_moderated: bool = False
+    moderation_reason: Optional[str] = None
+    moderated_at: Optional[datetime] = None
+    moderated_by: Optional[int] = None
     
     class Config:
         from_attributes = True
 
 class Comment(CommentInDB):
     author: User
+    replies: List["Comment"] = []
+    total_reactions: Optional[int] = 0
+    reactions_by_type: Optional[Dict[str, int]] = {}
+    user_reaction: Optional[ReactionTypeEnum] = None
+
+# Comment reaction schemas
+class CommentReactionCreate(BaseModel):
+    reaction_type: ReactionTypeEnum = ReactionTypeEnum.LIKE
+
+class CommentReaction(BaseModel):
+    id: int
+    user_id: int
+    comment_id: int
+    reaction_type: ReactionTypeEnum
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+class CommentReactionsSummary(BaseModel):
+    comment_id: int
+    total_reactions: int
+    reactions_by_type: Dict[str, int]
+    user_reaction: Optional[ReactionTypeEnum] = None
+
+# Comment moderation schemas
+class CommentModerationAction(BaseModel):
+    action: str  # "approve", "hide", "delete"
+    reason: Optional[str] = None
 
 # Update forward references
 BlogPost.model_rebuild()
+Comment.model_rebuild()
 
 # Token schemas
 class Token(BaseModel):

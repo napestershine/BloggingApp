@@ -4,6 +4,15 @@ from sqlalchemy.sql import func
 from app.database.connection import Base
 import enum
 
+# Enum for reaction types
+class ReactionType(enum.Enum):
+    LIKE = "like"
+    LOVE = "love"
+    LAUGH = "laugh"
+    WOW = "wow"
+    SAD = "sad"
+    ANGRY = "angry"
+
 class User(Base):
     __tablename__ = "users"
     
@@ -36,7 +45,7 @@ class User(Base):
     
     # Relationships
     posts = relationship("BlogPost", back_populates="author")
-    comments = relationship("Comment", back_populates="author")
+    comments = relationship("Comment", back_populates="author", foreign_keys="Comment.author_id")
 
 class BlogPost(Base):
     __tablename__ = "blog_posts"
@@ -62,18 +71,40 @@ class Comment(Base):
     author_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     blog_post_id = Column(Integer, ForeignKey("blog_posts.id"), nullable=False)
     
+    # Threading support - parent comment for replies
+    parent_id = Column(Integer, ForeignKey("comments.id"), nullable=True)
+    
+    # Moderation fields
+    is_moderated = Column(Boolean, default=False)
+    moderation_reason = Column(String(255), nullable=True)
+    moderated_at = Column(DateTime(timezone=True), nullable=True)
+    moderated_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    
     # Relationships
-    author = relationship("User", back_populates="comments")
+    author = relationship("User", back_populates="comments", foreign_keys=[author_id])
     blog_post = relationship("BlogPost", back_populates="comments")
+    
+    # Self-referential relationship for threading
+    parent = relationship("Comment", remote_side=[id], backref="replies")
+    moderator = relationship("User", foreign_keys=[moderated_by], post_update=True)
 
-# Enum for reaction types
-class ReactionType(enum.Enum):
-    LIKE = "like"
-    LOVE = "love"
-    LAUGH = "laugh"
-    WOW = "wow"
-    SAD = "sad"
-    ANGRY = "angry"
+class CommentReaction(Base):
+    __tablename__ = "comment_reactions"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    comment_id = Column(Integer, ForeignKey("comments.id"), nullable=False)
+    reaction_type = Column(Enum(ReactionType), default=ReactionType.LIKE)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    user = relationship("User")
+    comment = relationship("Comment")
+    
+    # Ensure a user can only have one reaction per comment
+    __table_args__ = (
+        UniqueConstraint('user_id', 'comment_id', name='uq_user_comment_reaction'),
+    )
 
 class PostLike(Base):
     __tablename__ = "post_likes"
