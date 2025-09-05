@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey, Boolean, Enum, UniqueConstraint
+from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey, Boolean, Enum, UniqueConstraint, BigInteger, Table
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.database.connection import Base
@@ -12,6 +12,25 @@ class ReactionType(enum.Enum):
     WOW = "wow"
     SAD = "sad"
     ANGRY = "angry"
+
+class PostStatus(enum.Enum):
+    DRAFT = "DRAFT"
+    PUBLISHED = "PUBLISHED"
+
+# Association tables for many-to-many relationships
+blog_post_tags = Table(
+    'blog_post_tags',
+    Base.metadata,
+    Column('blog_post_id', Integer, ForeignKey('blog_posts.id'), primary_key=True),
+    Column('tag_id', Integer, ForeignKey('tags.id'), primary_key=True)
+)
+
+blog_post_categories = Table(
+    'blog_post_categories', 
+    Base.metadata,
+    Column('blog_post_id', Integer, ForeignKey('blog_posts.id'), primary_key=True),
+    Column('category_id', Integer, ForeignKey('categories.id'), primary_key=True)
+)
 
 class User(Base):
     __tablename__ = "users"
@@ -54,7 +73,9 @@ class BlogPost(Base):
     title = Column(String(255), nullable=False)
     content = Column(Text, nullable=False)
     slug = Column(String(255), unique=True, index=True)
+    status = Column(Enum(PostStatus), default=PostStatus.DRAFT, nullable=False)
     published = Column(DateTime(timezone=True), server_default=func.now())
+    last_modified = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     author_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     
     # Relationships
@@ -62,6 +83,8 @@ class BlogPost(Base):
     comments = relationship("Comment", back_populates="blog_post")
     likes = relationship("PostLike", back_populates="post")
     shares = relationship("PostShare", back_populates="post")
+    tags = relationship("Tag", secondary=blog_post_tags, back_populates="blog_posts")
+    categories = relationship("Category", secondary=blog_post_categories, back_populates="blog_posts")
 
 class Comment(Base):
     __tablename__ = "comments"
@@ -149,3 +172,44 @@ class PostShare(Base):
     # Relationships
     post = relationship("BlogPost")
     user = relationship("User")
+
+class Media(Base):
+    __tablename__ = "media"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    filename = Column(String(255), nullable=False)
+    original_filename = Column(String(255), nullable=False)
+    file_path = Column(String(500), nullable=False)
+    file_size = Column(BigInteger, nullable=False)
+    mime_type = Column(String(100), nullable=False)
+    uploaded_at = Column(DateTime(timezone=True), server_default=func.now())
+    uploaded_by = Column(Integer, ForeignKey("users.id"), nullable=False)
+    
+    # Relationships
+    uploader = relationship("User")
+
+class Category(Base):
+    __tablename__ = "categories"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(100), unique=True, nullable=False, index=True)
+    description = Column(Text, nullable=True)
+    slug = Column(String(100), unique=True, nullable=False, index=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
+    
+    # Relationships
+    creator = relationship("User")
+    blog_posts = relationship("BlogPost", secondary=blog_post_categories, back_populates="categories")
+
+class Tag(Base):
+    __tablename__ = "tags"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(50), unique=True, nullable=False, index=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
+    
+    # Relationships 
+    creator = relationship("User")
+    blog_posts = relationship("BlogPost", secondary=blog_post_tags, back_populates="tags")
