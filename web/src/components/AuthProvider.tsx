@@ -163,7 +163,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return false;
       }
 
-      const newUser = await authAPI.register(userData);
+      await authAPI.register(userData);
       
       // Auto-login after successful registration
       const loginSuccess = await login({
