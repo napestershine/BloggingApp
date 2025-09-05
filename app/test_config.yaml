@@ -1,0 +1,142 @@
+# Test configuration file for the SF5 Blog App Flutter project
+
+# This file contains global test settings and configurations
+# It can be used by CI/CD systems and development tools
+
+# Test execution settings
+test_timeout: 30s
+integration_test_timeout: 60s
+e2e_test_timeout: 120s
+
+# Coverage settings
+coverage_minimum_percentage: 80
+coverage_exclude_patterns:
+  - '**/*.g.dart'
+  - '**/*.freezed.dart'
+  - '**/main.dart'
+  - '**/test/**'
+  - '**/integration_test/**'
+  - '**/test_driver/**'
+
+# Test categories and their purposes
+test_categories:
+  unit:
+    description: "Fast, isolated tests for individual functions/classes"
+    location: "test/"
+    patterns: ["**/*_test.dart"]
+    exclude: ["**/integration_test/**", "**/test_driver/**"]
+    
+  widget:
+    description: "UI component tests using TestWidgets"
+    location: "test/widgets/, test/screens/"
+    patterns: ["**/widgets/*_test.dart", "**/screens/*_test.dart"]
+    
+  integration:
+    description: "Feature flow tests within the app"
+    location: "integration_test/"
+    patterns: ["**/*_test.dart"]
+    
+  e2e:
+    description: "End-to-end user journey tests"
+    location: "test_driver/"
+    patterns: ["**/*_test.dart"]
+
+# Mock configuration
+mock_settings:
+  generate_mocks: true
+  mock_annotation_files:
+    - "test/services/auth_service_test.dart"
+    - "test/services/api_service_test.dart"
+    - "test/screens/login_screen_test.dart"
+    - "test/screens/blog_list_screen_test.dart"
+
+# Test data configuration
+test_data:
+  reset_between_tests: true
+  use_consistent_timestamps: false
+  default_test_server_url: "http://localhost:8080/api"
+  
+# Platform-specific test settings
+platforms:
+  android:
+    enabled: true
+    min_sdk: 21
+    compile_sdk: 34
+    
+  ios:
+    enabled: true
+    min_version: "11.0"
+    
+  web:
+    enabled: false
+    
+  windows:
+    enabled: false
+    
+  macos:
+    enabled: false
+    
+  linux:
+    enabled: false
+
+# Environment variables for testing
+test_environment:
+  API_BASE_URL: "http://localhost:8080/api"
+  TEST_MODE: "true"
+  LOG_LEVEL: "debug"
+  FLUTTER_TEST: "true"
+
+# Performance test thresholds
+performance_thresholds:
+  widget_build_time_ms: 100
+  screen_transition_ms: 300
+  api_response_timeout_ms: 5000
+  app_startup_time_ms: 3000
+
+# Accessibility test requirements
+accessibility:
+  screen_reader_support: true
+  keyboard_navigation: true
+  color_contrast_ratio: 4.5
+  touch_target_size: 44
+
+# Security test considerations
+security:
+  test_with_invalid_tokens: true
+  test_xss_prevention: true
+  test_data_validation: true
+  test_authentication_flows: true
+
+# CI/CD integration settings
+ci_cd:
+  run_tests_on_pr: true
+  run_integration_tests_on_merge: true
+  generate_coverage_report: true
+  fail_on_coverage_below_threshold: true
+  publish_test_results: true
+
+# Test reporting
+reporting:
+  format: "junit"
+  output_directory: "test-results/"
+  include_coverage: true
+  include_screenshots: true
+  
+# Parallel test execution
+parallel_execution:
+  enabled: true
+  max_workers: 4
+  chunk_size: 10
+
+# Test retry configuration
+retry_settings:
+  max_retries: 3
+  retry_on_failure: true
+  retry_delay_ms: 1000
+
+# Development-specific settings
+development:
+  watch_mode: true
+  auto_run_on_save: false
+  verbose_output: false
+  debug_mode: false

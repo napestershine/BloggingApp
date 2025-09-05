@@ -152,10 +152,75 @@ The app integrates with the following SF5 API endpoints:
 
 ### Testing
 
-Run unit tests:
+The app includes a comprehensive test suite with multiple types of tests:
+
+#### Quick Test Commands
+
 ```bash
+# Run all unit and widget tests
 flutter test
+
+# Run tests with coverage
+flutter test --coverage
+
+# Run integration tests
+flutter test integration_test/
+
+# Run comprehensive test suite (requires test script)
+./run_tests.sh
 ```
+
+#### Test Types
+
+1. **Unit Tests** (`test/services/`, `test/models_test.dart`)
+   - Service layer testing (AuthService, ApiService)
+   - Model serialization testing
+   - Business logic validation
+
+2. **Widget Tests** (`test/screens/`, `test/widgets/`)
+   - UI component testing
+   - User interaction testing
+   - Form validation testing
+
+3. **Integration Tests** (`integration_test/`)
+   - Feature flow testing
+   - Authentication workflows
+   - Navigation testing
+
+4. **Acceptance Tests** (`test_driver/`)
+   - End-to-end user journeys
+   - Real app behavior testing
+
+#### Test Coverage
+
+- Target coverage: 80%+
+- Automated coverage reporting
+- HTML coverage reports generated
+
+#### Running Specific Test Categories
+
+```bash
+# Unit tests only
+flutter test test/services/
+
+# Widget tests only
+flutter test test/screens/ test/widgets/
+
+# Integration tests
+flutter test integration_test/
+
+# End-to-end tests
+flutter drive --target=test_driver/app.dart
+```
+
+#### CI/CD Testing
+
+Automated testing runs on:
+- Pull requests
+- Push to main/develop branches
+- Includes static analysis, unit tests, integration tests, and build verification
+
+For detailed testing documentation, see [TEST_DOCUMENTATION.md](TEST_DOCUMENTATION.md).
 
 ### Building
 
