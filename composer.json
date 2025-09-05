@@ -1,8 +1,10 @@
 {
+  "name": "napestershine/sf5",
+  "description": "Symfony 5/7 application migrated to PHP 8.3",
   "type": "project",
   "license": "proprietary",
   "require": {
-    "php": "^8.2|^8.3",
+    "php": "^8.3",
     "ext-ctype": "*",
     "ext-iconv": "*",
     "api-platform/core": "^4.1",
