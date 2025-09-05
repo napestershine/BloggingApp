@@ -36,7 +36,7 @@ def auth_headers(test_user, client):
     return {"Authorization": f"Bearer {token}"}
 
 class TestMediaUpload:
-    def test_upload_image_file(self, client, auth_headers):
+    def test_upload_image_file(self, client, auth_headers, test_db):
         """Test uploading a valid image file"""
         # Create a small test image file in memory
         file_content = b"fake image content"
@@ -56,7 +56,7 @@ class TestMediaUpload:
         assert "id" in data
         
         # Verify file was saved to database
-        db = TestingSessionLocal()
+        db = test_db()
         try:
             media = db.query(Media).filter(Media.id == data["id"]).first()
             assert media is not None
@@ -64,7 +64,7 @@ class TestMediaUpload:
         finally:
             db.close()
     
-    def test_upload_file_without_auth(self, setup_database):
+    def test_upload_file_without_auth(self, client):
         """Test uploading file without authentication should fail"""
         file_content = b"test content"
         file = io.BytesIO(file_content)
@@ -112,7 +112,7 @@ class TestMediaUpload:
         assert response.status_code == 200
         assert response.content == file_content
     
-    def test_get_nonexistent_file(self, setup_database):
+    def test_get_nonexistent_file(self, client):
         """Test retrieving non-existent file should return 404"""
         response = client.get("/media/99999")
         assert response.status_code == 404
