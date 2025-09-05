@@ -1,0 +1,283 @@
+name: Flutter App Test Suite
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths: 
+      - 'app/**'
+      - '.github/workflows/**'
+  pull_request:
+    branches: [ main, develop ]
+    paths: 
+      - 'app/**'
+      - '.github/workflows/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Static Analysis and Code Quality
+  analysis:
+    name: Static Analysis
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.24.0'
+        channel: 'stable'
+        
+    - name: Get dependencies
+      run: flutter pub get
+      
+    - name: Verify formatting
+      run: dart format --output=none --set-exit-if-changed .
+      
+    - name: Analyze code
+      run: flutter analyze
+      
+    - name: Check for unused dependencies
+      run: dart pub deps
+
+  # Unit and Widget Tests
+  test:
+    name: Unit & Widget Tests
+    runs-on: ubuntu-latest
+    needs: analysis
+    defaults:
+      run:
+        working-directory: app
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.24.0'
+        channel: 'stable'
+        
+    - name: Get dependencies
+      run: flutter pub get
+      
+    - name: Generate mocks
+      run: flutter packages pub run build_runner build --delete-conflicting-outputs
+      
+    - name: Run tests with coverage
+      run: flutter test --coverage --reporter=expanded
+      
+    - name: Install lcov for coverage
+      run: sudo apt-get update && sudo apt-get install -y lcov
+      
+    - name: Generate coverage report
+      run: |
+        lcov --remove coverage/lcov.info \
+          '*/flutter/packages/*' \
+          '*/third_party/*' \
+          '*/test/*' \
+          '*/integration_test/*' \
+          '*/test_driver/*' \
+          '*/*.g.dart' \
+          '*/*.freezed.dart' \
+          -o coverage/lcov_cleaned.info
+        genhtml coverage/lcov_cleaned.info -o coverage/html
+        
+    - name: Upload coverage reports to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: app/coverage/lcov_cleaned.info
+        flags: unittests
+        name: codecov-umbrella
+        
+    - name: Archive coverage results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: coverage-report
+        path: app/coverage/html
+        
+    - name: Check coverage threshold
+      run: |
+        COVERAGE=$(lcov --summary coverage/lcov_cleaned.info 2>&1 | grep -o '[0-9.]*%' | head -n 1 | sed 's/%//')
+        echo "Coverage: ${COVERAGE}%"
+        if (( $(echo "$COVERAGE < 80" | bc -l) )); then
+          echo "❌ Coverage below threshold: ${COVERAGE}% < 80%"
+          exit 1
+        fi
+        echo "✅ Coverage threshold met: ${COVERAGE}% >= 80%"
+
+  # Integration Tests
+  integration_test:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: test
+    defaults:
+      run:
+        working-directory: app
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.24.0'
+        channel: 'stable'
+        
+    - name: Get dependencies
+      run: flutter pub get
+      
+    - name: Run integration tests
+      run: |
+        if [ -d "integration_test" ] && [ "$(ls -A integration_test)" ]; then
+          flutter test integration_test/
+        else
+          echo "No integration tests found, skipping"
+        fi
+
+  # Build Verification
+  build:
+    name: Build Verification
+    runs-on: ubuntu-latest
+    needs: analysis
+    strategy:
+      matrix:
+        target: [apk, web]
+    defaults:
+      run:
+        working-directory: app
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.24.0'
+        channel: 'stable'
+        
+    - name: Enable web support
+      if: matrix.target == 'web'
+      run: flutter config --enable-web
+      
+    - name: Get dependencies
+      run: flutter pub get
+      
+    - name: Build ${{ matrix.target }}
+      run: |
+        if [ "${{ matrix.target }}" = "apk" ]; then
+          flutter build apk --debug
+        elif [ "${{ matrix.target }}" = "web" ]; then
+          flutter build web
+        fi
+        
+    - name: Archive build artifacts
+      uses: actions/upload-artifact@v3
+      if: matrix.target == 'apk'
+      with:
+        name: apk-debug
+        path: app/build/app/outputs/flutter-apk/app-debug.apk
+
+  # Security Scan
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: 'app/'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+        
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v2
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+  # Performance Analysis
+  performance:
+    name: Performance Analysis
+    runs-on: ubuntu-latest
+    needs: build
+    defaults:
+      run:
+        working-directory: app
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.24.0'
+        channel: 'stable'
+        
+    - name: Get dependencies
+      run: flutter pub get
+      
+    - name: Analyze app size
+      run: |
+        flutter build apk --analyze-size > size_analysis.txt 2>&1 || true
+        if [ -f size_analysis.txt ]; then
+          echo "📊 App Size Analysis:"
+          cat size_analysis.txt
+        fi
+        
+    - name: Upload size analysis
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: size-analysis
+        path: app/size_analysis.txt
+
+  # Test Results Summary
+  test_summary:
+    name: Test Summary
+    runs-on: ubuntu-latest
+    needs: [analysis, test, integration_test, build, security, performance]
+    if: always()
+    
+    steps:
+    - name: Test Results Summary
+      run: |
+        echo "🎯 Test Suite Results Summary"
+        echo "=============================="
+        echo "Static Analysis: ${{ needs.analysis.result }}"
+        echo "Unit & Widget Tests: ${{ needs.test.result }}"
+        echo "Integration Tests: ${{ needs.integration_test.result }}"
+        echo "Build Verification: ${{ needs.build.result }}"
+        echo "Security Scan: ${{ needs.security.result }}"
+        echo "Performance Analysis: ${{ needs.performance.result }}"
+        echo ""
+        
+        if [[ "${{ needs.analysis.result }}" == "success" && 
+              "${{ needs.test.result }}" == "success" && 
+              "${{ needs.integration_test.result }}" == "success" && 
+              "${{ needs.build.result }}" == "success" ]]; then
+          echo "✅ All critical tests passed!"
+        else
+          echo "❌ Some tests failed. Please check the logs."
+          exit 1
+        fi
