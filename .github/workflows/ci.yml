@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 jobs:
-  test:
+  test-php:
     runs-on: ubuntu-latest
 
     steps:
@@ -24,16 +24,41 @@ jobs:
       id: composer-cache
       uses: actions/cache@v3
       with:
-        path: vendor
-        key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
+        path: php/vendor
+        key: ${{ runner.os }}-php-${{ hashFiles('php/composer.lock') }}
         restore-keys: |
           ${{ runner.os }}-php-
 
     - name: Install dependencies
-      run: composer install --prefer-dist --no-progress
+      run: cd php && composer install --prefer-dist --no-progress
 
     - name: Run PHPUnit tests
-      run: php bin/phpunit
+      run: cd php && php bin/phpunit
 
     - name: Run PHPStan analysis
-      run: vendor/bin/phpstan analyse
+      run: cd php && vendor/bin/phpstan analyse
+
+  test-python:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Cache pip packages
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('python/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Install dependencies
+      run: cd python && pip install -r requirements.txt
+
+    - name: Run Python tests
+      run: cd python && python -m pytest app/tests/ -v
