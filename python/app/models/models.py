@@ -1,7 +1,12 @@
-from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey, Boolean, BigInteger, Table
+from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey, Boolean, BigInteger, Table, Enum
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.database.connection import Base
+import enum
+
+class PostStatus(enum.Enum):
+    DRAFT = "DRAFT"
+    PUBLISHED = "PUBLISHED"
 
 # Association tables for many-to-many relationships
 blog_post_tags = Table(
@@ -59,7 +64,9 @@ class BlogPost(Base):
     title = Column(String(255), nullable=False)
     content = Column(Text, nullable=False)
     slug = Column(String(255), unique=True, index=True)
+    status = Column(Enum(PostStatus), default=PostStatus.DRAFT, nullable=False)
     published = Column(DateTime(timezone=True), server_default=func.now())
+    last_modified = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     author_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     
     # Relationships
