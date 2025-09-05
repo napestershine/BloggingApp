@@ -15,6 +15,7 @@ RUN apt-get update && apt-get install -y \
     zip \
     unzip \
     libpq-dev \
+    libicu-dev \
     && docker-php-ext-install \
     pdo_pgsql \
     pgsql \
@@ -30,24 +31,11 @@ RUN apt-get update && apt-get install -y \
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Copy application files
-COPY . .
-
-# Install PHP dependencies
-RUN composer install --no-dev --optimize-autoloader --no-interaction
-
-# Set proper permissions
-RUN chown -R www-data:www-data /var/www \
-    && chmod -R 755 /var/www/var
-
 # Create JWT keys directory
-RUN mkdir -p config/jwt && chown -R www-data:www-data config/jwt
+RUN mkdir -p config/jwt
 
 # Expose port 9000 for PHP-FPM
 EXPOSE 9000
-
-# Switch to www-data user
-USER www-data
 
 # Start PHP-FPM
 CMD ["php-fpm"]
