@@ -177,6 +177,9 @@ npm run type-check
 ```bash
 cd python
 pytest
+
+# For PostgreSQL testing (CI environment)
+TEST_DATABASE_URL=postgresql://user:password@host:port/db pytest
 ```
 
 ### Code Quality
