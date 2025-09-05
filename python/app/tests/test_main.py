@@ -1,20 +1,16 @@
 import pytest
-from fastapi.testclient import TestClient
-from app.main import app
 
-client = TestClient(app)
-
-def test_read_root():
+def test_read_root(client):
     response = client.get("/")
     assert response.status_code == 200
     assert response.json() == {"message": "Welcome to the Blog API"}
 
-def test_health_check():
+def test_health_check(client):
     response = client.get("/health")
     assert response.status_code == 200
     assert response.json() == {"status": "healthy"}
 
-def test_register_user():
+def test_register_user(client):
     response = client.post(
         "/auth/register",
         json={
@@ -32,7 +28,7 @@ def test_register_user():
     assert data["name"] == "Test User"
     assert "id" in data
 
-def test_register_user_password_mismatch():
+def test_register_user_password_mismatch(client):
     response = client.post(
         "/auth/register",
         json={
@@ -46,12 +42,12 @@ def test_register_user_password_mismatch():
     assert response.status_code == 400
     assert "Passwords do not match" in response.json()["detail"]
 
-def test_delete_blog_post_not_authenticated():
+def test_delete_blog_post_not_authenticated(client):
     """Test that unauthenticated users cannot delete posts"""
     response = client.delete("/blog_posts/1")
     assert response.status_code == 403  # FastAPI returns 403 for missing auth
 
-def test_delete_nonexistent_blog_post():
+def test_delete_nonexistent_blog_post(client):
     """Test deleting a non-existent blog post returns 404"""
     # First register and login a user to get token
     register_response = client.post(
