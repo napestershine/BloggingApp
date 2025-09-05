@@ -52,6 +52,8 @@ class BlogPostInDB(BlogPostBase):
 class BlogPost(BlogPostInDB):
     author: User
     comments: List["Comment"] = []
+    categories: List["Category"] = []
+    tags: List["Tag"] = []
 
 # Comment schemas
 class CommentBase(BaseModel):
@@ -74,9 +76,6 @@ class CommentInDB(CommentBase):
 
 class Comment(CommentInDB):
     author: User
-
-# Update forward references
-BlogPost.model_rebuild()
 
 # Token schemas
 class Token(BaseModel):
@@ -156,3 +155,58 @@ class MediaInDB(MediaBase):
 
 class Media(MediaInDB):
     uploader: User
+
+# Category schemas
+class CategoryBase(BaseModel):
+    name: str
+    description: Optional[str] = None
+    slug: Optional[str] = None
+
+class CategoryCreate(CategoryBase):
+    pass
+
+class CategoryUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    slug: Optional[str] = None
+
+class CategoryInDB(CategoryBase):
+    id: int
+    slug: str
+    created_at: datetime
+    created_by: int
+    
+    class Config:
+        from_attributes = True
+
+class Category(CategoryInDB):
+    creator: User
+
+# Tag schemas  
+class TagBase(BaseModel):
+    name: str
+
+class TagCreate(TagBase):
+    pass
+
+class TagInDB(TagBase):
+    id: int
+    created_at: datetime
+    created_by: int
+    
+    class Config:
+        from_attributes = True
+
+class Tag(TagInDB):
+    creator: User
+
+# Blog post tag/category management schemas
+class BlogPostTagsUpdate(BaseModel):
+    tag_ids: List[int]
+
+class BlogPostCategoriesUpdate(BaseModel):
+    category_ids: List[int]
+
+# Update forward references after all classes are defined
+BlogPost.model_rebuild()
+Comment.model_rebuild()
