@@ -186,9 +186,23 @@ def test_sample_credentials(client):
         {"username": "janesmith", "password": "jane123"},
     ]
     
-    for cred in sample_credentials:
-        response = client.post("/auth/login", data=cred)
-        assert response.status_code == 200, f"Failed to login with {cred['username']}"
+    # Create each user first
+    for user_data in sample_users:
+        registration_data = {
+            "username": user_data["username"],
+            "password": user_data["password"],
+            "retyped_password": user_data["password"],
+            "name": user_data["name"],
+            "email": user_data["email"]
+        }
+        response = client.post("/auth/register", json=registration_data)
+        assert response.status_code == 201, f"Failed to create user {user_data['username']}"
+    
+    # Now test login with these credentials
+    for user_data in sample_users:
+        login_cred = {"username": user_data["username"], "password": user_data["password"]}
+        response = client.post("/auth/login", data=login_cred)
+        assert response.status_code == 200, f"Failed to login with {user_data['username']}"
         token_data = response.json()
         assert "access_token" in token_data
         assert token_data["token_type"] == "bearer"
