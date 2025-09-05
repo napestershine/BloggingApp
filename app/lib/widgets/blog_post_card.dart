@@ -4,22 +4,24 @@ import '../models/blog_post.dart';
 class BlogPostCard extends StatelessWidget {
   final BlogPost blogPost;
   final VoidCallback? onTap;
+  final bool isCompact;
 
   const BlogPostCard({
     super.key,
     required this.blogPost,
     this.onTap,
+    this.isCompact = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: isCompact ? EdgeInsets.zero : const EdgeInsets.only(bottom: 16),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.all(isCompact ? 12 : 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -27,13 +29,14 @@ class BlogPostCard extends StatelessWidget {
                 blogPost.title,
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
+                  fontSize: isCompact ? 18 : null,
                 ),
-                maxLines: 2,
+                maxLines: isCompact ? 1 : 2,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: isCompact ? 6 : 8),
               
-              if (blogPost.publishedDate != null) ...[
+              if (blogPost.publishedDate != null && !isCompact) ...[
                 Row(
                   children: [
                     Icon(
@@ -56,26 +59,35 @@ class BlogPostCard extends StatelessWidget {
                   children: [
                     Icon(
                       Icons.person,
-                      size: 16,
+                      size: 14,
                       color: Theme.of(context).textTheme.bodySmall?.color,
                     ),
                     const SizedBox(width: 4),
-                    Text(
-                      'By ${blogPost.author!.name}',
-                      style: Theme.of(context).textTheme.bodySmall,
+                    Expanded(
+                      child: Text(
+                        'By ${blogPost.author!.name}',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          fontSize: isCompact ? 11 : null,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: isCompact ? 6 : 8),
               ],
               
-              Text(
-                blogPost.content,
-                style: Theme.of(context).textTheme.bodyMedium,
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 12),
+              if (!isCompact) ...[
+                Text(
+                  blogPost.content,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 12),
+              ],
+              
+              if (isCompact) Expanded(child: Container()),
               
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -85,37 +97,38 @@ class BlogPostCard extends StatelessWidget {
                       children: [
                         Icon(
                           Icons.comment_outlined,
-                          size: 16,
+                          size: isCompact ? 14 : 16,
                           color: Theme.of(context).textTheme.bodySmall?.color,
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          '${blogPost.comments!.length} comments',
-                          style: Theme.of(context).textTheme.bodySmall,
+                          '${blogPost.comments!.length}',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            fontSize: isCompact ? 11 : null,
+                          ),
                         ),
                       ],
                     )
                   else
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.comment_outlined,
-                          size: 16,
-                          color: Theme.of(context).textTheme.bodySmall?.color,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'No comments',
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                      ],
+                    Icon(
+                      Icons.comment_outlined,
+                      size: isCompact ? 14 : 16,
+                      color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.5),
                     ),
                   
-                  Icon(
-                    Icons.arrow_forward_ios,
-                    size: 16,
-                    color: Theme.of(context).textTheme.bodySmall?.color,
-                  ),
+                  if (isCompact && blogPost.publishedDate != null)
+                    Text(
+                      _formatDate(blogPost.publishedDate!),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        fontSize: 10,
+                      ),
+                    )
+                  else
+                    Icon(
+                      Icons.arrow_forward_ios,
+                      size: isCompact ? 14 : 16,
+                      color: Theme.of(context).textTheme.bodySmall?.color,
+                    ),
                 ],
               ),
             ],
