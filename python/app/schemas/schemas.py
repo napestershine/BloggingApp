@@ -134,3 +134,25 @@ class WhatsAppSettingsUpdate(BaseModel):
     notify_on_new_posts: Optional[bool] = None
     notify_on_comments: Optional[bool] = None
     notify_on_mentions: Optional[bool] = None
+
+# Media schemas
+class MediaBase(BaseModel):
+    filename: str
+    original_filename: str
+    file_size: int
+    mime_type: str
+
+class MediaCreate(MediaBase):
+    file_path: str
+
+class MediaInDB(MediaBase):
+    id: int
+    file_path: str
+    uploaded_at: datetime
+    uploaded_by: int
+    
+    class Config:
+        from_attributes = True
+
+class Media(MediaInDB):
+    uploader: User
