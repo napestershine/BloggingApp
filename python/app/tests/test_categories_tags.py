@@ -1,42 +1,11 @@
-import os
 import pytest
-from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from app.main import app
-from app.database.connection import get_db, Base
 from app.models.models import User, Category, Tag, BlogPost
 from app.auth.auth import get_password_hash
 import uuid
 
-# Test database
-SQLALCHEMY_DATABASE_URL = "sqlite:///./test_categories_tags.db"
-engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-def override_get_db():
-    try:
-        db = TestingSessionLocal()
-        yield db
-    finally:
-        db.close()
-
-app.dependency_overrides[get_db] = override_get_db
-
-client = TestClient(app)
-
-@pytest.fixture(scope="module")
-def setup_database():
-    Base.metadata.create_all(bind=engine)
-    yield
-    Base.metadata.drop_all(bind=engine)
-    # Clean up test database
-    if os.path.exists("./test_categories_tags.db"):
-        os.remove("./test_categories_tags.db")
-
 @pytest.fixture
-def test_user():
-    db = TestingSessionLocal()
+def test_user(test_db):
+    db = test_db()
     try:
         unique_id = str(uuid.uuid4())[:8]
         user = User(
@@ -53,7 +22,7 @@ def test_user():
         db.close()
 
 @pytest.fixture
-def auth_headers(test_user):
+def auth_headers(test_user, client):
     login_data = {
         "username": test_user.username,
         "password": "testpass123"
@@ -63,7 +32,7 @@ def auth_headers(test_user):
     return {"Authorization": f"Bearer {token}"}
 
 class TestCategories:
-    def test_create_category(self, setup_database, auth_headers):
+    def test_create_category(self, auth_headers, client):
         """Test creating a new category"""
         category_data = {
             "name": "Technology",
@@ -79,7 +48,7 @@ class TestCategories:
         assert data["slug"] == "technology"
         assert "id" in data
     
-    def test_create_category_custom_slug(self, setup_database, auth_headers):
+    def test_create_category_custom_slug(self, auth_headers, client):
         """Test creating category with custom slug"""
         category_data = {
             "name": "Web Development",
@@ -93,7 +62,7 @@ class TestCategories:
         data = response.json()
         assert data["slug"] == "webdev"
     
-    def test_create_duplicate_category(self, setup_database, auth_headers):
+    def test_create_duplicate_category(self, auth_headers, client):
         """Test creating category with duplicate name should fail"""
         category_data = {
             "name": "Duplicate Category",
@@ -109,7 +78,7 @@ class TestCategories:
         assert response2.status_code == 400
         assert "already exists" in response2.json()["detail"]
     
-    def test_get_categories(self, setup_database, auth_headers):
+    def test_get_categories(self, auth_headers, client):
         """Test getting list of categories"""
         # Create a few categories
         categories = [
@@ -129,7 +98,7 @@ class TestCategories:
         assert "Science" in category_names
         assert "Travel" in category_names
     
-    def test_get_category_by_id(self, setup_database, auth_headers):
+    def test_get_category_by_id(self, auth_headers, client):
         """Test getting a specific category by ID"""
         category_data = {
             "name": "Specific Category",
@@ -145,7 +114,7 @@ class TestCategories:
         data = response.json()
         assert data["name"] == "Specific Category"
     
-    def test_update_category(self, setup_database, auth_headers):
+    def test_update_category(self, auth_headers, client):
         """Test updating a category"""
         # Create category
         category_data = {
@@ -169,7 +138,7 @@ class TestCategories:
         assert data["name"] == "Updated Name"
         assert data["description"] == "Updated description"
     
-    def test_delete_category(self, setup_database, auth_headers):
+    def test_delete_category(self, auth_headers, client):
         """Test deleting a category"""
         category_data = {
             "name": "To Be Deleted",
@@ -188,7 +157,7 @@ class TestCategories:
         assert get_response.status_code == 404
 
 class TestTags:
-    def test_create_tag(self, setup_database, auth_headers):
+    def test_create_tag(self, auth_headers, client):
         """Test creating a new tag"""
         tag_data = {"name": "Python"}
         
@@ -199,7 +168,7 @@ class TestTags:
         assert data["name"] == "python"  # Should be lowercase
         assert "id" in data
     
-    def test_create_duplicate_tag_returns_existing(self, setup_database, auth_headers):
+    def test_create_duplicate_tag_returns_existing(self, auth_headers, client):
         """Test creating duplicate tag returns existing tag"""
         tag_data = {"name": "JavaScript"}
         
@@ -216,7 +185,7 @@ class TestTags:
         # Should be the same tag
         assert tag1_id == tag2_id
     
-    def test_get_tags(self, setup_database, auth_headers):
+    def test_get_tags(self, auth_headers, client):
         """Test getting list of tags"""
         tags = ["React", "Vue", "Angular"]
         
@@ -233,7 +202,7 @@ class TestTags:
         assert "vue" in tag_names
         assert "angular" in tag_names
     
-    def test_search_tags(self, setup_database, auth_headers):
+    def test_search_tags(self, auth_headers, client):
         """Test searching tags"""
         tags = ["Machine Learning", "Machine Vision", "Deep Learning"]
         
@@ -249,7 +218,7 @@ class TestTags:
         assert "machine learning" in tag_names
         assert "machine vision" in tag_names
     
-    def test_delete_tag(self, setup_database, auth_headers):
+    def test_delete_tag(self, auth_headers, client):
         """Test deleting a tag"""
         tag_data = {"name": "ToDelete"}
         
@@ -265,7 +234,7 @@ class TestTags:
         assert get_response.status_code == 404
 
 class TestBlogPostTagsCategories:
-    def test_assign_tags_to_blog_post(self, setup_database, auth_headers):
+    def test_assign_tags_to_blog_post(self, auth_headers, client):
         """Test assigning tags to a blog post"""
         # Create tags
         tag1_response = client.post("/tags/", json={"name": "Python"}, headers=auth_headers)
@@ -292,7 +261,7 @@ class TestBlogPostTagsCategories:
         assert "python" in tag_names
         assert "fastapi" in tag_names
     
-    def test_assign_categories_to_blog_post(self, setup_database, auth_headers):
+    def test_assign_categories_to_blog_post(self, auth_headers, client):
         """Test assigning categories to a blog post"""
         # Create categories
         cat1_response = client.post("/categories/", json={"name": "Programming"}, headers=auth_headers)
@@ -319,7 +288,7 @@ class TestBlogPostTagsCategories:
         assert "Programming" in category_names
         assert "Tutorial" in category_names
     
-    def test_get_blog_post_tags(self, setup_database, auth_headers):
+    def test_get_blog_post_tags(self, auth_headers, client):
         """Test getting tags for a blog post"""
         # Create tag and blog post with tag
         tag_response = client.post("/tags/", json={"name": "TestTag"}, headers=auth_headers)

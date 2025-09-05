@@ -1,42 +1,11 @@
-import os
 import pytest
-from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from app.main import app
-from app.database.connection import get_db, Base
 from app.models.models import User, BlogPost, PostStatus
 from app.auth.auth import get_password_hash
 import uuid
 
-# Test database
-SQLALCHEMY_DATABASE_URL = "sqlite:///./test_drafts.db"
-engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-def override_get_db():
-    try:
-        db = TestingSessionLocal()
-        yield db
-    finally:
-        db.close()
-
-app.dependency_overrides[get_db] = override_get_db
-
-client = TestClient(app)
-
-@pytest.fixture(scope="module")
-def setup_database():
-    Base.metadata.create_all(bind=engine)
-    yield
-    Base.metadata.drop_all(bind=engine)
-    # Clean up test database
-    if os.path.exists("./test_drafts.db"):
-        os.remove("./test_drafts.db")
-
 @pytest.fixture
-def test_user():
-    db = TestingSessionLocal()
+def test_user(test_db):
+    db = test_db()
     try:
         unique_id = str(uuid.uuid4())[:8]
         user = User(
@@ -53,7 +22,7 @@ def test_user():
         db.close()
 
 @pytest.fixture
-def auth_headers(test_user):
+def auth_headers(test_user, client):
     login_data = {
         "username": test_user.username,
         "password": "testpass123"
@@ -63,7 +32,7 @@ def auth_headers(test_user):
     return {"Authorization": f"Bearer {token}"}
 
 class TestDraftManagement:
-    def test_create_draft_post(self, setup_database, auth_headers):
+    def test_create_draft_post(self, auth_headers, client):
         """Test creating a draft post"""
         post_data = {
             "title": "Draft Post",
@@ -79,7 +48,7 @@ class TestDraftManagement:
         assert data["status"] == "DRAFT"
         assert "slug" in data
     
-    def test_create_published_post(self, setup_database, auth_headers):
+    def test_create_published_post(self, auth_headers, client):
         """Test creating a published post"""
         post_data = {
             "title": "Published Post",
@@ -94,7 +63,7 @@ class TestDraftManagement:
         assert data["title"] == "Published Post"
         assert data["status"] == "PUBLISHED"
     
-    def test_create_post_defaults_to_draft(self, setup_database, auth_headers):
+    def test_create_post_defaults_to_draft(self, auth_headers, client):
         """Test creating post without status defaults to draft"""
         post_data = {
             "title": "Default Status Post",
@@ -107,7 +76,7 @@ class TestDraftManagement:
         data = response.json()
         assert data["status"] == "DRAFT"
     
-    def test_get_blog_posts_only_shows_published(self, setup_database, auth_headers):
+    def test_get_blog_posts_only_shows_published(self, auth_headers, client):
         """Test that GET /blog_posts/ only shows published posts by default"""
         # Create both draft and published posts
         draft_data = {
@@ -135,7 +104,7 @@ class TestDraftManagement:
         assert "Published Post" in titles
         assert "Draft Post" not in titles
     
-    def test_get_blog_posts_with_draft_filter(self, setup_database, auth_headers):
+    def test_get_blog_posts_with_draft_filter(self, auth_headers, client):
         """Test getting blog posts with draft status filter"""
         # Create both draft and published posts
         draft_data = {
@@ -162,7 +131,7 @@ class TestDraftManagement:
         for post in data:
             assert post["status"] == "DRAFT"
     
-    def test_get_user_drafts(self, setup_database, auth_headers):
+    def test_get_user_drafts(self, auth_headers, client):
         """Test getting current user's draft posts"""
         # Create some draft posts
         draft_posts = [
@@ -190,7 +159,7 @@ class TestDraftManagement:
         assert "Draft 2" in titles
         assert "Published" not in titles
     
-    def test_autosave_draft(self, setup_database, auth_headers):
+    def test_autosave_draft(self, auth_headers, client):
         """Test auto-saving draft changes"""
         # Create a draft post
         post_data = {
@@ -216,7 +185,7 @@ class TestDraftManagement:
         assert data["content"] == "Updated content"
         assert data["status"] == "DRAFT"
     
-    def test_autosave_published_post_fails(self, setup_database, auth_headers):
+    def test_autosave_published_post_fails(self, auth_headers, client):
         """Test that auto-save fails for published posts"""
         # Create a published post with unique title
         import uuid
@@ -241,7 +210,7 @@ class TestDraftManagement:
         assert response.status_code == 400
         assert "only available for draft posts" in response.json()["detail"]
     
-    def test_publish_draft(self, setup_database, auth_headers):
+    def test_publish_draft(self, auth_headers, client):
         """Test publishing a draft post"""
         # Create a draft post
         post_data = {
@@ -261,7 +230,7 @@ class TestDraftManagement:
         assert data["status"] == "PUBLISHED"
         assert data["title"] == "Draft to Publish"
     
-    def test_publish_already_published_post_fails(self, setup_database, auth_headers):
+    def test_publish_already_published_post_fails(self, auth_headers, client):
         """Test that publishing an already published post fails"""
         # Create a published post
         post_data = {
@@ -279,7 +248,7 @@ class TestDraftManagement:
         assert response.status_code == 400
         assert "Only draft posts can be published" in response.json()["detail"]
     
-    def test_update_post_status(self, setup_database, auth_headers):
+    def test_update_post_status(self, auth_headers, client):
         """Test updating post status through PUT endpoint"""
         # Create a draft post
         post_data = {
@@ -302,12 +271,12 @@ class TestDraftManagement:
         data = response.json()
         assert data["status"] == "PUBLISHED"
     
-    def test_get_drafts_requires_auth(self, setup_database):
+    def test_get_drafts_requires_auth(self, client):
         """Test that getting drafts requires authentication"""
         response = client.get("/blog_posts/drafts")
         assert response.status_code == 403
     
-    def test_autosave_requires_auth(self, setup_database):
+    def test_autosave_requires_auth(self, client):
         """Test that auto-save requires authentication"""
         autosave_data = {"title": "Test"}
         response = client.post("/blog_posts/1/autosave", json=autosave_data)
