@@ -1,7 +1,22 @@
-from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey, Boolean, BigInteger
+from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey, Boolean, BigInteger, Table
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.database.connection import Base
+
+# Association tables for many-to-many relationships
+blog_post_tags = Table(
+    'blog_post_tags',
+    Base.metadata,
+    Column('blog_post_id', Integer, ForeignKey('blog_posts.id'), primary_key=True),
+    Column('tag_id', Integer, ForeignKey('tags.id'), primary_key=True)
+)
+
+blog_post_categories = Table(
+    'blog_post_categories', 
+    Base.metadata,
+    Column('blog_post_id', Integer, ForeignKey('blog_posts.id'), primary_key=True),
+    Column('category_id', Integer, ForeignKey('categories.id'), primary_key=True)
+)
 
 class User(Base):
     __tablename__ = "users"
@@ -50,6 +65,8 @@ class BlogPost(Base):
     # Relationships
     author = relationship("User", back_populates="posts")
     comments = relationship("Comment", back_populates="blog_post")
+    tags = relationship("Tag", secondary=blog_post_tags, back_populates="blog_posts")
+    categories = relationship("Category", secondary=blog_post_categories, back_populates="blog_posts")
 
 class Comment(Base):
     __tablename__ = "comments"
@@ -78,3 +95,29 @@ class Media(Base):
     
     # Relationships
     uploader = relationship("User")
+
+class Category(Base):
+    __tablename__ = "categories"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(100), unique=True, nullable=False, index=True)
+    description = Column(Text, nullable=True)
+    slug = Column(String(100), unique=True, nullable=False, index=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
+    
+    # Relationships
+    creator = relationship("User")
+    blog_posts = relationship("BlogPost", secondary=blog_post_categories, back_populates="categories")
+
+class Tag(Base):
+    __tablename__ = "tags"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(50), unique=True, nullable=False, index=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
+    
+    # Relationships 
+    creator = relationship("User")
+    blog_posts = relationship("BlogPost", secondary=blog_post_tags, back_populates="tags")
