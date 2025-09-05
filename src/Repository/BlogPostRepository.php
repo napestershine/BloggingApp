@@ -11,6 +11,7 @@ use Doctrine\Persistence\ManagerRegistry;
  * @method BlogPost|null findOneBy(array<string, mixed> $criteria, array<string, string>|null $orderBy = null)
  * @method BlogPost[]    findAll()
  * @method BlogPost[]    findBy(array<string, mixed> $criteria, array<string, string>|null $orderBy = null, $limit = null, $offset = null)
+ * @extends ServiceEntityRepository<BlogPost>
  */
 class BlogPostRepository extends ServiceEntityRepository
 {

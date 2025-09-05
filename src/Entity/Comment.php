@@ -36,8 +36,9 @@ class Comment implements AuthoredEntityInterface, PublishedDateEntityInterface
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
      * @Groups({"get-comment-with-author"})
+     * @phpstan-ignore-next-line
      */
-    private $id;
+    private ?int $id;
 
     /**
      * @ORM\Column(type="text")
@@ -45,27 +46,27 @@ class Comment implements AuthoredEntityInterface, PublishedDateEntityInterface
      * @Assert\NotBlank()
      * @Assert\Length(min="5", max="3000")
      */
-    private $content;
+    private string $content;
 
     /**
      * @ORM\Column(type="datetime")
      * @Groups({"get-comment-with-author"})
      */
-    private $published;
+    private \DateTimeInterface $published;
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="comments")
      * @ORM\JoinColumn(nullable=false)
      * @Groups({"get-comment-with-author"})
      */
-    private $author;
+    private UserInterface $author;
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\BlogPost", inversedBy="comments")
      * @ORM\JoinColumn(nullable=false)
      * @Groups({"post"})
      */
-    private $blogPost;
+    private BlogPost $blogPost;
 
     public function getId(): ?int
     {
@@ -84,7 +85,7 @@ class Comment implements AuthoredEntityInterface, PublishedDateEntityInterface
         return $this;
     }
 
-    public function getPublished(): ?\DateTimeInterface
+    public function getPublished(): \DateTimeInterface
     {
         return $this->published;
     }
@@ -97,9 +98,9 @@ class Comment implements AuthoredEntityInterface, PublishedDateEntityInterface
     }
 
     /**
-     * @return User
+     * @return UserInterface
      */
-    public function getAuthor(): User
+    public function getAuthor(): UserInterface
     {
         return $this->author;
     }

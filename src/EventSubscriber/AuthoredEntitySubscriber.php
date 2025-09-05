@@ -31,7 +31,7 @@ class AuthoredEntitySubscriber implements EventSubscriberInterface
     }
 
     /**
-     * @return array
+     * @return array<string, array<int, mixed>>
      */
     public static function getSubscribedEvents(): array
     {

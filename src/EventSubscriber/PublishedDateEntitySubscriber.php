@@ -18,9 +18,9 @@ use Symfony\Component\HttpKernel\KernelEvents;
 class PublishedDateEntitySubscriber implements EventSubscriberInterface
 {
     /**
-     * @return array
+     * @return array<string, array<int, mixed>>
      */
-    public static function getSubscribedEvents()
+    public static function getSubscribedEvents(): array
     {
         return [
             KernelEvents::VIEW => ['setDatePublished', EventPriorities::PRE_WRITE],
@@ -31,7 +31,7 @@ class PublishedDateEntitySubscriber implements EventSubscriberInterface
      * @param ViewEvent $event
      * @throws \Exception
      */
-    public function setDatePublished(ViewEvent $event)
+    public function setDatePublished(ViewEvent $event): void
     {
         $entity = $event->getControllerResult();
         $method = $event->getRequest()->getMethod();

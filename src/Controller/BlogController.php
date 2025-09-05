@@ -46,10 +46,10 @@ class BlogController extends AbstractController
     /**
      * @Route("/post/{id}", name="blog_by_id", requirements={"id"="\d+"}, methods={"GET"})
      * @param BlogPostRepository $blogPostRepository
-     * @param $id
+     * @param int $id
      * @return JsonResponse
      */
-    public function post(BlogPostRepository $blogPostRepository, $id): JsonResponse
+    public function post(BlogPostRepository $blogPostRepository, int $id): JsonResponse
     {
         return $this->json($blogPostRepository->find($id));
     }
@@ -57,10 +57,10 @@ class BlogController extends AbstractController
     /**
      * @Route("/post/{slug}", name="blog_by_slug", methods={"GET"})
      * @param BlogPostRepository $blogPostRepository
-     * @param $slug
+     * @param string $slug
      * @return JsonResponse
      */
-    public function postBySlug(BlogPostRepository $blogPostRepository, $slug): JsonResponse
+    public function postBySlug(BlogPostRepository $blogPostRepository, string $slug): JsonResponse
     {
         return $this->json($blogPostRepository->findOneBy(['slug' => $slug]));
     }
@@ -85,10 +85,10 @@ class BlogController extends AbstractController
     /**
      * @Route("/post/{id}", name="blog_delete", methods={"DELETE"})
      * @param EntityManagerInterface $entityManager
-     * @param $id
+     * @param int $id
      * @return JsonResponse
      */
-    public function delete(EntityManagerInterface $entityManager, $id): JsonResponse
+    public function delete(EntityManagerInterface $entityManager, int $id): JsonResponse
     {
         $post = $entityManager->getRepository(BlogPost::class)->find($id);
         $entityManager->remove($post);

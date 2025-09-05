@@ -40,8 +40,9 @@ class BlogPost implements AuthoredEntityInterface, PublishedDateEntityInterface
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
      * @Groups({"get-blog-post-with-author"})
+     * @phpstan-ignore-next-line
      */
-    private $id;
+    private ?int $id;
 
     /**
      * @ORM\Column(type="string", length=255)
@@ -49,13 +50,13 @@ class BlogPost implements AuthoredEntityInterface, PublishedDateEntityInterface
      * @Assert\Length(min="10")
      * @Groups({"post", "get-blog-post-with-author"})
      */
-    private $title;
+    private string $title;
 
     /**
      * @ORM\Column(type="datetime")
      * @Groups({"get-blog-post-with-author"})
      */
-    private $published;
+    private \DateTimeInterface $published;
 
     /**
      * @ORM\Column(type="text")
@@ -63,28 +64,29 @@ class BlogPost implements AuthoredEntityInterface, PublishedDateEntityInterface
      * @Assert\Length(min="20")
      * @Groups({"post", "get-blog-post-with-author"})
      */
-    private $content;
+    private string $content;
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="posts")
      * @ORM\JoinColumn(nullable=false)
      * @Groups({"get-blog-post-with-author"})
      */
-    private $author;
+    private UserInterface $author;
 
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
      * @Assert\NotBlank()
      * @Groups({"post", "get-blog-post-with-author"})
      */
-    private $slug;
+    private ?string $slug;
 
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\Comment", mappedBy="blogPost")
      * @ApiSubresource()
      * @Groups({"get-blog-post-with-author"})
+     * @var ArrayCollection<int, Comment>
      */
-    private $comments;
+    private ArrayCollection $comments;
 
     /**
      * BlogPost constructor.
@@ -111,7 +113,7 @@ class BlogPost implements AuthoredEntityInterface, PublishedDateEntityInterface
         return $this;
     }
 
-    public function getPublished(): ?\DateTimeInterface
+    public function getPublished(): \DateTimeInterface
     {
         return $this->published;
     }
@@ -140,7 +142,7 @@ class BlogPost implements AuthoredEntityInterface, PublishedDateEntityInterface
         return $this->slug;
     }
 
-    public function setSlug(string $slug): self
+    public function setSlug(?string $slug): self
     {
         $this->slug = $slug;
 
@@ -148,9 +150,9 @@ class BlogPost implements AuthoredEntityInterface, PublishedDateEntityInterface
     }
 
     /**
-     * @return User
+     * @return UserInterface
      */
-    public function getAuthor(): User
+    public function getAuthor(): UserInterface
     {
         return $this->author;
     }
@@ -167,7 +169,7 @@ class BlogPost implements AuthoredEntityInterface, PublishedDateEntityInterface
     }
 
     /**
-     * @return Collection
+     * @return Collection<int, Comment>
      */
     public function getComments(): Collection
     {

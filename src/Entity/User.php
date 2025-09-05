@@ -52,8 +52,9 @@ class User implements UserInterface
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
      * @Groups({"get"})
+     * @phpstan-ignore-next-line
      */
-    private $id;
+    private ?int $id;
 
     /**
      * @ORM\Column(type="string", length=255)
@@ -61,7 +62,7 @@ class User implements UserInterface
      * @Assert\NotBlank()
      * @Assert\Length(min="6", max="255")
      */
-    private ?string $username;
+    private string $username;
 
     /**
      * @ORM\Column(type="string", length=255)
@@ -72,7 +73,7 @@ class User implements UserInterface
      *     message="Password must be seven characters long and contains at least one digit, one upper case letter and one lower case letter"
      * )
      */
-    private ?string $password;
+    private string $password;
 
     /**
      * @Groups({"put", "post"})
@@ -82,7 +83,7 @@ class User implements UserInterface
      *     message="Passwords does not match"
      * )
      */
-    private ?string $retypedPassword;
+    private string $retypedPassword;
 
     /**
      * @ORM\Column(type="string", length=255)
@@ -90,7 +91,7 @@ class User implements UserInterface
      * @Assert\NotBlank()
      * @Assert\Length(min="1", max="255")"
      */
-    private ?string $name;
+    private string $name;
 
     /**
      * @ORM\Column(type="string", length=255)
@@ -98,17 +99,19 @@ class User implements UserInterface
      * @Assert\NotBlank()
      * @Assert\Email()
      */
-    private ?string $email;
+    private string $email;
 
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\BlogPost", mappedBy="author")
      * @Groups({"get"})
+     * @var ArrayCollection<int, BlogPost>
      */
     private ArrayCollection $posts;
 
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\Comment", mappedBy="author")
      * @Groups({"get"})
+     * @var ArrayCollection<int, Comment>
      */
     private ArrayCollection $comments;
 
@@ -126,7 +129,7 @@ class User implements UserInterface
         return $this->id;
     }
 
-    public function getUsername(): ?string
+    public function getUsername(): string
     {
         return $this->username;
     }
@@ -138,7 +141,7 @@ class User implements UserInterface
         return $this;
     }
 
-    public function getPassword(): ?string
+    public function getPassword(): string
     {
         return $this->password;
     }
@@ -150,7 +153,7 @@ class User implements UserInterface
         return $this;
     }
 
-    public function getName(): ?string
+    public function getName(): string
     {
         return $this->name;
     }
@@ -162,7 +165,7 @@ class User implements UserInterface
         return $this;
     }
 
-    public function getEmail(): ?string
+    public function getEmail(): string
     {
         return $this->email;
     }
@@ -175,7 +178,7 @@ class User implements UserInterface
     }
 
     /**
-     * @return Collection
+     * @return Collection<int, BlogPost>
      */
     public function getPosts(): Collection
     {
@@ -183,7 +186,7 @@ class User implements UserInterface
     }
 
     /**
-     * @return Collection
+     * @return Collection<int, Comment>
      */
     public function getComments(): Collection
     {
@@ -201,7 +204,7 @@ class User implements UserInterface
     /**
      * @inheritDoc
      */
-    public function getSalt()
+    public function getSalt(): ?string
     {
         return null;
     }
@@ -233,6 +236,6 @@ class User implements UserInterface
 
     public function getUserIdentifier(): string
     {
-        // TODO: Implement getUserIdentifier() method.
+        return $this->username;
     }
 }
