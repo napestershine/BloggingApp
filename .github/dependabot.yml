@@ -4,7 +4,12 @@ updates:
     directory: "/python" # Specify the directory where your requirements.txt resides
     schedule:
       interval: "daily" # check for updates daily
+    # Enable auto-merge for patch and minor updates
+    open-pull-requests-limit: 10
+    
   - package-ecosystem: "pub" # for Flutter/Dart project
     directory: "/app" # Specify the directory where your pubspec.yaml resides
     schedule:
       interval: "daily" # check for updates daily
+    # Enable auto-merge for patch and minor updates
+    open-pull-requests-limit: 10
