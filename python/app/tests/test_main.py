@@ -45,3 +45,39 @@ def test_register_user_password_mismatch():
     )
     assert response.status_code == 400
     assert "Passwords do not match" in response.json()["detail"]
+
+def test_delete_blog_post_not_authenticated():
+    """Test that unauthenticated users cannot delete posts"""
+    response = client.delete("/blog_posts/1")
+    assert response.status_code == 403  # FastAPI returns 403 for missing auth
+
+def test_delete_nonexistent_blog_post():
+    """Test deleting a non-existent blog post returns 404"""
+    # First register and login a user to get token
+    register_response = client.post(
+        "/auth/register",
+        json={
+            "username": "testuser3",
+            "email": "test3@example.com",
+            "name": "Test User 3", 
+            "password": "TestPass123",
+            "retyped_password": "TestPass123"
+        }
+    )
+    
+    login_response = client.post(
+        "/auth/login",
+        data={
+            "username": "testuser3",
+            "password": "TestPass123"
+        }
+    )
+    token = login_response.json()["access_token"]
+    
+    # Try to delete non-existent post
+    response = client.delete(
+        "/blog_posts/9999",
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    assert response.status_code == 404
+    assert "Blog post not found" in response.json()["detail"]

@@ -92,6 +92,23 @@ def update_blog_post(
             )
         post.slug = post_update.slug
     
+@router.delete("/{post_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_blog_post(
+    post_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    post = db.query(BlogPost).filter(BlogPost.id == post_id).first()
+    if not post:
+        raise HTTPException(status_code=404, detail="Blog post not found")
+    
+    # Only author can delete their post
+    if post.author_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to delete this post"
+        )
+    
+    db.delete(post)
     db.commit()
-    db.refresh(post)
-    return post
+    return

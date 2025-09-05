@@ -76,6 +76,27 @@ def update_comment(
     db.refresh(comment)
     return comment
 
+@router.delete("/{comment_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_comment(
+    comment_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    comment = db.query(Comment).filter(Comment.id == comment_id).first()
+    if not comment:
+        raise HTTPException(status_code=404, detail="Comment not found")
+    
+    # Only author can delete their comment
+    if comment.author_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to delete this comment"
+        )
+    
+    db.delete(comment)
+    db.commit()
+    return
+
 @router.get("/blog_post/{blog_post_id}", response_model=List[CommentSchema])
 def get_comments_for_blog_post(blog_post_id: int, db: Session = Depends(get_db)):
     # Check if blog post exists

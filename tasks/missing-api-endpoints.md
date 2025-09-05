@@ -2,7 +2,7 @@
 
 This document tracks the implementation status of API endpoints needed to support Flutter development.
 
-## ✅ Implemented Endpoints (14 total)
+## ✅ Implemented Endpoints (16 total)
 
 ### Authentication & Users
 ```
@@ -18,6 +18,7 @@ This document tracks the implementation status of API endpoints needed to suppor
 ✅ POST /blog_posts/                 - Create blog post
 ✅ GET /blog_posts/{id}              - Get single blog post
 ✅ PUT /blog_posts/{id}              - Update blog post
+✅ DELETE /blog_posts/{id}           - Delete blog post
 ```
 
 ### Comments
@@ -26,6 +27,7 @@ This document tracks the implementation status of API endpoints needed to suppor
 ✅ POST /comments/                   - Create comment
 ✅ GET /comments/{id}                - Get single comment
 ✅ PUT /comments/{id}                - Update comment
+✅ DELETE /comments/{id}             - Delete comment
 ✅ GET /comments/blog_post/{id}      - Get post comments
 ```
 
@@ -47,7 +49,6 @@ This document tracks the implementation status of API endpoints needed to suppor
 ❌ POST /users/upload/avatar         - Upload user avatar
 ❌ POST /auth/2fa/setup              - Setup 2FA
 ❌ POST /auth/2fa/verify             - Verify 2FA
-❌ DELETE /blog_posts/{id}           - Delete blog post (missing)
 ```
 
 ### Content Management (P0/P1 - High Priority)
@@ -64,7 +65,6 @@ This document tracks the implementation status of API endpoints needed to suppor
 ❌ POST /tags                        - Create tag
 ❌ GET /blog_posts/{id}/tags         - Get post tags
 ❌ PUT /blog_posts/{id}/tags         - Update post tags
-❌ DELETE /comments/{id}             - Delete comment (missing)
 ```
 
 ### Social Features (P1 - Important for Flutter UX)
@@ -117,14 +117,14 @@ This document tracks the implementation status of API endpoints needed to suppor
 - Implement proper token refresh logic
 
 ## Summary
-- **Implemented Endpoints**: 14
-- **Missing Critical (P0) Endpoints**: 9
-- **Missing High Priority (P1) Endpoints**: 14
-- **Total Missing for MVP**: 23
+- **Implemented Endpoints**: 16
+- **Missing Critical (P0) Endpoints**: 8
+- **Missing High Priority (P1) Endpoints**: 12
+- **Total Missing for MVP**: 20
 - **Total Endpoints Needed Eventually**: 85+
 
 ## Next Steps for Flutter Development
-1. **Immediate (P0)**: Complete basic CRUD operations (delete endpoints, user profiles)
+1. **Immediate (P0)**: Complete authentication enhancements and user profiles
 2. **Short-term (P1)**: Implement search, social features, content management
 3. **Medium-term (P2)**: Add advanced features, analytics, admin tools
 4. **Long-term (P3)**: Monetization, advanced integrations
