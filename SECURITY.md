@@ -2,7 +2,7 @@
 
 ## Supported Versions
 
-This project is built on Symfony 7.3 with PHP 8.2+. Security updates are provided for the current version only.
+This project is built on Symfony 7.3 with PHP 8.2+ (supports PHP 8.3). Security updates are provided for the current version only.
 
 | Version | Supported          |
 | ------- | ------------------ |
