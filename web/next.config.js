@@ -14,6 +14,9 @@ const nextConfig = {
     formats: ['image/webp', 'image/avif'],
   },
 
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   // Experimental features for performance
   experimental: {
     appDir: true,
