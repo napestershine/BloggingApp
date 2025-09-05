@@ -1,0 +1,12 @@
+name: Run a step if a secret has been set
+on: push
+jobs:
+  samplejob:
+    runs-on: ubuntu-latest
+    env:
+      job_secret: ${{ secrets.JobSecret }}
+    steps:
+      - if: ${{ env.job_secret != '' }}
+        run: echo 'the secret has a value set.'
+      - if: ${{ env.job_secret == '' }}
+        run: echo ' the secret does not have a value set.'
