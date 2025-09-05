@@ -134,8 +134,35 @@ curl -X POST "http://localhost:8000/comments/" \
 ## Development
 
 ### Running Tests
+
+The application supports both SQLite and PostgreSQL for testing:
+
+#### Local Development (SQLite)
 ```bash
 pytest
+```
+
+#### CI/Production Testing (PostgreSQL)
+```bash
+# Set TEST_DATABASE_URL environment variable to use PostgreSQL
+TEST_DATABASE_URL=postgresql://user:password@localhost:5432/test_db pytest
+```
+
+#### GitHub Actions CI
+Tests automatically run with PostgreSQL in CI environment. The GitHub Actions workflow:
+- Starts a PostgreSQL 15 service
+- Sets up the test database (blog_test)
+- Runs all tests with PostgreSQL
+
+#### Database-specific Testing
+Run the database integration test to verify both SQLite and PostgreSQL compatibility:
+```bash
+# Test with SQLite (default)
+pytest app/tests/test_database_integration.py -v
+
+# Test with PostgreSQL (requires running PostgreSQL instance)
+TEST_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/blog_test \
+  pytest app/tests/test_database_integration.py -v
 ```
 
 ### Code Formatting
