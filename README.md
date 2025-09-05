@@ -6,6 +6,13 @@
 
 ### Docker Setup (Recommended)
 
+#### Quick Setup
+Run the automated setup script:
+```sh
+./docker-setup.sh
+```
+
+#### Manual Setup
 1. Copy the Docker environment configuration:
 ```sh
 cp .env.docker .env.local
@@ -20,18 +27,34 @@ openssl rsa -pubout -in config/jwt/private.pem -out config/jwt/public.pem
 
 3. Start the Docker containers:
 ```sh
-docker-compose up -d
+docker compose up -d
 ```
 
 4. Install dependencies and setup database:
 ```sh
-docker-compose exec app composer install
-docker-compose exec app php bin/console doctrine:migrations:migrate
+docker compose exec app composer install
+docker compose exec app php bin/console doctrine:migrations:migrate
 ```
 
 5. Access the application:
-- API: http://localhost:8080
-- Database: localhost:5432 (from host)
+- **Web**: http://localhost:8080
+- **API**: http://localhost:8080/api  
+- **Database**: localhost:5432 (from host)
+
+#### Useful Docker Commands
+```sh
+# Stop all services
+docker compose down
+
+# View logs
+docker compose logs -f
+
+# Access PHP container shell
+docker compose exec app bash
+
+# Run Symfony commands
+docker compose exec app php bin/console cache:clear
+```
 
 ### Manual Setup
 
