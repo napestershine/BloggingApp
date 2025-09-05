@@ -26,6 +26,13 @@ class User(Base):
     avatar_url = Column(String(255), nullable=True)
     social_links = Column(Text, nullable=True)  # JSON string
     
+    # WhatsApp notification settings
+    whatsapp_number = Column(String(20), nullable=True)
+    whatsapp_notifications_enabled = Column(Boolean, default=False)
+    notify_on_new_posts = Column(Boolean, default=True)
+    notify_on_comments = Column(Boolean, default=True)
+    notify_on_mentions = Column(Boolean, default=True)
+    
     # Relationships
     posts = relationship("BlogPost", back_populates="author")
     comments = relationship("Comment", back_populates="author")
