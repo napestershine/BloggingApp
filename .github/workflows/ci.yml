@@ -22,18 +22,21 @@ jobs:
 
     - name: Cache Composer packages
       id: composer-cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
-        path: vendor
-        key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
+        path: php/vendor
+        key: ${{ runner.os }}-php-${{ hashFiles('php/composer.lock') }}
         restore-keys: |
           ${{ runner.os }}-php-
 
     - name: Install dependencies
-      run: composer install --prefer-dist --no-progress
+      working-directory: php
+      run: composer install --prefer-dist --no-progress --no-interaction
 
     - name: Run PHPUnit tests
+      working-directory: php
       run: php bin/phpunit
 
     - name: Run PHPStan analysis
+      working-directory: php
       run: vendor/bin/phpstan analyse
