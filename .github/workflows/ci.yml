@@ -10,6 +10,21 @@ jobs:
   test-python:
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: blog_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
     steps:
     - uses: actions/checkout@v4
 
@@ -31,3 +46,5 @@ jobs:
 
     - name: Run Python tests
       run: cd python && python -m pytest app/tests/ -v
+      env:
+        TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/blog_test
