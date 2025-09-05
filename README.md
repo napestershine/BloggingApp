@@ -56,18 +56,41 @@ docker compose exec app bash
 docker compose exec app php bin/console cache:clear
 ```
 
-### Manual Setup
+### Manual Setup (Without Docker)
 
-### JWT Keys Generation
+If you prefer not to use Docker, you can set up the project manually:
+
+1. Install PHP 8.2+, PostgreSQL, and Composer
+2. Copy environment configuration:
 ```sh
+cp .env .env.local
+```
+
+3. Configure your database connection in `.env.local`
+
+4. Generate JWT keys:
+```sh
+mkdir -p config/jwt
 openssl genrsa -out config/jwt/private.pem -aes256 4096
 openssl rsa -pubout -in config/jwt/private.pem -out config/jwt/public.pem
 ```
 
+5. Install dependencies:
+```sh
+composer install
+```
+
+6. Run database migrations:
+```sh
+php bin/console doctrine:migrations:migrate
+```
+
+## Usage Examples
+
 ### Create a user
 ```json
 {
-	"username": "admin",
+    "username": "admin",
     "name": "Manu",
     "email": "manu@blog.com",
     "password": "123"
@@ -76,5 +99,9 @@ openssl rsa -pubout -in config/jwt/private.pem -out config/jwt/public.pem
 
 ### Create a blog post
 ```json
-
+{
+    "title": "My First Post",
+    "content": "This is the content of my first blog post.",
+    "author": "admin"
+}
 ```
