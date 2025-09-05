@@ -1,0 +1,9 @@
+include: package:flutter_lints/flutter.yaml
+
+# Additional lint rules for this project
+linter:
+  rules:
+    prefer_const_constructors: true
+    prefer_const_literals_to_create_immutables: true
+    avoid_print: false # Allow print statements for debugging
+    use_build_context_synchronously: false # Allow async context usage
