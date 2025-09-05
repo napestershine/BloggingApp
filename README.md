@@ -1,10 +1,11 @@
 # BloggingApp
 
-A modern, full-stack blogging platform featuring a Flutter mobile application and a FastAPI backend. This project provides a complete solution for creating, managing, and publishing blog content with user authentication, comments, and social features.
+A modern, full-stack blogging platform featuring a Flutter mobile application, Next.js web application, and a FastAPI backend. This project provides a complete solution for creating, managing, and publishing blog content with user authentication, comments, and social features across mobile and web platforms.
 
 ## 🏗️ Architecture
 
-- **Frontend**: Flutter mobile application with Material Design 3 UI
+- **Mobile Frontend**: Flutter mobile application with Material Design 3 UI
+- **Web Frontend**: Next.js web application with TypeScript, Tailwind CSS, and SSR
 - **Backend**: FastAPI-based REST API with JWT authentication
 - **Database**: SQLAlchemy ORM with SQLite (dev) / PostgreSQL (prod) support
 - **Authentication**: JWT token-based security
@@ -14,7 +15,8 @@ A modern, full-stack blogging platform featuring a Flutter mobile application an
 
 ### Prerequisites
 
-- **Flutter**: SDK 3.0.0+ with Dart
+- **Flutter**: SDK 3.0.0+ with Dart (for mobile app)
+- **Node.js**: 18+ with npm/yarn (for web app)
 - **Python**: 3.12+ for the API backend
 - **Docker**: (Optional) For containerized deployment
 
@@ -32,11 +34,18 @@ A modern, full-stack blogging platform featuring a Flutter mobile application an
    docker-compose up --build
    ```
 
-3. Run the Flutter app:
+3. Run the Flutter app (mobile):
    ```bash
    cd app
    flutter pub get
    flutter run
+   ```
+
+4. Run the Next.js web app:
+   ```bash
+   cd web
+   npm install
+   npm run dev
    ```
 
 ### Option 2: Manual Setup
@@ -49,11 +58,18 @@ A modern, full-stack blogging platform featuring a Flutter mobile application an
    uvicorn app.main:app --reload
    ```
 
-2. **Set up the Flutter app**:
+2. **Set up the Flutter app** (mobile):
    ```bash
    cd app
    flutter pub get
    flutter run
+   ```
+
+3. **Set up the Next.js web app**:
+   ```bash
+   cd web
+   npm install
+   npm run dev
    ```
 
 ## 📱 Components
@@ -64,6 +80,13 @@ A modern, full-stack blogging platform featuring a Flutter mobile application an
 - Blog post creation and management
 - Comments and social interactions
 - Responsive UI for different screen sizes
+
+### [Next.js Web App](./web/README.md)
+- Modern web platform with TypeScript and Tailwind CSS
+- Server-side rendering for excellent SEO
+- Responsive design with mobile-first approach
+- Complete authentication flow and API integration
+- Docker-ready with production configuration
 
 ### [FastAPI Backend](./python/README.md)
 - RESTful API with automatic documentation
@@ -94,7 +117,8 @@ Once the FastAPI backend is running, access the interactive documentation:
 - ✅ Comment system with user associations
 - ✅ RESTful API with OpenAPI documentation
 - ✅ Flutter mobile app with state management
-- ✅ Responsive Material Design UI
+- ✅ Next.js web app with SSR and TypeScript
+- ✅ Responsive Material Design UI (mobile) and Tailwind CSS (web)
 
 ### Planned Features (See [Tasks](./tasks/README.md))
 - 🔄 Rich text editor for blog posts
@@ -115,6 +139,11 @@ BloggingApp/
 │   ├── android/           # Android-specific files
 │   ├── ios/               # iOS-specific files
 │   └── README.md          # Flutter app documentation
+├── web/                    # Next.js web application
+│   ├── src/               # TypeScript source code
+│   ├── public/            # Static assets
+│   ├── Dockerfile         # Container configuration
+│   └── README.md          # Web app documentation
 ├── python/                # FastAPI backend
 │   ├── app/               # Python source code
 │   ├── Dockerfile         # Container configuration
@@ -134,6 +163,14 @@ cd app
 flutter test
 ```
 
+**Next.js Web App**:
+```bash
+cd web
+npm run test # (if tests are configured)
+npm run lint
+npm run type-check
+```
+
 **FastAPI Backend**:
 ```bash
 cd python
@@ -146,6 +183,12 @@ pytest
 ```bash
 flutter analyze
 flutter test
+```
+
+**Next.js Web App**:
+```bash
+npm run lint
+npm run type-check
 ```
 
 **Python**:
@@ -165,6 +208,7 @@ mypy app/
 
 Please read the component-specific READMEs for detailed setup and contribution guidelines:
 - [Flutter App Contributing](./app/README.md#contributing)
+- [Next.js Web App Development](./web/README.md#contributing)
 - [API Backend Development](./python/README.md#development)
 
 ## 📄 License
@@ -185,6 +229,7 @@ We've conducted a comprehensive analysis of web platform options:
 ## 🔗 Links
 
 - [Flutter App Documentation](./app/README.md)
+- [Next.js Web App Documentation](./web/README.md)
 - [FastAPI Backend Documentation](./python/README.md)
 - [Development Tasks & Roadmap](./tasks/README.md)
 - [API Documentation](http://localhost:8000/docs) (when running)
