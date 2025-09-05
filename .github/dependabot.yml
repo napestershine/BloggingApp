@@ -1,6 +1,6 @@
 version: 2
 updates:
-  - package-ecosystem: "composer" # for PHP project
-    directory: "/" # Specify the directory where your composer.json resides
+  - package-ecosystem: "pip" # for Python project
+    directory: "/python" # Specify the directory where your requirements.txt resides
     schedule:
       interval: "daily" # check for updates daily
