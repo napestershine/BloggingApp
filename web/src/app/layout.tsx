@@ -55,8 +55,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className="font-sans"> {/* Using system fonts instead of Inter */}
+    <html lang="en">
+      <body className="font-sans" suppressHydrationWarning> {/* Using system fonts instead of Inter */}
         <ThemeProvider>
           <AuthProvider>
             {children}
