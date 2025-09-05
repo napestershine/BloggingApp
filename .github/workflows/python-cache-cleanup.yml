@@ -2,8 +2,8 @@ name: Python Cache Cleanup
 
 on:
   schedule:
-    # Run daily at 2 AM UTC
-    - cron: '0 2 * * *'
+    # Run hourly at the start of each hour
+    - cron: '0 * * * *'
   workflow_dispatch: # Allow manual triggering
 
 jobs:
@@ -61,7 +61,7 @@ jobs:
           - Removed ${{ steps.detect.outputs.pyc_count }} .pyc files
           - Removed ${{ steps.detect.outputs.pycache_count }} __pycache__ directories
           
-          This cleanup was performed automatically by the daily Python cache cleanup workflow."
+          This cleanup was performed automatically by the hourly Python cache cleanup workflow."
           git push
           echo "Changes committed and pushed"
         else
@@ -76,7 +76,7 @@ jobs:
           const title = '🧹 Python cache files found and cleaned up';
           const body = `## Automatic Python Cache Cleanup Report
           
-          The daily Python cache cleanup workflow found and removed cache files:
+          The hourly Python cache cleanup workflow found and removed cache files:
           
           - **${context.payload.inputs?.pyc_count || '${{ steps.detect.outputs.pyc_count }}'} .pyc files** removed
           - **${context.payload.inputs?.pycache_count || '${{ steps.detect.outputs.pycache_count }}'} __pycache__ directories** removed
@@ -96,7 +96,7 @@ jobs:
           2. Consider using \`git clean -f -d\` locally to remove untracked files
           3. Set up your IDE/editor to exclude these files from version control
           
-          This issue will be automatically closed once no cache files are found for 7 consecutive days.
+          This issue will be automatically closed once no cache files are found for 7 consecutive runs.
           `;
           
           // Check if there's already an open issue for this
