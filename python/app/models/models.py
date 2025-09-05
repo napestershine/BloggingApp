@@ -1,7 +1,8 @@
-from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey, Boolean
+from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey, Boolean, Enum, UniqueConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.database.connection import Base
+import enum
 
 class User(Base):
     __tablename__ = "users"
@@ -50,6 +51,7 @@ class BlogPost(Base):
     # Relationships
     author = relationship("User", back_populates="posts")
     comments = relationship("Comment", back_populates="blog_post")
+    likes = relationship("PostLike", back_populates="post")
 
 class Comment(Base):
     __tablename__ = "comments"
@@ -63,3 +65,30 @@ class Comment(Base):
     # Relationships
     author = relationship("User", back_populates="comments")
     blog_post = relationship("BlogPost", back_populates="comments")
+
+# Enum for reaction types
+class ReactionType(enum.Enum):
+    LIKE = "like"
+    LOVE = "love"
+    LAUGH = "laugh"
+    WOW = "wow"
+    SAD = "sad"
+    ANGRY = "angry"
+
+class PostLike(Base):
+    __tablename__ = "post_likes"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    post_id = Column(Integer, ForeignKey("blog_posts.id"), nullable=False)
+    reaction_type = Column(Enum(ReactionType), default=ReactionType.LIKE)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    user = relationship("User")
+    post = relationship("BlogPost", back_populates="likes")
+    
+    # Ensure a user can only have one reaction per post
+    __table_args__ = (
+        UniqueConstraint('user_id', 'post_id', name='uq_user_post_like'),
+    )

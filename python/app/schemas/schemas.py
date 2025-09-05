@@ -1,6 +1,16 @@
 from pydantic import BaseModel, EmailStr
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, List, Dict
+from enum import Enum
+
+# Reaction types enum for API
+class ReactionTypeEnum(str, Enum):
+    LIKE = "like"
+    LOVE = "love"
+    LAUGH = "laugh"
+    WOW = "wow"
+    SAD = "sad"
+    ANGRY = "angry"
 
 # User schemas
 class UserBase(BaseModel):
@@ -52,6 +62,9 @@ class BlogPostInDB(BlogPostBase):
 class BlogPost(BlogPostInDB):
     author: User
     comments: List["Comment"] = []
+    total_reactions: Optional[int] = 0
+    reactions_by_type: Optional[Dict[str, int]] = {}
+    user_reaction: Optional[ReactionTypeEnum] = None
 
 # Comment schemas
 class CommentBase(BaseModel):
@@ -134,3 +147,23 @@ class WhatsAppSettingsUpdate(BaseModel):
     notify_on_new_posts: Optional[bool] = None
     notify_on_comments: Optional[bool] = None
     notify_on_mentions: Optional[bool] = None
+
+# Post Like schemas
+class PostLikeCreate(BaseModel):
+    reaction_type: ReactionTypeEnum = ReactionTypeEnum.LIKE
+
+class PostLike(BaseModel):
+    id: int
+    user_id: int
+    post_id: int
+    reaction_type: ReactionTypeEnum
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+class PostReactionsSummary(BaseModel):
+    post_id: int
+    total_reactions: int
+    reactions_by_type: Dict[str, int]
+    user_reaction: Optional[ReactionTypeEnum] = None
