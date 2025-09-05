@@ -1,6 +1,11 @@
 from pydantic import BaseModel, EmailStr
 from datetime import datetime
 from typing import Optional, List
+from enum import Enum
+
+class PostStatus(str, Enum):
+    DRAFT = "DRAFT"
+    PUBLISHED = "PUBLISHED"
 
 # User schemas
 class UserBase(BaseModel):
@@ -32,6 +37,7 @@ class BlogPostBase(BaseModel):
     title: str
     content: str
     slug: Optional[str] = None
+    status: Optional[PostStatus] = PostStatus.DRAFT
 
 class BlogPostCreate(BlogPostBase):
     pass
@@ -40,10 +46,12 @@ class BlogPostUpdate(BaseModel):
     title: Optional[str] = None
     content: Optional[str] = None
     slug: Optional[str] = None
+    status: Optional[PostStatus] = None
 
 class BlogPostInDB(BlogPostBase):
     id: int
     published: datetime
+    last_modified: datetime
     author_id: int
     
     class Config:
@@ -206,6 +214,11 @@ class BlogPostTagsUpdate(BaseModel):
 
 class BlogPostCategoriesUpdate(BaseModel):
     category_ids: List[int]
+
+# Draft management schemas
+class DraftAutoSave(BaseModel):
+    title: Optional[str] = None
+    content: Optional[str] = None
 
 # Update forward references after all classes are defined
 BlogPost.model_rebuild()
