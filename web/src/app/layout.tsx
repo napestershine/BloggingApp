@@ -2,6 +2,7 @@ import '@/styles/globals.css';
 import { Inter } from 'next/font/google';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from '@/components/AuthProvider';
+import { ThemeProvider } from '@/components/ThemeProvider';
 import { Metadata } from 'next';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -54,35 +55,38 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <AuthProvider>
-          {children}
-          <Toaster
-            position="top-right"
-            toastOptions={{
-              duration: 4000,
-              style: {
-                background: '#363636',
-                color: '#fff',
-              },
-              success: {
-                duration: 3000,
-                iconTheme: {
-                  primary: '#4ade80',
-                  secondary: '#fff',
+        <ThemeProvider>
+          <AuthProvider>
+            {children}
+            <Toaster
+              position="top-right"
+              toastOptions={{
+                duration: 4000,
+                style: {
+                  background: 'var(--toast-bg, #363636)',
+                  color: 'var(--toast-color, #fff)',
+                  borderRadius: '8px',
                 },
-              },
-              error: {
-                duration: 5000,
-                iconTheme: {
-                  primary: '#ef4444',
-                  secondary: '#fff',
+                success: {
+                  duration: 3000,
+                  iconTheme: {
+                    primary: 'var(--success-color, #4ade80)',
+                    secondary: 'var(--success-text, #fff)',
+                  },
                 },
-              },
-            }}
-          />
-        </AuthProvider>
+                error: {
+                  duration: 5000,
+                  iconTheme: {
+                    primary: 'var(--error-color, #ef4444)',
+                    secondary: 'var(--error-text, #fff)',
+                  },
+                },
+              }}
+            />
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
