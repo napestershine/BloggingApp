@@ -2,6 +2,8 @@
 
 A modern, full-stack blogging platform featuring a Flutter mobile application, Next.js web application, and a FastAPI backend. This project provides a complete solution for creating, managing, and publishing blog content with user authentication, comments, and social features across mobile and web platforms.
 
+[![Dependabot Updates](https://github.com/napestershine/BloggingApp/actions/workflows/dependabot/dependabot-updates/badge.svg?branch=main)](https://github.com/napestershine/BloggingApp/actions/workflows/dependabot/dependabot-updates)
+
 ## 🏗️ Architecture
 
 - **Mobile Frontend**: Flutter mobile application with Material Design 3 UI
