@@ -1,0 +1,27 @@
+# Docker Compose override for development
+# This file is automatically loaded by docker-compose
+# Use it to override settings for local development
+
+version: '3.8'
+
+services:
+  app:
+    volumes:
+      # Mount the entire project for live development
+      - .:/var/www
+      # Exclude vendor directory to avoid conflicts
+      - /var/www/vendor
+    environment:
+      # Enable Xdebug for development
+      XDEBUG_MODE: develop,debug
+      PHP_IDE_CONFIG: serverName=localhost
+
+  # Optional: Add phpMyAdmin for database management
+  # Uncomment if you prefer a web interface for PostgreSQL
+  # adminer:
+  #   image: adminer
+  #   restart: always
+  #   ports:
+  #     - 8081:8080
+  #   networks:
+  #     - sf5_network

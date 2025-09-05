@@ -4,6 +4,37 @@
 
 ## Setup
 
+### Docker Setup (Recommended)
+
+1. Copy the Docker environment configuration:
+```sh
+cp .env.docker .env.local
+```
+
+2. Generate JWT keys:
+```sh
+mkdir -p config/jwt
+openssl genrsa -out config/jwt/private.pem -aes256 4096
+openssl rsa -pubout -in config/jwt/private.pem -out config/jwt/public.pem
+```
+
+3. Start the Docker containers:
+```sh
+docker-compose up -d
+```
+
+4. Install dependencies and setup database:
+```sh
+docker-compose exec app composer install
+docker-compose exec app php bin/console doctrine:migrations:migrate
+```
+
+5. Access the application:
+- API: http://localhost:8080
+- Database: localhost:5432 (from host)
+
+### Manual Setup
+
 ### JWT Keys Generation
 ```sh
 openssl genrsa -out config/jwt/private.pem -aes256 4096
