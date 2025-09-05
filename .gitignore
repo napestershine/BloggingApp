@@ -23,3 +23,7 @@
 ###> docker ###
 /docker-compose.override.yml
 ###< docker ###
+
+###> composer ###
+/composer.lock
+###< composer ###
