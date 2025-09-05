@@ -168,8 +168,6 @@ class PostReactionsSummary(BaseModel):
     reactions_by_type: Dict[str, int]
     user_reaction: Optional[ReactionTypeEnum] = None
 
-class Media(MediaInDB):
-    uploader: User
 
 # Category schemas
 class CategoryBase(BaseModel):
@@ -287,7 +285,7 @@ class WhatsAppSettingsUpdate(BaseModel):
     notify_on_comments: Optional[bool] = None
     notify_on_mentions: Optional[bool] = None
 
-# Media schemas
+# Media schemas  
 class MediaBase(BaseModel):
     filename: str
     original_filename: str
@@ -305,6 +303,9 @@ class MediaInDB(MediaBase):
     
     class Config:
         from_attributes = True
+
+class Media(MediaInDB):
+    uploader: User
 
 # Post Like schemas
 class PostLikeCreate(BaseModel):
@@ -326,8 +327,6 @@ class PostReactionsSummary(BaseModel):
     reactions_by_type: Dict[str, int]
     user_reaction: Optional[ReactionTypeEnum] = None
 
-class Media(MediaInDB):
-    uploader: User
 
 # Category schemas
 class CategoryBase(BaseModel):
