@@ -171,12 +171,24 @@ Please read the component-specific READMEs for detailed setup and contribution g
 
 This project is open source. Please check individual components for specific licensing information.
 
+## 🌐 Web Platform Analysis
+
+We've conducted a comprehensive analysis of web platform options:
+
+- **[Web Technology Comparison](./docs/WEB_TECHNOLOGY_COMPARISON.md)** - Detailed comparison of Flutter Web vs Next.js vs Nuxt.js
+- **[Executive Summary](./docs/EXECUTIVE_SUMMARY.md)** - Quick overview and recommendations  
+- **[Next.js Implementation Guide](./docs/NEXTJS_IMPLEMENTATION_GUIDE.md)** - Step-by-step implementation roadmap
+- **[Next.js Demo](./examples/nextjs-demo/)** - Working example with FastAPI integration
+
+**Key Finding**: Next.js is recommended for the web platform due to superior SEO capabilities and performance optimization for content-driven applications.
+
 ## 🔗 Links
 
 - [Flutter App Documentation](./app/README.md)
 - [FastAPI Backend Documentation](./python/README.md)
 - [Development Tasks & Roadmap](./tasks/README.md)
 - [API Documentation](http://localhost:8000/docs) (when running)
+- [Web Platform Analysis](./docs/WEB_TECHNOLOGY_COMPARISON.md)
 
 ---
 
