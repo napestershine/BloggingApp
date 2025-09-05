@@ -12,6 +12,16 @@ class ReactionTypeEnum(str, Enum):
     SAD = "sad"
     ANGRY = "angry"
 
+# Sharing platforms enum for API
+class SharingPlatformEnum(str, Enum):
+    TWITTER = "twitter"
+    FACEBOOK = "facebook"
+    LINKEDIN = "linkedin"
+    REDDIT = "reddit"
+    EMAIL = "email"
+    COPY_LINK = "copy_link"
+    WHATSAPP = "whatsapp"
+
 # User schemas
 class UserBase(BaseModel):
     username: str
@@ -122,6 +132,26 @@ class CommentReactionsSummary(BaseModel):
 class CommentModerationAction(BaseModel):
     action: str  # "approve", "hide", "delete"
     reason: Optional[str] = None
+
+# Post sharing schemas
+class PostShareCreate(BaseModel):
+    platform: SharingPlatformEnum
+
+class PostShare(BaseModel):
+    id: int
+    post_id: int
+    user_id: Optional[int] = None
+    platform: SharingPlatformEnum
+    shared_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+class PostShareStats(BaseModel):
+    post_id: int
+    total_shares: int
+    shares_by_platform: Dict[str, int]
+    recent_shares: List[PostShare] = []
 
 # Update forward references
 BlogPost.model_rebuild()

@@ -61,6 +61,7 @@ class BlogPost(Base):
     author = relationship("User", back_populates="posts")
     comments = relationship("Comment", back_populates="blog_post")
     likes = relationship("PostLike", back_populates="post")
+    shares = relationship("PostShare", back_populates="post")
 
 class Comment(Base):
     __tablename__ = "comments"
@@ -123,3 +124,28 @@ class PostLike(Base):
     __table_args__ = (
         UniqueConstraint('user_id', 'post_id', name='uq_user_post_like'),
     )
+
+# Enum for social sharing platforms
+class SharingPlatform(enum.Enum):
+    TWITTER = "twitter"
+    FACEBOOK = "facebook"
+    LINKEDIN = "linkedin"
+    REDDIT = "reddit"
+    EMAIL = "email"
+    COPY_LINK = "copy_link"
+    WHATSAPP = "whatsapp"
+
+class PostShare(Base):
+    __tablename__ = "post_shares"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    post_id = Column(Integer, ForeignKey("blog_posts.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)  # Optional for anonymous shares
+    platform = Column(Enum(SharingPlatform), nullable=False)
+    shared_at = Column(DateTime(timezone=True), server_default=func.now())
+    user_agent = Column(String(500), nullable=True)  # For tracking device/browser
+    ip_address = Column(String(45), nullable=True)  # For basic analytics
+    
+    # Relationships
+    post = relationship("BlogPost")
+    user = relationship("User")
