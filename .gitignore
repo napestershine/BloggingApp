@@ -1,4 +1,10 @@
+# Python cache files
 __pycache__/
-*.pyc
-*.db
-.env
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.pyo
