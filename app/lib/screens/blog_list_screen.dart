@@ -8,6 +8,7 @@ import '../services/api_service.dart';
 import '../widgets/blog_post_card.dart';
 import '../widgets/skeleton_loader.dart';
 import '../widgets/error_display.dart';
+import '../utils/responsive_layout.dart';
 
 class BlogListScreen extends StatefulWidget {
   const BlogListScreen({super.key});
@@ -132,17 +133,70 @@ class _BlogListScreenState extends State<BlogListScreen> {
 
     return RefreshIndicator(
       onRefresh: _loadBlogPosts,
-      child: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: _blogPosts.length,
-        itemBuilder: (context, index) {
-          final blogPost = _blogPosts[index];
-          return BlogPostCard(
-            blogPost: blogPost,
-            onTap: () => context.go('/blog/${blogPost.id}'),
-          );
-        },
+      child: ResponsiveWidth.centered(
+        context,
+        ResponsiveLayout(
+          mobile: _buildMobileList(),
+          tablet: _buildTabletGrid(),
+          desktop: _buildDesktopGrid(),
+        ),
       ),
+    );
+  }
+
+  Widget _buildMobileList() {
+    return ListView.builder(
+      padding: ResponsivePadding.page(context),
+      itemCount: _blogPosts.length,
+      itemBuilder: (context, index) {
+        final blogPost = _blogPosts[index];
+        return BlogPostCard(
+          blogPost: blogPost,
+          onTap: () => context.go('/blog/${blogPost.id}'),
+        );
+      },
+    );
+  }
+
+  Widget _buildTabletGrid() {
+    return GridView.builder(
+      padding: ResponsivePadding.page(context),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: ResponsiveGrid.spacing(context),
+        mainAxisSpacing: ResponsiveGrid.spacing(context),
+        childAspectRatio: 1.2,
+      ),
+      itemCount: _blogPosts.length,
+      itemBuilder: (context, index) {
+        final blogPost = _blogPosts[index];
+        return BlogPostCard(
+          blogPost: blogPost,
+          onTap: () => context.go('/blog/${blogPost.id}'),
+          isCompact: true,
+        );
+      },
+    );
+  }
+
+  Widget _buildDesktopGrid() {
+    return GridView.builder(
+      padding: ResponsivePadding.page(context),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: ResponsiveGrid.spacing(context),
+        mainAxisSpacing: ResponsiveGrid.spacing(context),
+        childAspectRatio: 1.2,
+      ),
+      itemCount: _blogPosts.length,
+      itemBuilder: (context, index) {
+        final blogPost = _blogPosts[index];
+        return BlogPostCard(
+          blogPost: blogPost,
+          onTap: () => context.go('/blog/${blogPost.id}'),
+          isCompact: true,
+        );
+      },
     );
   }
 }

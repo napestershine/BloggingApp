@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 
 import '../services/auth_service.dart';
+import '../utils/responsive_layout.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -75,19 +76,86 @@ class _LoginScreenState extends State<LoginScreen> {
         title: Text(_isLoginMode ? 'Login' : 'Register'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.article,
-                size: 80,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-              const SizedBox(height: 32),
+      body: ResponsiveWidth.centered(
+        context,
+        SingleChildScrollView(
+          padding: ResponsivePadding.page(context),
+          child: ResponsiveLayout(
+            mobile: _buildMobileLayout(),
+            tablet: _buildTabletLayout(),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMobileLayout() {
+    return _buildForm();
+  }
+
+  Widget _buildTabletLayout() {
+    return Row(
+      children: [
+        Expanded(
+          child: Card(
+            elevation: 8,
+            child: Container(
+              padding: const EdgeInsets.all(40),
+              constraints: const BoxConstraints(maxWidth: 500),
+              child: _buildForm(),
+            ),
+          ),
+        ),
+        const SizedBox(width: 40),
+        Expanded(
+          child: _buildWelcomeSection(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildWelcomeSection() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(
+          Icons.article,
+          size: 120,
+          color: Theme.of(context).colorScheme.primary,
+        ),
+        const SizedBox(height: 24),
+        Text(
+          'Welcome to SF5 Blog',
+          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          'Create, share, and discover amazing blog posts from writers around the world.',
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildForm() {
+    return Form(
+      key: _formKey,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          if (ResponsiveBreakpoints.isMobile(context)) ...[
+            Icon(
+              Icons.article,
+              size: 80,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            const SizedBox(height: 32),
+          ],
               
               TextFormField(
                 controller: _usernameController,
@@ -247,8 +315,8 @@ class _LoginScreenState extends State<LoginScreen> {
               ],
             ],
           ),
-        ),
-      ),
+        );
+      }
     );
   }
 }
