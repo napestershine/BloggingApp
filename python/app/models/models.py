@@ -47,6 +47,21 @@ class BlogPost(Base):
     published = Column(DateTime(timezone=True), server_default=func.now())
     author_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     
+    # SEO fields
+    meta_title = Column(String(255), nullable=True)
+    meta_description = Column(String(500), nullable=True)
+    og_title = Column(String(255), nullable=True)
+    og_description = Column(String(500), nullable=True)
+    og_image = Column(String(255), nullable=True)
+    
+    # Analytics fields for trending/search
+    view_count = Column(Integer, default=0)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    
+    # Categories/tags (stored as JSON string for now)
+    tags = Column(Text, nullable=True)  # JSON string of tags
+    category = Column(String(100), nullable=True)
+    
     # Relationships
     author = relationship("User", back_populates="posts")
     comments = relationship("Comment", back_populates="blog_post")

@@ -32,19 +32,43 @@ class BlogPostBase(BaseModel):
     title: str
     content: str
     slug: Optional[str] = None
-
+    
 class BlogPostCreate(BlogPostBase):
-    pass
+    # SEO fields (optional during creation)
+    meta_title: Optional[str] = None
+    meta_description: Optional[str] = None
+    og_title: Optional[str] = None
+    og_description: Optional[str] = None
+    og_image: Optional[str] = None
+    tags: Optional[str] = None  # JSON string
+    category: Optional[str] = None
 
 class BlogPostUpdate(BaseModel):
     title: Optional[str] = None
     content: Optional[str] = None
     slug: Optional[str] = None
+    # SEO fields
+    meta_title: Optional[str] = None
+    meta_description: Optional[str] = None
+    og_title: Optional[str] = None
+    og_description: Optional[str] = None
+    og_image: Optional[str] = None
+    tags: Optional[str] = None
+    category: Optional[str] = None
 
 class BlogPostInDB(BlogPostBase):
     id: int
     published: datetime
     author_id: int
+    view_count: int = 0
+    updated_at: Optional[datetime] = None
+    meta_title: Optional[str] = None
+    meta_description: Optional[str] = None
+    og_title: Optional[str] = None
+    og_description: Optional[str] = None
+    og_image: Optional[str] = None
+    tags: Optional[str] = None
+    category: Optional[str] = None
     
     class Config:
         from_attributes = True
@@ -134,3 +158,55 @@ class WhatsAppSettingsUpdate(BaseModel):
     notify_on_new_posts: Optional[bool] = None
     notify_on_comments: Optional[bool] = None
     notify_on_mentions: Optional[bool] = None
+
+# SEO schemas
+class SEOData(BaseModel):
+    meta_title: Optional[str] = None
+    meta_description: Optional[str] = None
+    og_title: Optional[str] = None
+    og_description: Optional[str] = None
+    og_image: Optional[str] = None
+
+class SEOPreview(BaseModel):
+    title: str
+    description: str
+    url: str
+    image: Optional[str] = None
+
+# Search schemas
+class SearchQuery(BaseModel):
+    q: str  # query string
+    category: Optional[str] = None
+    tags: Optional[List[str]] = None
+    author: Optional[str] = None
+    sort_by: Optional[str] = "relevance"  # relevance, date, views
+    limit: int = 10
+    offset: int = 0
+
+class SearchResult(BaseModel):
+    posts: List[BlogPost]
+    total: int
+    suggestions: List[str] = []
+
+class SearchSuggestion(BaseModel):
+    query: str
+    suggestions: List[str]
+
+# Slug schemas
+class SlugValidation(BaseModel):
+    slug: str
+    is_available: bool
+    suggestions: List[str] = []
+
+class SlugSuggestion(BaseModel):
+    title: str
+    suggestions: List[str]
+
+# Trending/Related posts schemas
+class TrendingPost(BaseModel):
+    post: BlogPost
+    score: float  # trending score based on views, comments, etc.
+
+class RelatedPost(BaseModel):
+    post: BlogPost
+    similarity_score: float

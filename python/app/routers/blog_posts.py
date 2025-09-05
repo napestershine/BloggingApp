@@ -45,7 +45,15 @@ async def create_blog_post(
         title=post.title,
         content=post.content,
         slug=slug,
-        author_id=current_user.id
+        author_id=current_user.id,
+        # SEO fields
+        meta_title=post.meta_title,
+        meta_description=post.meta_description,
+        og_title=post.og_title,
+        og_description=post.og_description,
+        og_image=post.og_image,
+        tags=post.tags,
+        category=post.category
     )
     
     db.add(db_post)
@@ -78,6 +86,11 @@ def get_blog_post(post_id: int, db: Session = Depends(get_db)):
     post = db.query(BlogPost).filter(BlogPost.id == post_id).first()
     if not post:
         raise HTTPException(status_code=404, detail="Blog post not found")
+    
+    # Increment view count
+    post.view_count = (post.view_count or 0) + 1
+    db.commit()
+    
     return post
 
 @router.put("/{post_id}", response_model=BlogPostSchema)
@@ -115,6 +128,22 @@ def update_blog_post(
                 detail="Slug already exists"
             )
         post.slug = post_update.slug
+    
+    # Update SEO fields
+    if post_update.meta_title is not None:
+        post.meta_title = post_update.meta_title
+    if post_update.meta_description is not None:
+        post.meta_description = post_update.meta_description
+    if post_update.og_title is not None:
+        post.og_title = post_update.og_title
+    if post_update.og_description is not None:
+        post.og_description = post_update.og_description
+    if post_update.og_image is not None:
+        post.og_image = post_update.og_image
+    if post_update.tags is not None:
+        post.tags = post_update.tags
+    if post_update.category is not None:
+        post.category = post_update.category
     
     db.commit()
     db.refresh(post)
