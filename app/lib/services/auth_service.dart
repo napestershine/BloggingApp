@@ -9,8 +9,8 @@ class AuthService extends ChangeNotifier {
   static const String _tokenKey = 'jwt_token';
   static const String _userKey = 'user_data';
   
-  // Update this URL to match your Symfony API endpoint
-  static const String baseUrl = 'http://localhost:8080/api';
+  // Update this URL to match your FastAPI endpoint
+  static const String baseUrl = 'http://localhost:8000';
   
   String? _token;
   User? _currentUser;
@@ -63,19 +63,19 @@ class AuthService extends ChangeNotifier {
 
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/login_check'),
+        Uri.parse('$baseUrl/auth/login'),
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: json.encode({
+        body: {
           'username': username,
           'password': password,
-        }),
+        },
       );
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        _token = data['token'];
+        _token = data['access_token'];
         
         // Fetch user details after successful login
         await _fetchCurrentUser();
@@ -104,14 +104,14 @@ class AuthService extends ChangeNotifier {
 
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/users'),
+        Uri.parse('$baseUrl/auth/register'),
         headers: {
           'Content-Type': 'application/json',
         },
         body: json.encode({
           'username': username,
           'password': password,
-          'retypedPassword': retypedPassword,
+          'retyped_password': retypedPassword,
           'name': name,
           'email': email,
         }),
@@ -167,5 +167,82 @@ class AuthService extends ChangeNotifier {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer $_token',
     };
+  }
+
+  Future<bool> requestPasswordReset(String email) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/auth/password/forgot'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({
+          'email': email,
+        }),
+      );
+
+      return response.statusCode == 200;
+    } catch (e) {
+      print('Password reset request error: $e');
+      return false;
+    }
+  }
+
+  Future<bool> resetPassword(String token, String newPassword) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/auth/password/reset'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({
+          'token': token,
+          'new_password': newPassword,
+        }),
+      );
+
+      return response.statusCode == 200;
+    } catch (e) {
+      print('Password reset error: $e');
+      return false;
+    }
+  }
+
+  Future<bool> requestEmailVerification(String email) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/auth/verify-email'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({
+          'email': email,
+        }),
+      );
+
+      return response.statusCode == 200;
+    } catch (e) {
+      print('Email verification request error: $e');
+      return false;
+    }
+  }
+
+  Future<bool> confirmEmailVerification(String token) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/auth/verify-email/confirm'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({
+          'token': token,
+        }),
+      );
+
+      return response.statusCode == 200;
+    } catch (e) {
+      print('Email verification confirmation error: $e');
+      return false;
+    }
   }
 }
