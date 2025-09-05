@@ -169,10 +169,11 @@ Tests should be run in CI/CD pipeline:
 
 ## Known Limitations
 
-1. **API Dependencies**: Some integration tests require a running test API server
-2. **Platform Differences**: E2E tests may behave differently on different platforms
-3. **Network Simulation**: Limited ability to simulate specific network conditions
-4. **Authentication**: Real authentication flows require valid test credentials
+1. **Generated Files**: Tests depend on generated mock and serialization files (*.g.dart, *.mocks.dart) that require Flutter SDK to create. Stub versions are included for environments without Flutter SDK.
+2. **API Dependencies**: Some integration tests require a running test API server
+3. **Platform Differences**: E2E tests may behave differently on different platforms
+4. **Network Simulation**: Limited ability to simulate specific network conditions
+5. **Authentication**: Real authentication flows require valid test credentials
 
 ## Future Improvements
 
@@ -197,3 +198,17 @@ Tests should be run in CI/CD pipeline:
 2. Add debug prints in tests for troubleshooting
 3. Use `tester.binding.debugDumpApp()` to inspect widget tree
 4. Run single tests in isolation to identify issues
+
+### Generated Files Setup
+
+If tests fail due to missing generated files, run the following commands with Flutter SDK available:
+
+```bash
+# Generate mocks and JSON serialization files
+flutter packages pub run build_runner build --delete-conflicting-outputs
+
+# Run tests after generation
+flutter test
+```
+
+**Note**: Stub versions of generated files are committed to allow testing in environments without Flutter SDK, but for full functionality, proper generation is recommended.
