@@ -2,112 +2,41 @@
 
 ![CI](https://github.com/napestershine/sf5/workflows/CI/badge.svg)
 
-A modern blog API built with Symfony 7.3 and API Platform, featuring JWT authentication, rich text editing with CKEditor, and a complete RESTful API for managing blog posts, users, and comments.
+## Setup
 
-## 🚀 Features
+### Docker Setup (Recommended)
 
-- **Modern Symfony 7.3** framework with best practices
-- **API Platform** integration for automatic API documentation and validation
-- **JWT Authentication** for secure API access
-- **Rich Text Editing** with CKEditor integration
-- **User Management** with proper authentication and authorization
-- **Blog Post Management** with CRUD operations
-- **Comment System** for blog posts
-- **Database Migrations** with Doctrine ORM
-- **Data Fixtures** for development and testing
-- **Code Quality Tools** (PHPStan, Rector)
-- **Testing Setup** with PHPUnit
-
-## 🛠 Technology Stack
-
-- **Backend**: Symfony 7.3, PHP 8.2+
-- **API**: API Platform 4.1
-- **Database**: PostgreSQL (configurable)
-- **Authentication**: JWT (LexikJWTAuthenticationBundle)
-- **ORM**: Doctrine ORM 3.x
-- **Template Engine**: Twig
-- **Rich Text**: CKEditor Bundle
-- **Testing**: PHPUnit
-- **Code Quality**: PHPStan, Rector
-
-## 📋 Prerequisites
-
-Before you begin, ensure you have the following installed:
-
-- **PHP 8.2 or higher** with extensions:
-  - `ext-ctype`
-  - `ext-iconv`
-- **Composer** (latest version)
-- **PostgreSQL** (or MySQL/SQLite)
-- **OpenSSL** for JWT key generation
-- **Node.js & npm** (for CKEditor assets)
-
-## 🔧 Installation
-
-### 1. Clone the Repository
-
-```bash
-git clone https://github.com/napestershine/sf5.git
-cd sf5
+1. Copy the Docker environment configuration:
+```sh
+cp .env.docker .env.local
 ```
 
-### 2. Install Dependencies
-
-```bash
-composer install
-```
-
-### 3. Environment Configuration
-
-Copy the environment file and configure your settings:
-
-```bash
-cp .env .env.local
-```
-
-Edit `.env.local` and configure your database connection:
-
-```env
-# Database Configuration
-DATABASE_URL="postgresql://username:password@127.0.0.1:5432/blog_db?serverVersion=15&charset=utf8"
-
-# For MySQL use:
-# DATABASE_URL="mysql://username:password@127.0.0.1:3306/blog_db?serverVersion=8.0.32&charset=utf8mb4"
-
-# For SQLite use:
-# DATABASE_URL="sqlite:///%kernel.project_dir%/var/data.db"
-
-# Application Environment
-APP_ENV=dev
-APP_SECRET=your-secret-key-here
-```
-
-### 4. Database Setup
-
-Create the database and run migrations:
-
-```bash
-# Create database
-php bin/console doctrine:database:create
-
-# Run migrations
-php bin/console doctrine:migrations:migrate
-
-# Load sample data (optional)
-php bin/console doctrine:fixtures:load
-```
-
-### 5. JWT Configuration
-
-Create the JWT directory and generate keys:
-
-```bash
+2. Generate JWT keys:
+```sh
 mkdir -p config/jwt
+openssl genrsa -out config/jwt/private.pem -aes256 4096
+openssl rsa -pubout -in config/jwt/private.pem -out config/jwt/public.pem
 ```
 
-Generate JWT keys (you'll be prompted for a passphrase):
+3. Start the Docker containers:
+```sh
+docker-compose up -d
+```
 
-```bash
+4. Install dependencies and setup database:
+```sh
+docker-compose exec app composer install
+docker-compose exec app php bin/console doctrine:migrations:migrate
+```
+
+5. Access the application:
+- API: http://localhost:8080
+- Database: localhost:5432 (from host)
+
+### Manual Setup
+
+### JWT Keys Generation
+```sh
 openssl genrsa -out config/jwt/private.pem -aes256 4096
 openssl rsa -pubout -in config/jwt/private.pem -out config/jwt/public.pem
 ```
