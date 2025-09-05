@@ -191,7 +191,7 @@ export class ErrorService {
           }
           break;
       }
-    } catch (parseError) {
+    } catch {
       // If we can't parse the response, create a generic error
       errorInfo = {
         type: statusCode >= 500 ? ErrorType.SERVER : ErrorType.UNKNOWN,
