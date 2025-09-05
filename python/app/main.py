@@ -28,6 +28,10 @@ app.include_router(users.router)
 app.include_router(blog_posts.router)
 app.include_router(comments.router)
 
+# Import and include notifications router
+from app.routers import notifications
+app.include_router(notifications.router)
+
 @app.get("/")
 def read_root():
     return {"message": "Welcome to the Blog API"}

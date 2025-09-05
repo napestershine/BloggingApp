@@ -9,6 +9,11 @@ from app.schemas.schemas import (
     BlogPostUpdate
 )
 from app.auth.auth import get_current_user
+from app.services.notification_service import whatsapp_service
+import asyncio
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/blog_posts", tags=["blog_posts"])
 
@@ -18,7 +23,7 @@ def get_blog_posts(skip: int = 0, limit: int = 100, db: Session = Depends(get_db
     return posts
 
 @router.post("/", response_model=BlogPostSchema, status_code=status.HTTP_201_CREATED)
-def create_blog_post(
+async def create_blog_post(
     post: BlogPostCreate, 
     db: Session = Depends(get_db), 
     current_user: User = Depends(get_current_user)
@@ -46,6 +51,25 @@ def create_blog_post(
     db.add(db_post)
     db.commit()
     db.refresh(db_post)
+    
+    # Send WhatsApp notifications to followers (for now, we'll skip this as we don't have a follower system yet)
+    # In the future, this would notify users who follow this author
+    try:
+        # For demonstration, we could notify the author themselves about their post
+        if (current_user.whatsapp_notifications_enabled and 
+            current_user.whatsapp_number and 
+            current_user.notify_on_new_posts):
+            
+            asyncio.create_task(
+                whatsapp_service.notify_new_blog_post(
+                    current_user.name,
+                    post.title,
+                    current_user.whatsapp_number
+                )
+            )
+    except Exception as e:
+        # Don't fail the post creation if notification fails
+        logger.error(f"Failed to send WhatsApp notification for new post: {e}")
     
     return db_post
 
@@ -91,6 +115,10 @@ def update_blog_post(
                 detail="Slug already exists"
             )
         post.slug = post_update.slug
+    
+    db.commit()
+    db.refresh(post)
+    return post
     
 @router.delete("/{post_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_blog_post(

@@ -9,6 +9,11 @@ from app.schemas.schemas import (
     CommentUpdate
 )
 from app.auth.auth import get_current_user
+from app.services.notification_service import whatsapp_service
+import asyncio
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/comments", tags=["comments"])
 
@@ -18,7 +23,7 @@ def get_comments(skip: int = 0, limit: int = 100, db: Session = Depends(get_db))
     return comments
 
 @router.post("/", response_model=CommentSchema, status_code=status.HTTP_201_CREATED)
-def create_comment(
+async def create_comment(
     comment: CommentCreate, 
     db: Session = Depends(get_db), 
     current_user: User = Depends(get_current_user)
@@ -40,6 +45,25 @@ def create_comment(
     db.add(db_comment)
     db.commit()
     db.refresh(db_comment)
+    
+    # Send WhatsApp notification to blog post author if they're not the commenter
+    try:
+        if (blog_post.author_id != current_user.id and 
+            blog_post.author.whatsapp_notifications_enabled and
+            blog_post.author.whatsapp_number and
+            blog_post.author.notify_on_comments):
+            
+            asyncio.create_task(
+                whatsapp_service.notify_new_comment(
+                    current_user.name,
+                    blog_post.title,
+                    comment.content,
+                    blog_post.author.whatsapp_number
+                )
+            )
+    except Exception as e:
+        # Don't fail the comment creation if notification fails
+        logger.error(f"Failed to send WhatsApp notification for new comment: {e}")
     
     return db_comment
 

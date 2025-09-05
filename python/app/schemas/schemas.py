@@ -119,3 +119,18 @@ class UserProfileUpdate(BaseModel):
     name: Optional[str] = None
     bio: Optional[str] = None
     social_links: Optional[dict] = None
+
+# WhatsApp notification schemas
+class WhatsAppSettings(BaseModel):
+    whatsapp_number: Optional[str] = None
+    whatsapp_notifications_enabled: bool = False
+    notify_on_new_posts: bool = True
+    notify_on_comments: bool = True
+    notify_on_mentions: bool = True
+
+class WhatsAppSettingsUpdate(BaseModel):
+    whatsapp_number: Optional[str] = None
+    whatsapp_notifications_enabled: Optional[bool] = None
+    notify_on_new_posts: Optional[bool] = None
+    notify_on_comments: Optional[bool] = None
+    notify_on_mentions: Optional[bool] = None
