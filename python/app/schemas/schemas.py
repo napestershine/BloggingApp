@@ -85,3 +85,37 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     username: Optional[str] = None
+
+# Email verification schemas
+class EmailVerificationRequest(BaseModel):
+    email: EmailStr
+
+class EmailVerificationConfirm(BaseModel):
+    token: str
+
+# Password reset schemas
+class PasswordResetRequest(BaseModel):
+    email: EmailStr
+
+class PasswordResetConfirm(BaseModel):
+    token: str
+    new_password: str
+
+# User profile schemas
+class UserProfile(BaseModel):
+    id: int
+    username: str
+    name: str
+    email: EmailStr
+    bio: Optional[str] = None
+    avatar_url: Optional[str] = None
+    social_links: Optional[dict] = None
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+class UserProfileUpdate(BaseModel):
+    name: Optional[str] = None
+    bio: Optional[str] = None
+    social_links: Optional[dict] = None

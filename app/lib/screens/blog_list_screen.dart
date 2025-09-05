@@ -6,6 +6,8 @@ import '../models/blog_post.dart';
 import '../services/auth_service.dart';
 import '../services/api_service.dart';
 import '../widgets/blog_post_card.dart';
+import '../widgets/skeleton_loader.dart';
+import '../widgets/error_display.dart';
 
 class BlogListScreen extends StatefulWidget {
   const BlogListScreen({super.key});
@@ -101,65 +103,29 @@ class _BlogListScreenState extends State<BlogListScreen> {
 
   Widget _buildBody() {
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(),
+      return ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: 6, // Show 6 skeleton items
+        itemBuilder: (context, index) => const BlogPostSkeleton(),
       );
     }
 
     if (_error != null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.error_outline,
-              size: 64,
-              color: Colors.red[300],
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Error loading blog posts',
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              _error!,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _loadBlogPosts,
-              child: const Text('Retry'),
-            ),
-          ],
-        ),
+      return ErrorDisplay(
+        message: _error!,
+        onRetry: _loadBlogPosts,
       );
     }
 
     if (_blogPosts.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.article_outlined,
-              size: 64,
-              color: Colors.grey[400],
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'No blog posts yet',
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(height: 8),
-            const Text('Be the first to create a blog post!'),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () => context.go('/create-post'),
-              child: const Text('Create Post'),
-            ),
-          ],
+      return EmptyStateDisplay(
+        title: 'No blog posts yet',
+        message: 'Be the first to create a blog post!',
+        icon: Icons.article_outlined,
+        action: ElevatedButton.icon(
+          onPressed: () => context.go('/create-post'),
+          icon: const Icon(Icons.add),
+          label: const Text('Create Post'),
         ),
       );
     }

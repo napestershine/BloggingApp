@@ -235,6 +235,16 @@ class _LoginScreenState extends State<LoginScreen> {
                       : 'Already have an account? Login',
                 ),
               ),
+              
+              if (_isLoginMode) ...[
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: () {
+                    context.push('/password-reset');
+                  },
+                  child: const Text('Forgot Password?'),
+                ),
+              ],
             ],
           ),
         ),

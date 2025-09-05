@@ -13,6 +13,19 @@ class User(Base):
     hashed_password = Column(String(255), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
+    # Email verification
+    email_verified = Column(Boolean, default=False)
+    email_verification_token = Column(String(255), nullable=True)
+    
+    # Password reset
+    password_reset_token = Column(String(255), nullable=True)
+    password_reset_expires = Column(DateTime(timezone=True), nullable=True)
+    
+    # Profile fields
+    bio = Column(Text, nullable=True)
+    avatar_url = Column(String(255), nullable=True)
+    social_links = Column(Text, nullable=True)  # JSON string
+    
     # Relationships
     posts = relationship("BlogPost", back_populates="author")
     comments = relationship("Comment", back_populates="author")
