@@ -4,7 +4,41 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../models/user.dart';
+import 'error_service.dart';
 
+/// AuthService manages user authentication and authorization for the BloggingApp.
+/// 
+/// This service provides comprehensive authentication functionality including:
+/// - User registration and login with JWT token management
+/// - Secure token storage using SharedPreferences
+/// - Automatic token refresh and session management
+/// - Password reset and email verification workflows
+/// - Integration with FastAPI backend authentication endpoints
+/// 
+/// The service follows the singleton pattern and uses ChangeNotifier
+/// to provide real-time updates to the UI when authentication state changes.
+/// 
+/// Key Features:
+/// - Secure JWT token storage and automatic inclusion in API requests
+/// - Automatic logout on token expiration or refresh failure
+/// - Comprehensive error handling with user-friendly messages
+/// - Loading states for all authentication operations
+/// - Offline capability with cached user data
+/// 
+/// Example Usage:
+/// ```dart
+/// // Login user
+/// bool success = await authService.login('username', 'password');
+/// 
+/// // Check authentication status
+/// bool isLoggedIn = authService.isAuthenticated;
+/// 
+/// // Get authenticated user
+/// User? user = authService.currentUser;
+/// 
+/// // Logout user
+/// await authService.logout();
+/// ```
 class AuthService extends ChangeNotifier {
   static const String _tokenKey = 'jwt_token';
   static const String _userKey = 'user_data';
@@ -57,7 +91,33 @@ class AuthService extends ChangeNotifier {
     }
   }
 
+  /// Authenticates a user with username and password
+  /// 
+  /// [username] User's login username
+  /// [password] User's password
+  /// 
+  /// Returns true if login is successful, false otherwise.
+  /// Updates the authentication state and stores tokens securely.
+  /// 
+  /// This method:
+  /// 1. Validates input parameters
+  /// 2. Sends login request to FastAPI backend
+  /// 3. Processes JWT tokens and user data
+  /// 4. Stores authentication data locally
+  /// 5. Updates UI state through ChangeNotifier
+  /// 
+  /// Error handling includes:
+  /// - Network connectivity issues
+  /// - Invalid credentials
+  /// - Server errors
+  /// - Token processing failures
   Future<bool> login(String username, String password) async {
+    // Validate input parameters
+    if (username.trim().isEmpty || password.trim().isEmpty) {
+      debugPrint('Login failed: Empty username or password');
+      return false;
+    }
+
     _isLoading = true;
     notifyListeners();
 
@@ -68,33 +128,43 @@ class AuthService extends ChangeNotifier {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
         body: {
-          'username': username,
+          'username': username.trim(),
           'password': password,
+        },
+      ).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          throw TimeoutException('Login request timed out');
         },
       );
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
+        
+        // Validate response structure
+        if (data['access_token'] == null) {
+          debugPrint('Login failed: Invalid response format');
+          return false;
+        }
+        
         _token = data['access_token'];
         
         // Fetch user details after successful login
         await _fetchCurrentUser();
         await _saveToStorage();
         
-        _isLoading = false;
-        notifyListeners();
+        debugPrint('Login successful for user: $username');
         return true;
       } else {
-        print('Login failed: ${response.statusCode} - ${response.body}');
-        _isLoading = false;
-        notifyListeners();
+        debugPrint('Login failed: ${response.statusCode} - ${response.body}');
         return false;
       }
     } catch (e) {
-      print('Login error: $e');
+      debugPrint('Login error: $e');
+      return false;
+    } finally {
       _isLoading = false;
       notifyListeners();
-      return false;
     }
   }
 
