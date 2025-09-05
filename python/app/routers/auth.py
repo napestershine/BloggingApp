@@ -182,3 +182,17 @@ def reset_password(
     db.commit()
     
     return {"message": "Password reset successfully"}
+
+@router.post("/refresh", response_model=Token)
+def refresh_token(current_user: User = Depends(get_current_user)):
+    """Refresh access token for authenticated user"""
+    access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
+    access_token = create_access_token(
+        data={"sub": current_user.username}, expires_delta=access_token_expires
+    )
+    return {"access_token": access_token, "token_type": "bearer"}
+
+@router.post("/logout")
+def logout_user(current_user: User = Depends(get_current_user)):
+    """Logout user (client should discard the token)"""
+    return {"message": "Successfully logged out"}

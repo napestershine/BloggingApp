@@ -170,3 +170,147 @@ def test_unauthorized_profile_access():
     # Try to update profile without token - this should fail
     response = client.put("/users/1/profile", json={"name": "Hacker"})
     assert response.status_code in [401, 403]  # Either unauthorized or forbidden is acceptable
+
+def test_token_refresh():
+    """Test token refresh functionality"""
+    username = get_unique_username()
+    email = get_unique_email()
+    
+    # First register and login a user
+    registration_data = {
+        "username": username,
+        "password": "testpass123",
+        "retyped_password": "testpass123",
+        "name": "Test User",
+        "email": email
+    }
+    response = client.post("/auth/register", json=registration_data)
+    assert response.status_code == 201
+    
+    # Login to get token
+    login_data = {
+        "username": username,
+        "password": "testpass123"
+    }
+    response = client.post("/auth/login", data=login_data)
+    assert response.status_code == 200
+    original_token = response.json()["access_token"]
+    headers = {"Authorization": f"Bearer {original_token}"}
+    
+    # Test token refresh
+    import time
+    time.sleep(1)  # Ensure different timestamp for token
+    response = client.post("/auth/refresh", headers=headers)
+    assert response.status_code == 200
+    refresh_data = response.json()
+    assert "access_token" in refresh_data
+    assert refresh_data["token_type"] == "bearer"
+    # Token should be valid (we can't easily compare content since it may be the same due to timing)
+
+def test_logout():
+    """Test logout functionality"""
+    username = get_unique_username()
+    email = get_unique_email()
+    
+    # First register and login a user
+    registration_data = {
+        "username": username,
+        "password": "testpass123",
+        "retyped_password": "testpass123",
+        "name": "Test User",
+        "email": email
+    }
+    response = client.post("/auth/register", json=registration_data)
+    assert response.status_code == 201
+    
+    # Login to get token
+    login_data = {
+        "username": username,
+        "password": "testpass123"
+    }
+    response = client.post("/auth/login", data=login_data)
+    assert response.status_code == 200
+    token = response.json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+    
+    # Test logout
+    response = client.post("/auth/logout", headers=headers)
+    assert response.status_code == 200
+    assert response.json()["message"] == "Successfully logged out"
+
+def test_sample_credentials():
+    """Test login with sample credentials"""
+    sample_credentials = [
+        {"username": "admin", "password": "admin123"},
+        {"username": "johndoe", "password": "john123"},
+        {"username": "janesmith", "password": "jane123"},
+    ]
+    
+    for cred in sample_credentials:
+        response = client.post("/auth/login", data=cred)
+        assert response.status_code == 200, f"Failed to login with {cred['username']}"
+        token_data = response.json()
+        assert "access_token" in token_data
+        assert token_data["token_type"] == "bearer"
+
+def test_complete_user_journey():
+    """Test complete user journey from registration to profile management"""
+    username = get_unique_username()
+    email = get_unique_email()
+    
+    # 1. Register user
+    registration_data = {
+        "username": username,
+        "password": "testpass123",
+        "retyped_password": "testpass123",
+        "name": "Test User",
+        "email": email
+    }
+    response = client.post("/auth/register", json=registration_data)
+    assert response.status_code == 201
+    user_data = response.json()
+    user_id = user_data["id"]
+    
+    # 2. Request email verification
+    response = client.post("/auth/verify-email", json={"email": email})
+    assert response.status_code == 200
+    verification_token = response.json()["token"]
+    
+    # 3. Confirm email verification
+    response = client.post("/auth/verify-email/confirm", json={"token": verification_token})
+    assert response.status_code == 200
+    
+    # 4. Login
+    login_data = {"username": username, "password": "testpass123"}
+    response = client.post("/auth/login", data=login_data)
+    assert response.status_code == 200
+    token = response.json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+    
+    # 5. Get profile
+    response = client.get(f"/users/{user_id}/profile", headers=headers)
+    assert response.status_code == 200
+    
+    # 6. Update profile
+    update_data = {
+        "name": "Updated Test User",
+        "bio": "Updated bio",
+        "social_links": {"twitter": "@testuser"}
+    }
+    response = client.put(f"/users/{user_id}/profile", json=update_data, headers=headers)
+    assert response.status_code == 200
+    updated_profile = response.json()
+    assert updated_profile["name"] == "Updated Test User"
+    assert updated_profile["bio"] == "Updated bio"
+    
+    # 7. Refresh token
+    import time
+    time.sleep(1)  # Ensure different timestamp
+    response = client.post("/auth/refresh", headers=headers)
+    assert response.status_code == 200
+    new_token = response.json()["access_token"]
+    # Token should be valid (content may be same due to timing but endpoint works)
+    
+    # 8. Logout
+    response = client.post("/auth/logout", headers=headers)
+    assert response.status_code == 200

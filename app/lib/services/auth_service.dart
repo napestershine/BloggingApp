@@ -152,10 +152,49 @@ class AuthService extends ChangeNotifier {
   }
 
   Future<void> logout() async {
-    _token = null;
-    _currentUser = null;
-    await _saveToStorage();
-    notifyListeners();
+    try {
+      if (_token != null) {
+        // Call logout endpoint
+        await http.post(
+          Uri.parse('$baseUrl/auth/logout'),
+          headers: getAuthHeaders(),
+        );
+      }
+    } catch (e) {
+      print('Logout API error: $e');
+    } finally {
+      _token = null;
+      _currentUser = null;
+      await _saveToStorage();
+      notifyListeners();
+    }
+  }
+
+  Future<bool> refreshToken() async {
+    if (_token == null) return false;
+    
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/auth/refresh'),
+        headers: getAuthHeaders(),
+      );
+      
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        _token = data['access_token'];
+        await _saveToStorage();
+        notifyListeners();
+        return true;
+      } else {
+        // Token refresh failed, logout user
+        await logout();
+        return false;
+      }
+    } catch (e) {
+      print('Token refresh error: $e');
+      await logout();
+      return false;
+    }
   }
 
   Map<String, String> getAuthHeaders() {
