@@ -1,5 +1,16 @@
 import axios from 'axios';
-import { BlogPost, User, AuthResponse, Comment, PaginatedResponse } from '@/types';
+import { 
+  BlogPost, 
+  User, 
+  AuthResponse, 
+  Comment, 
+  PaginatedResponse,
+  UserRole,
+  AdminStats,
+  UserManagementResponse,
+  PostModerationResponse,
+  CommentModerationResponse
+} from '@/types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -158,6 +169,96 @@ export const tokenUtils = {
 
   isAuthenticated: (): boolean => {
     return !!tokenUtils.getToken();
+  },
+};
+
+// Admin API functions
+export const adminAPI = {
+  // Get admin dashboard statistics
+  getStats: async (): Promise<AdminStats> => {
+    const response = await apiClient.get('/admin/stats');
+    return response.data;
+  },
+
+  // User management
+  getUsers: async (
+    skip = 0, 
+    limit = 50, 
+    roleFilter?: UserRole, 
+    search?: string
+  ): Promise<UserManagementResponse[]> => {
+    let url = `/admin/users?skip=${skip}&limit=${limit}`;
+    if (roleFilter) url += `&role_filter=${roleFilter}`;
+    if (search) url += `&search=${encodeURIComponent(search)}`;
+    
+    const response = await apiClient.get(url);
+    return response.data;
+  },
+
+  getUser: async (userId: number): Promise<UserManagementResponse> => {
+    const response = await apiClient.get(`/admin/users/${userId}`);
+    return response.data;
+  },
+
+  updateUserRole: async (userId: number, role: UserRole): Promise<void> => {
+    await apiClient.put(`/admin/users/${userId}/role`, { role });
+  },
+
+  deleteUser: async (userId: number): Promise<void> => {
+    await apiClient.delete(`/admin/users/${userId}`);
+  },
+
+  // Content moderation
+  getPosts: async (
+    skip = 0, 
+    limit = 50, 
+    authorId?: number, 
+    search?: string, 
+    days?: number
+  ): Promise<PostModerationResponse[]> => {
+    let url = `/admin/content/posts?skip=${skip}&limit=${limit}`;
+    if (authorId) url += `&author_id=${authorId}`;
+    if (search) url += `&search=${encodeURIComponent(search)}`;
+    if (days) url += `&days=${days}`;
+    
+    const response = await apiClient.get(url);
+    return response.data;
+  },
+
+  getComments: async (
+    skip = 0, 
+    limit = 50, 
+    authorId?: number, 
+    postId?: number, 
+    search?: string, 
+    days?: number
+  ): Promise<CommentModerationResponse[]> => {
+    let url = `/admin/content/comments?skip=${skip}&limit=${limit}`;
+    if (authorId) url += `&author_id=${authorId}`;
+    if (postId) url += `&post_id=${postId}`;
+    if (search) url += `&search=${encodeURIComponent(search)}`;
+    if (days) url += `&days=${days}`;
+    
+    const response = await apiClient.get(url);
+    return response.data;
+  },
+
+  deletePost: async (postId: number): Promise<void> => {
+    await apiClient.delete(`/admin/content/posts/${postId}`);
+  },
+
+  deleteComment: async (commentId: number): Promise<void> => {
+    await apiClient.delete(`/admin/content/comments/${commentId}`);
+  },
+
+  getFlaggedPosts: async (skip = 0, limit = 50): Promise<PostModerationResponse[]> => {
+    const response = await apiClient.get(`/admin/content/posts/flagged?skip=${skip}&limit=${limit}`);
+    return response.data;
+  },
+
+  getContentAnalytics: async (days = 30): Promise<any> => {
+    const response = await apiClient.get(`/admin/content/analytics/content?days=${days}`);
+    return response.data;
   },
 };
 

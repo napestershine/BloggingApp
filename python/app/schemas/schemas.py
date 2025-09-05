@@ -1,6 +1,7 @@
 from pydantic import BaseModel, EmailStr
 from datetime import datetime
 from typing import Optional, List
+from app.models.models import UserRole
 
 # User schemas
 class UserBase(BaseModel):
@@ -19,6 +20,7 @@ class UserUpdate(BaseModel):
 
 class UserInDB(UserBase):
     id: int
+    role: UserRole
     created_at: datetime
     
     class Config:
