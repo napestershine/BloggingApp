@@ -1,0 +1,134 @@
+name: Python Cache Cleanup
+
+on:
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  cleanup-python-cache:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Detect Python cache files
+      id: detect
+      run: |
+        echo "Scanning for Python cache files..."
+        pyc_files=$(find . -name "*.pyc" -type f | wc -l)
+        pycache_dirs=$(find . -name "__pycache__" -type d | wc -l)
+        
+        echo "Found $pyc_files .pyc files"
+        echo "Found $pycache_dirs __pycache__ directories"
+        
+        echo "pyc_count=$pyc_files" >> $GITHUB_OUTPUT
+        echo "pycache_count=$pycache_dirs" >> $GITHUB_OUTPUT
+        
+        if [ $pyc_files -gt 0 ] || [ $pycache_dirs -gt 0 ]; then
+          echo "cleanup_needed=true" >> $GITHUB_OUTPUT
+        else
+          echo "cleanup_needed=false" >> $GITHUB_OUTPUT
+        fi
+        
+    - name: Remove Python cache files
+      if: steps.detect.outputs.cleanup_needed == 'true'
+      run: |
+        echo "Cleaning up Python cache files..."
+        find . -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
+        find . -name "*.pyc" -type f -delete
+        find . -name "*.pyo" -type f -delete
+        find . -name "*.pyd" -type f -delete
+        echo "Cleanup completed"
+        
+    - name: Commit and push changes
+      if: steps.detect.outputs.cleanup_needed == 'true'
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        
+        # Add all deleted files
+        git add -A
+        
+        # Check if there are changes to commit
+        if ! git diff --cached --quiet; then
+          git commit -m "chore: automatically remove Python cache files
+          
+          - Removed ${{ steps.detect.outputs.pyc_count }} .pyc files
+          - Removed ${{ steps.detect.outputs.pycache_count }} __pycache__ directories
+          
+          This cleanup was performed automatically by the daily Python cache cleanup workflow."
+          git push
+          echo "Changes committed and pushed"
+        else
+          echo "No changes to commit"
+        fi
+        
+    - name: Create issue if cleanup was needed
+      if: steps.detect.outputs.cleanup_needed == 'true'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const title = '🧹 Python cache files found and cleaned up';
+          const body = `## Automatic Python Cache Cleanup Report
+          
+          The daily Python cache cleanup workflow found and removed cache files:
+          
+          - **${context.payload.inputs?.pyc_count || '${{ steps.detect.outputs.pyc_count }}'} .pyc files** removed
+          - **${context.payload.inputs?.pycache_count || '${{ steps.detect.outputs.pycache_count }}'} __pycache__ directories** removed
+          
+          ### What happened?
+          Python cache files were found in the repository despite being listed in .gitignore. This usually happens when:
+          - Files were committed before the .gitignore rules were in place
+          - Someone accidentally forced a commit of cache files
+          - The .gitignore rules weren't working as expected
+          
+          ### What was done?
+          The workflow automatically removed these files and committed the changes.
+          
+          ### Next steps
+          Please review your development setup to ensure Python cache files aren't being committed:
+          1. Make sure your .gitignore is working properly
+          2. Consider using \`git clean -f -d\` locally to remove untracked files
+          3. Set up your IDE/editor to exclude these files from version control
+          
+          This issue will be automatically closed once no cache files are found for 7 consecutive days.
+          `;
+          
+          // Check if there's already an open issue for this
+          const existingIssues = await github.rest.issues.listForRepo({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            state: 'open',
+            labels: 'automated-cleanup'
+          });
+          
+          const existingIssue = existingIssues.data.find(issue => 
+            issue.title.includes('Python cache files found and cleaned up')
+          );
+          
+          if (!existingIssue) {
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['automated-cleanup', 'maintenance']
+            });
+          } else {
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: existingIssue.number,
+              body: `## Additional Cleanup - ${new Date().toISOString().split('T')[0]}
+              
+              Found and removed more cache files:
+              - **${{ steps.detect.outputs.pyc_count }} .pyc files**
+              - **${{ steps.detect.outputs.pycache_count }} __pycache__ directories**
+              `
+            });
+          }
