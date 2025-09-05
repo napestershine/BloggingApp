@@ -152,10 +152,34 @@ def test_user_profile_management(client):
     }
     response = client.put(f"/users/{user_id}/profile", json=update_data, headers=headers)
     assert response.status_code == 200
-    assert response.json()["message"] == "Successfully logged out"
+    updated_profile = response.json()
+    assert updated_profile["name"] == "Updated Test User"
+    assert updated_profile["bio"] == "This is my test bio"
 
-def test_sample_credentials():
-    """Test login with sample credentials"""
+def test_sample_credentials(client):
+    """Test login with sample credentials - first create the users"""
+    from app.auth.auth import get_password_hash
+    
+    sample_users_data = [
+        {"username": "admin", "password": "admin123", "email": "admin@example.com", "name": "Admin User"},
+        {"username": "johndoe", "password": "john123", "email": "john@example.com", "name": "John Doe"},
+        {"username": "janesmith", "password": "jane123", "email": "jane@example.com", "name": "Jane Smith"},
+    ]
+    
+    # First create the users using the registration endpoint
+    for user_data in sample_users_data:
+        registration_data = {
+            "username": user_data["username"],
+            "password": user_data["password"],
+            "retyped_password": user_data["password"],
+            "name": user_data["name"],
+            "email": user_data["email"]
+        }
+        response = client.post("/auth/register", json=registration_data)
+        # It's okay if the user already exists (201 for created, other codes for existing)
+        assert response.status_code in [201, 400]  # 400 might be returned if user exists
+    
+    # Now test login with the credentials
     sample_credentials = [
         {"username": "admin", "password": "admin123"},
         {"username": "johndoe", "password": "john123"},
@@ -169,7 +193,7 @@ def test_sample_credentials():
         assert "access_token" in token_data
         assert token_data["token_type"] == "bearer"
 
-def test_complete_user_journey():
+def test_complete_user_journey(client):
     """Test complete user journey from registration to profile management"""
     username = get_unique_username()
     email = get_unique_email()
