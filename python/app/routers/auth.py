@@ -9,58 +9,47 @@ from app.schemas.schemas import (
     EmailVerificationRequest, EmailVerificationConfirm,
     PasswordResetRequest, PasswordResetConfirm
 )
+from app.schemas.responses import SuccessResponse, CreatedResponse
 from app.auth.auth import (
     verify_password, 
     get_password_hash, 
     create_access_token, 
     get_current_user
 )
+from app.services.user_service import user_service
+from app.utils.security import SecurityValidator
 from app.core.config import settings
 import secrets
 import uuid
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
-@router.post("/register", response_model=UserSchema, status_code=status.HTTP_201_CREATED)
+@router.post("/register", response_model=CreatedResponse[UserSchema], status_code=status.HTTP_201_CREATED)
 def register_user(user: UserCreate, db: Session = Depends(get_db)):
-    # Check if passwords match
-    if user.password != user.retyped_password:
+    """Register a new user with enhanced validation"""
+    # Validate password strength before creating user
+    validation = SecurityValidator.validate_password_strength(user.password)
+    if not validation["valid"]:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Passwords do not match"
+            detail=validation["message"]
         )
     
-    # Check if user already exists
-    db_user = db.query(User).filter(
-        (User.username == user.username) | (User.email == user.email)
-    ).first()
+    # Use the service layer for user creation
+    db_user = user_service.create_user(db, user)
     
-    if db_user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Username or email already registered"
-        )
-    
-    # Create new user
-    hashed_password = get_password_hash(user.password)
-    db_user = User(
-        username=user.username,
-        email=user.email,
-        name=user.name,
-        hashed_password=hashed_password
+    return CreatedResponse(
+        message="User registered successfully",
+        data=db_user
     )
-    
-    db.add(db_user)
-    db.commit()
-    db.refresh(db_user)
-    
-    return db_user
 
 @router.post("/login", response_model=Token)
 def login_user(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.username == form_data.username).first()
+    """Authenticate user with enhanced security"""
+    # Use service layer for authentication
+    user = user_service.authenticate_user(db, form_data.username, form_data.password)
     
-    if not user or not verify_password(form_data.password, user.hashed_password):
+    if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",

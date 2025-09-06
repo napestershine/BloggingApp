@@ -104,6 +104,10 @@ async def create_blog_post(
                     current_user.name,
                     post.title,
                     current_user.whatsapp_number
+                )
+            )
+    except Exception as e:
+        logger.error(f"Failed to send notification: {str(e)}")
 
     # Send WhatsApp notifications to followers only for published posts
     if db_post.status == PostStatus.PUBLISHED:
