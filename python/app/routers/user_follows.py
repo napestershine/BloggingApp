@@ -11,6 +11,7 @@ from app.schemas.schemas import (
     FollowerUser
 )
 from app.auth.auth import get_current_user
+from app.services.notification_service_internal import notification_service
 import logging
 
 logger = logging.getLogger(__name__)
@@ -72,6 +73,16 @@ def follow_user(
     db.add(new_follow)
     db.commit()
     db.refresh(new_follow)
+    
+    # Create follow notification
+    try:
+        notification_service.create_follow_notification(
+            db=db,
+            followed_user_id=user_id,
+            follower_user=current_user
+        )
+    except Exception as e:
+        logger.warning(f"Failed to create follow notification: {e}")
     
     return UserFollowResponse(
         following_id=user_id,

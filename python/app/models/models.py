@@ -232,3 +232,36 @@ class UserFollow(Base):
     # Relationships
     follower = relationship("User", foreign_keys=[follower_id], back_populates="following")
     following = relationship("User", foreign_keys=[following_id], back_populates="followers")
+
+class NotificationType(enum.Enum):
+    FOLLOW = "follow"
+    POST_LIKE = "post_like"
+    POST_COMMENT = "post_comment"
+    COMMENT_REPLY = "comment_reply"
+    POST_MENTION = "post_mention"
+    COMMENT_MENTION = "comment_mention"
+
+class Notification(Base):
+    __tablename__ = "notifications"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)  # Recipient
+    type = Column(Enum(NotificationType), nullable=False)
+    title = Column(String(255), nullable=False)
+    message = Column(Text, nullable=False)
+    
+    # Related entity IDs (for linking back to the source)
+    related_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)  # User who triggered notification
+    related_post_id = Column(Integer, ForeignKey("blog_posts.id"), nullable=True)  # Related post
+    related_comment_id = Column(Integer, ForeignKey("comments.id"), nullable=True)  # Related comment
+    
+    # Notification status
+    is_read = Column(Boolean, default=False, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    read_at = Column(DateTime(timezone=True), nullable=True)
+    
+    # Relationships
+    user = relationship("User", foreign_keys=[user_id])
+    related_user = relationship("User", foreign_keys=[related_user_id])
+    related_post = relationship("BlogPost", foreign_keys=[related_post_id])
+    related_comment = relationship("Comment", foreign_keys=[related_comment_id])

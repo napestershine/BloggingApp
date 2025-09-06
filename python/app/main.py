@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database.connection import engine
 from app.models import models
-from app.routers import auth, users, blog_posts, comments, post_likes, post_sharing, media, categories, tags, search, user_follows
+from app.routers import auth, users, blog_posts, comments, post_likes, post_sharing, media, categories, tags, search, user_follows, notification_system
 
 # Create database tables
 models.Base.metadata.create_all(bind=engine)
@@ -38,6 +38,7 @@ app.include_router(user_follows.router)
 # Import and include notifications router
 from app.routers import notifications
 app.include_router(notifications.router)
+app.include_router(notification_system.router)
 
 @app.get("/")
 def read_root():

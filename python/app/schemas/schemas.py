@@ -426,3 +426,49 @@ class FollowerUser(BaseModel):
     
     class Config:
         from_attributes = True
+
+# Notification schemas
+class NotificationTypeEnum(str, Enum):
+    FOLLOW = "follow"
+    POST_LIKE = "post_like"
+    POST_COMMENT = "post_comment"
+    COMMENT_REPLY = "comment_reply"
+    POST_MENTION = "post_mention"
+    COMMENT_MENTION = "comment_mention"
+
+class NotificationBase(BaseModel):
+    """Base notification schema"""
+    type: NotificationTypeEnum
+    title: str
+    message: str
+    related_user_id: Optional[int] = None
+    related_post_id: Optional[int] = None
+    related_comment_id: Optional[int] = None
+
+class NotificationCreate(NotificationBase):
+    """Schema for creating notifications"""
+    user_id: int
+
+class NotificationResponse(NotificationBase):
+    """Full notification response"""
+    id: int
+    user_id: int
+    is_read: bool
+    created_at: datetime
+    read_at: Optional[datetime] = None
+    
+    # Related entity details
+    related_user: Optional[FollowerUser] = None
+    related_post: Optional[dict] = None  # Basic post info
+    
+    class Config:
+        from_attributes = True
+
+class NotificationUpdate(BaseModel):
+    """Schema for updating notifications"""
+    is_read: Optional[bool] = None
+
+class NotificationStats(BaseModel):
+    """Notification statistics"""
+    total_count: int
+    unread_count: int
