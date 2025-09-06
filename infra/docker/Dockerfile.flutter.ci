@@ -1,0 +1,53 @@
+# Flutter CI Dockerfile - NOT part of default compose
+# This is only for CI builds and testing of the Flutter mobile app
+# 
+# Usage: 
+# docker build -f infra/docker/Dockerfile.flutter.ci -t blogging-app-flutter-ci .
+# docker run --rm -v $(pwd)/app:/workspace blogging-app-flutter-ci flutter test
+
+FROM ubuntu:22.04
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    git \
+    unzip \
+    xz-utils \
+    zip \
+    libglu1-mesa \
+    openjdk-11-jdk \
+    wget \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set up Android SDK
+ENV ANDROID_SDK_ROOT=/opt/android-sdk
+ENV PATH=$PATH:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools
+
+RUN mkdir -p $ANDROID_SDK_ROOT/cmdline-tools && \
+    wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip && \
+    unzip commandlinetools-linux-9477386_latest.zip -d $ANDROID_SDK_ROOT/cmdline-tools && \
+    mv $ANDROID_SDK_ROOT/cmdline-tools/cmdline-tools $ANDROID_SDK_ROOT/cmdline-tools/latest && \
+    rm commandlinetools-linux-9477386_latest.zip
+
+# Accept Android licenses and install SDK components
+RUN yes | sdkmanager --licenses && \
+    sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.0"
+
+# Install Flutter
+ENV FLUTTER_ROOT=/opt/flutter
+ENV PATH=$PATH:$FLUTTER_ROOT/bin
+
+RUN git clone https://github.com/flutter/flutter.git -b stable $FLUTTER_ROOT && \
+    flutter doctor
+
+# Set working directory
+WORKDIR /workspace
+
+# Copy Flutter app
+COPY app/ .
+
+# Install dependencies
+RUN flutter pub get
+
+# Default command
+CMD ["flutter", "test"]
