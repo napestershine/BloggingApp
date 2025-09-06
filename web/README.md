@@ -4,7 +4,7 @@ A modern Next.js web application for the BloggingApp platform, built with TypeSc
 
 ## Features
 
-- **Modern Tech Stack**: Built with Next.js 14, TypeScript, and Tailwind CSS
+- **Modern Tech Stack**: Built with Next.js 15, React 19, TypeScript, and Tailwind CSS
 - **SEO Optimized**: Server-side rendering for excellent search engine optimization
 - **Responsive Design**: Mobile-first approach with beautiful UI components
 - **Authentication**: Complete auth flow with JWT token management
@@ -16,14 +16,16 @@ A modern Next.js web application for the BloggingApp platform, built with TypeSc
 
 ### Prerequisites
 
-- Node.js 18 or later
+- Node.js 20 or later
 - npm or yarn
 - Docker (optional, for containerized deployment)
 
 ### Development Setup
 
-1. **Install dependencies:**
+1. **Clean install dependencies:**
    ```bash
+   # Remove existing node_modules and package-lock.json if upgrading
+   rm -rf node_modules package-lock.json
    npm install
    ```
 
