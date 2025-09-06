@@ -1,7 +1,26 @@
 from pydantic import BaseModel, EmailStr
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, List, Dict
 from enum import Enum
+
+# Reaction types enum for API
+class ReactionTypeEnum(str, Enum):
+    LIKE = "like"
+    LOVE = "love"
+    LAUGH = "laugh"
+    WOW = "wow"
+    SAD = "sad"
+    ANGRY = "angry"
+
+# Sharing platforms enum for API
+class SharingPlatformEnum(str, Enum):
+    TWITTER = "twitter"
+    FACEBOOK = "facebook"
+    LINKEDIN = "linkedin"
+    REDDIT = "reddit"
+    EMAIL = "email"
+    COPY_LINK = "copy_link"
+    WHATSAPP = "whatsapp"
 
 # Enum definitions
 class PostStatus(str, Enum):

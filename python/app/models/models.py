@@ -1,7 +1,13 @@
-from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey, Boolean
+from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey, Boolean, Enum
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.database.connection import Base
+import enum
+
+# Enums
+class PostStatus(enum.Enum):
+    DRAFT = "DRAFT"
+    PUBLISHED = "PUBLISHED"
 
 class User(Base):
     __tablename__ = "users"
@@ -44,6 +50,7 @@ class BlogPost(Base):
     title = Column(String(255), nullable=False)
     content = Column(Text, nullable=False)
     slug = Column(String(255), unique=True, index=True)
+    status = Column(Enum(PostStatus), default=PostStatus.DRAFT, nullable=False)
     published = Column(DateTime(timezone=True), server_default=func.now())
     author_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     

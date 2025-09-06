@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.database.connection import engine
 from app.models import models
 from app.routers import auth, users, blog_posts, comments, search, seo, sitemap, slugs, recommendations, feed, rss
-# TODO: Add these routers when they are implemented
+# TODO: Add these routers when they are implemented - main branch has them
 # from app.routers import post_likes, post_sharing, media, categories, tags
 
 # Create database tables
@@ -29,7 +29,7 @@ app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(blog_posts.router)
 app.include_router(comments.router)
-# TODO: Add these routers when they are implemented
+# TODO: Add these routers when they are implemented - main branch has them  
 # app.include_router(post_likes.router)
 # app.include_router(post_sharing.router)
 # app.include_router(media.router)
