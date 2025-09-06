@@ -10,4 +10,4 @@ build/
 *.pyo
 
 # Ignore environment files
-.env
+*/.env
