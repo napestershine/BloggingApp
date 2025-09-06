@@ -248,11 +248,6 @@ export const adminAPI = {
     const response = await apiClient.get(`/admin/content/posts/flagged?skip=${skip}&limit=${limit}`);
     return response.data;
   },
-
-  getContentAnalytics: async (days = 30): Promise<any> => {
-    const response = await apiClient.get(`/admin/content/analytics/content?days=${days}`);
-    return response.data;
-  },
 };
 
 export default apiClient;
