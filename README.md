@@ -36,7 +36,7 @@ A modern, full-stack blogging platform featuring a Flutter mobile application, N
    # Access at http://localhost:3000
    ```
 
-3. **Full Stack** (when API network issues are resolved):
+3. **Full Stack**:
    ```bash
    docker compose up --build
    # Web: http://localhost:3000
