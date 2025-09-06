@@ -4,7 +4,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=sqlite:///./blog.db
+  # - DATABASE_URL=sqlite:///./blog.db  # (removed, now using .env for DATABASE_URL)
       - SECRET_KEY=your-secret-key-here-change-in-production
     volumes:
       - .:/app
