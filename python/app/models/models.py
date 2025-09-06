@@ -4,6 +4,12 @@ from sqlalchemy.sql import func
 from app.database.connection import Base
 import enum
 
+# Enums for post status
+class PostStatus(enum.Enum):
+    DRAFT = "DRAFT"
+    PUBLISHED = "PUBLISHED"
+
+
 # Enum for reaction types
 class ReactionType(enum.Enum):
     LIKE = "like"
@@ -12,10 +18,6 @@ class ReactionType(enum.Enum):
     WOW = "wow"
     SAD = "sad"
     ANGRY = "angry"
-
-class PostStatus(enum.Enum):
-    DRAFT = "DRAFT"
-    PUBLISHED = "PUBLISHED"
 
 # Association tables for many-to-many relationships
 blog_post_tags = Table(
@@ -31,6 +33,7 @@ blog_post_categories = Table(
     Column('blog_post_id', Integer, ForeignKey('blog_posts.id'), primary_key=True),
     Column('category_id', Integer, ForeignKey('categories.id'), primary_key=True)
 )
+
 
 class User(Base):
     __tablename__ = "users"
@@ -77,6 +80,21 @@ class BlogPost(Base):
     published = Column(DateTime(timezone=True), server_default=func.now())
     last_modified = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     author_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    
+    # SEO fields
+    meta_title = Column(String(255), nullable=True)
+    meta_description = Column(String(500), nullable=True)
+    og_title = Column(String(255), nullable=True)
+    og_description = Column(String(500), nullable=True)
+    og_image = Column(String(255), nullable=True)
+    
+    # Analytics fields for trending/search
+    view_count = Column(Integer, default=0)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    
+    # Categories/tags (stored as JSON string for now)
+    tags = Column(Text, nullable=True)  # JSON string of tags
+    category = Column(String(100), nullable=True)
     
     # Relationships
     author = relationship("User", back_populates="posts")
