@@ -3,15 +3,14 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# Copy all files first (will copy node_modules if present)
-COPY . .
-
-# Ensure we have package files
+# Copy package files first for better caching
 COPY package.json package-lock.json ./
 
-# Install dependencies (this will work even if node_modules exists)
+# Install dependencies
 RUN npm install --legacy-peer-deps
 
+# Copy the rest of the application files
+COPY . .
 # Build the application
 ENV NODE_ENV=production
 RUN npm run build
