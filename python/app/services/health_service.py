@@ -81,7 +81,8 @@ class HealthCheckService:
         
         # Check Twilio (if configured)
         try:
-            from app.core.config import settings
+            from app.core.config import get_settings
+            settings = get_settings()
             if settings.twilio_account_sid and settings.twilio_auth_token:
                 dependencies["twilio"] = "configured"
             else:

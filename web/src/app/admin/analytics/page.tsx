@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { adminAPI } from '@/lib/api';
-import { formatNumber, formatRelativeTime } from '@/lib/admin';
+import { formatNumber } from '@/lib/admin';
 
 interface ContentAnalytics {
   total_posts: number;
@@ -168,7 +168,7 @@ export default function AdminAnalyticsPage() {
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Top Authors by Posts</h3>
           {analytics?.top_authors_by_posts?.length ? (
             <div className="space-y-3">
-              {analytics.top_authors_by_posts.map((author, index) => (
+              {analytics.top_authors_by_posts.map((author) => (
                 <div key={author.username} className="flex items-center justify-between">
                   <div className="flex items-center">
                     <div className="w-8 h-8 bg-indigo-500 rounded-full flex items-center justify-center mr-3">
@@ -200,7 +200,7 @@ export default function AdminAnalyticsPage() {
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Top Authors by Comments</h3>
           {analytics?.top_authors_by_comments?.length ? (
             <div className="space-y-3">
-              {analytics.top_authors_by_comments.map((author, index) => (
+              {analytics.top_authors_by_comments.map((author) => (
                 <div key={author.username} className="flex items-center justify-between">
                   <div className="flex items-center">
                     <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center mr-3">

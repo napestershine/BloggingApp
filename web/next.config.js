@@ -12,13 +12,6 @@ const nextConfig = {
     domains: ['localhost'],
     formats: ['image/webp', 'image/avif'],
   },
-
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  typescript: {
-    ignoreBuildErrors: true,
-  },
   // Experimental features for performance
   experimental: {
     // appDir is now stable and enabled by default in Next.js 14

@@ -1,5 +1,9 @@
-import pytest
 import os
+os.environ.setdefault("TESTING", "true")
+os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///./test.db")
+os.environ.setdefault("SECRET_KEY", "test-secret")
+
+import pytest
 import tempfile
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker

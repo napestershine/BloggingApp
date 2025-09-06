@@ -104,7 +104,7 @@ export const handlers = [
   }),
 
   http.post(`${API_BASE_URL}/auth/register`, async ({ request }) => {
-    const { username, email, password } = await request.json() as { 
+    const { username, email } = await request.json() as { 
       username: string; 
       email: string; 
       password: string 

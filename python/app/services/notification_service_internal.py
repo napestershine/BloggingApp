@@ -1,7 +1,7 @@
 from typing import Optional
 from sqlalchemy.orm import Session
 from app.models.models import Notification, NotificationType, User, BlogPost, Comment
-from app.database.connection import SessionLocal
+from app.database.connection import get_session_local
 import logging
 
 logger = logging.getLogger(__name__)
