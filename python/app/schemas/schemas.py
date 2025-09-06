@@ -380,3 +380,49 @@ class DraftAutoSave(BaseModel):
 # Update forward references after all classes are defined
 BlogPost.model_rebuild()
 Comment.model_rebuild()
+
+# Search schemas
+class SearchResult(BaseModel):
+    """Search result item"""
+    title: str
+    content: str
+    slug: str
+    author: str
+    published: datetime
+    relevance_score: Optional[float] = None
+
+class SearchSuggestion(BaseModel):
+    """Search suggestion item"""
+    text: str
+    type: str  # "title", "category", "tag", "author"
+    description: str
+
+# User Follow schemas
+class UserFollowCreate(BaseModel):
+    """Schema for following a user"""
+    pass  # No additional fields needed, user IDs come from URL and auth
+
+class UserFollowResponse(BaseModel):
+    """Response when following/unfollowing a user"""
+    following_id: int
+    follower_id: int
+    is_following: bool
+    created_at: Optional[datetime] = None
+
+class UserFollowStats(BaseModel):
+    """User follow statistics"""
+    followers_count: int
+    following_count: int
+    is_following: Optional[bool] = None  # Only populated when requesting for another user
+
+class FollowerUser(BaseModel):
+    """User info for follower/following lists"""
+    id: int
+    username: str
+    name: str
+    bio: Optional[str] = None
+    avatar_url: Optional[str] = None
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True

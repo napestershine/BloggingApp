@@ -65,6 +65,10 @@ class User(Base):
     # Relationships
     posts = relationship("BlogPost", back_populates="author")
     comments = relationship("Comment", back_populates="author", foreign_keys="Comment.author_id")
+    
+    # Follow relationships - added for social features
+    following = relationship("UserFollow", foreign_keys="UserFollow.follower_id", back_populates="follower")
+    followers = relationship("UserFollow", foreign_keys="UserFollow.following_id", back_populates="following")
 
 class BlogPost(Base):
     __tablename__ = "blog_posts"
@@ -213,3 +217,18 @@ class Tag(Base):
     # Relationships 
     creator = relationship("User")
     blog_posts = relationship("BlogPost", secondary=blog_post_tags, back_populates="tags")
+
+class UserFollow(Base):
+    __tablename__ = "user_follows"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    follower_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    following_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Unique constraint to prevent duplicate follows
+    __table_args__ = (UniqueConstraint('follower_id', 'following_id', name='unique_follow'),)
+    
+    # Relationships
+    follower = relationship("User", foreign_keys=[follower_id], back_populates="following")
+    following = relationship("User", foreign_keys=[following_id], back_populates="followers")
