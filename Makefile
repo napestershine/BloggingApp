@@ -17,10 +17,10 @@ help: ## Show this help message
 
 # Production commands
 up: .env ## Start production services (db, api, web)
-	docker compose --profile prod up --build -d
+	docker compose up --build -d
 
 down: ## Stop all services
-	docker compose --profile prod down
+	docker compose down
 
 # Development commands  
 up-dev: .env ## Start development services with hot reload
@@ -54,7 +54,7 @@ build-web: ## Build Web image only
 
 # Utility commands
 logs: ## Show logs from all services
-	docker compose --profile prod logs -f
+	docker compose logs -f
 
 logs-dev: ## Show logs from development services
 	docker compose -f compose.yml -f compose.dev.yml logs -f
@@ -75,7 +75,7 @@ health: ## Check health of all services
 	@echo ""
 	@echo "Health checks:"
 	@docker compose exec api python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health'); print('✅ API healthy')" 2>/dev/null || echo "❌ API unhealthy"
-	@docker compose exec web wget --no-verbose --tries=1 --spider http://localhost:3000/api/health && echo "✅ Web healthy" || echo "❌ Web unhealthy" 2>/dev/null
+	@docker compose exec web node -e "const http = require('http'); const req = http.request({hostname: '0.0.0.0', port: 3000, path: '/api/health', timeout: 5000}, (res) => process.exit(res.statusCode === 200 ? 0 : 1)); req.on('error', () => process.exit(1)); req.end();" && echo "✅ Web healthy" || echo "❌ Web unhealthy" 2>/dev/null
 
 status: ## Show status of all services
 	docker compose ps

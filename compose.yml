@@ -19,9 +19,6 @@ services:
       start_period: 10s
     networks:
       - blogging-network
-    profiles:
-      - dev
-      - prod
 
   # FastAPI Backend
   api:
@@ -49,9 +46,6 @@ services:
       start_period: 40s
     networks:
       - blogging-network
-    profiles:
-      - dev
-      - prod
 
   # Next.js Frontend
   web:
@@ -59,7 +53,7 @@ services:
       context: ./web
       target: ${WEB_BUILD_TARGET:-runner}
       cache_from:
-        - node:18-alpine
+        - node:20-alpine
     container_name: blogging-app-web
     ports:
       - "${WEB_PORT:-3000}:3000"
@@ -79,9 +73,6 @@ services:
       start_period: 30s
     networks:
       - blogging-network
-    profiles:
-      - dev
-      - prod
 
 volumes:
   postgres_data:

@@ -51,7 +51,9 @@ services:
   db:
     environment:
       - POSTGRES_DB=${POSTGRES_DB:-blog_test}
-    tmpfs:
-      - /var/lib/postgresql/data
+    volumes:
+      # Override the volume with tmpfs for testing
+      - type: tmpfs
+        target: /var/lib/postgresql/data
     labels:
       - "blogging.env=ci"

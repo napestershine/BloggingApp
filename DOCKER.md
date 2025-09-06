@@ -1,53 +1,231 @@
-# Docker Setup for BloggingApp
+# Docker Setup Guide
 
-This directory contains Docker configuration files to run the BloggingApp in containerized environments for end-to-end testing.
+This guide explains the consolidated Docker setup for BloggingApp with profile-driven configurations.
 
 ## Quick Start
 
-### Development Environment
-
-Run the full stack in development mode:
-
+### Development (with hot reload)
 ```bash
-# Start both frontend and backend
-docker compose -f docker-compose.dev.yml up
+# Using Makefile (recommended)
+make up-dev
 
-# Or start just the frontend for frontend-only testing
-docker compose -f docker-compose.dev.yml up web
-
-# Or start just the backend
-docker compose -f docker-compose.dev.yml up api
+# Or manually
+docker compose -f compose.yml -f compose.dev.yml up --build
 ```
 
-The development setup includes:
-- **Frontend**: Next.js app with hot reloading (port 3000)
-- **Backend**: FastAPI with auto-reload (port 8000)
-- **Database**: SQLite (for development)
-
-### Production Environment
-
-Run the full stack in production mode:
-
+### Production
 ```bash
-# Build and start all services
-docker compose up --build
+# Using Makefile
+make up
 
-# Or start with PostgreSQL database
-docker compose up --build api web db
+# Or manually  
+docker compose up --build -d
 ```
 
-The production setup includes:
-- **Frontend**: Optimized Next.js build (port 3000)
-- **Backend**: FastAPI production server (port 8000)
-- **Database**: PostgreSQL (port 5432) + SQLite fallback
+### Testing
+```bash
+# Using Makefile
+make test
 
-## Services
+# Or manually
+docker compose -f compose.yml -f compose.ci.yml up --build --abort-on-container-exit
+```
 
-### Frontend (Next.js)
-- **Development**: `./web/Dockerfile.dev` - includes hot reloading
-- **Production**: `./web/Dockerfile` - optimized build with standalone output
-- **Port**: 3000
-- **Environment Variables**:
+## Environment Configuration
+
+1. Copy the environment template:
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Edit `.env` with your configuration:
+   ```bash
+   # Database settings
+   POSTGRES_DB=blog_db
+   POSTGRES_USER=your_user
+   POSTGRES_PASSWORD=your_password
+   
+   # API settings
+   SECRET_KEY=your-secret-key-change-in-production
+   
+   # Web settings
+   NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
+   ```
+
+## Architecture
+
+### Multi-stage Dockerfiles
+
+**API (python/Dockerfile)**:
+- `base`: Python 3.12 with system dependencies
+- `deps`: Install Python packages with pip caching
+- `dev`: Development stage with hot reload
+- `prod`: Production stage with non-root user
+
+**Web (web/Dockerfile)**:
+- `deps`: Install Node.js dependencies with npm caching
+- `builder`: Build Next.js application
+- `runner`: Production runtime with standalone output
+
+### Services
+
+| Service | Purpose | Ports | Health Check |
+|---------|---------|--------|--------------|
+| `db` | PostgreSQL 16 database | 5432 | `pg_isready` |
+| `api` | FastAPI backend | 8000 | `/health` endpoint |
+| `web` | Next.js frontend | 3000 | `/api/health` endpoint |
+
+### Profiles and Overrides
+
+**Development (`compose.dev.yml`)**:
+- Bind mounts for live code reloading
+- Development build targets
+- Verbose logging
+- Development database
+
+**Production (default `compose.yml`)**:
+- Optimized production images
+- No bind mounts
+- Minimal logging
+- Production database with persistence
+
+**CI/Testing (`compose.ci.yml`)**:
+- Test database (in-memory)
+- Test commands instead of servers
+- No persistent volumes
+
+## Common Commands
+
+### Service Management
+```bash
+# Start development environment
+make up-dev
+
+# Start production environment
+make up
+
+# Stop all services
+make down
+
+# Restart services
+make rebuild
+```
+
+### Logs and Monitoring
+```bash
+# View all logs
+make logs
+
+# View specific service logs
+make logs-api
+make logs-web
+make logs-db
+
+# Check service health
+make health
+
+# Check service status
+make status
+```
+
+### Database Operations
+```bash
+# Connect to database shell
+make db-shell
+
+# Backup database
+make db-backup
+
+# Seed database with demo data
+docker compose exec api python seed.py up
+```
+
+### Development
+```bash
+# Open shell in API container
+make shell-api
+
+# Open shell in Web container
+make shell-web
+
+# Run tests
+make test
+make test-api
+make test-web
+```
+
+### Cleanup
+```bash
+# Remove stopped containers and unused images
+make clean
+
+# Remove everything (DESTRUCTIVE)
+make clean-all
+```
+
+## Security Features
+
+- **Non-root users**: Production containers run as dedicated users
+- **Secret management**: No secrets baked into images
+- **Network isolation**: Services communicate through named networks
+- **Health checks**: All services have health monitoring
+- **Multi-stage builds**: Minimal production image sizes
+
+## Performance Optimizations
+
+- **BuildKit**: Enabled for parallel builds and caching
+- **Layer caching**: Efficient caching for npm and pip
+- **Standalone builds**: Next.js standalone output for smaller images
+- **Multi-stage**: Separate build and runtime environments
+
+## Troubleshooting
+
+### Build Issues
+```bash
+# Clear all caches and rebuild
+docker system prune -af
+docker compose build --no-cache
+
+# Check BuildKit is enabled
+export DOCKER_BUILDKIT=1
+```
+
+### Network Issues
+```bash
+# Check service connectivity
+docker compose exec api ping web
+docker compose exec web ping api
+docker compose exec api ping db
+```
+
+### Database Issues
+```bash
+# Check database logs
+make logs-db
+
+# Test database connection
+docker compose exec api python -c "from app.database import engine; print(engine.execute('SELECT 1').scalar())"
+```
+
+### Permission Issues
+```bash
+# Fix file permissions (if needed)
+sudo chown -R $USER:$USER .
+```
+
+## Flutter CI (Optional)
+
+For CI builds of the Flutter mobile app:
+
+```bash
+# Build Flutter CI image
+docker build -f infra/docker/Dockerfile.flutter.ci -t blogging-app-flutter-ci .
+
+# Run Flutter tests
+docker run --rm -v $(pwd)/app:/workspace blogging-app-flutter-ci flutter test
+```
+
+Note: Flutter is not included in the default compose setup. Use the CI Dockerfile only for automated testing of the mobile app.
   - `NEXT_PUBLIC_API_URL`: Backend API URL (default: http://localhost:8000)
   - `NEXT_PUBLIC_SITE_URL`: Frontend URL (default: http://localhost:3000)
 
