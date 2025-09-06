@@ -22,9 +22,6 @@ function debounce<T extends (...args: any[]) => any>(func: T, wait: number): T {
   }) as T;
 }
 
-interface SearchComponentProps {
-  onPostSelect?: (post: BlogPost) => void;
-}
 
 export default function SearchComponent({ onPostSelect }: SearchComponentProps) {
   const [query, setQuery] = useState('');
