@@ -16,7 +16,7 @@ const nextConfig = {
 
   // Experimental features for performance
   experimental: {
-    appDir: true,
+    // appDir is now stable and enabled by default in Next.js 14
   },
 
   // Output configuration for standalone deployment
