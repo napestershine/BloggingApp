@@ -95,7 +95,7 @@ export default function UserFollowComponent({
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            {username}'s Network
+            {username}&apos;s Network
           </h1>
           
           {stats.is_following !== null && (

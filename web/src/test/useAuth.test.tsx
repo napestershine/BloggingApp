@@ -1,7 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { renderHook } from '@testing-library/react'
 import { useAuth } from '@/hooks/useAuth'
-import { AuthProvider } from '@/components/AuthProvider'
 import { ReactNode } from 'react'
 
 // Mock the AuthProvider to avoid complex dependencies

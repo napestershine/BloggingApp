@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { bookmarkAPI, BlogPost, BookmarkStats } from '@/lib/api';
-import BlogPostCard from './BlogPostCard';
 
 export default function BookmarksComponent() {
   const [bookmarkedPosts, setBookmarkedPosts] = useState<BlogPost[]>([]);
@@ -63,6 +62,7 @@ export default function BookmarksComponent() {
     }
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const addBookmark = async (post: BlogPost) => {
     try {
       await bookmarkAPI.bookmarkPost(post.id);
