@@ -2,7 +2,8 @@ import { User, UserRole } from '@/types';
 
 // Admin role checking utilities
 export const isAdmin = (user: User | null): boolean => {
-  return user?.role === UserRole.ADMIN || user?.role === UserRole.SUPER_ADMIN;
+  if (user === null) return false;
+  return user.role === UserRole.ADMIN || user.role === UserRole.SUPER_ADMIN;
 };
 
 export const isSuperAdmin = (user: User | null): boolean => {
