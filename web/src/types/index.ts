@@ -1,4 +1,17 @@
-// TypeScript interfaces matching the FastAPI backend models
+export enum PostStatus {
+  DRAFT = "draft",
+  PENDING = "pending", 
+  PUBLISHED = "published",
+  REJECTED = "rejected",
+  SCHEDULED = "scheduled"
+}
+
+export enum CommentStatus {
+  PENDING = "pending",
+  APPROVED = "approved",
+  REJECTED = "rejected",
+  SPAM = "spam"
+}
 
 export enum UserRole {
   USER = "user",
@@ -61,6 +74,9 @@ export interface AdminStats {
   new_users_today: number;
   new_posts_today: number;
   new_comments_today: number;
+  pending_posts: number;
+  pending_comments: number;
+  featured_posts: number;
 }
 
 export interface UserManagementResponse {
@@ -85,7 +101,12 @@ export interface PostModerationResponse {
   author_username: string;
   author_name: string;
   total_comments: number;
-  status?: string;
+  status: PostStatus;
+  featured: boolean;
+  views: number;
+  moderator_name?: string;
+  moderated_at?: string;
+  rejection_reason?: string;
 }
 
 export interface CommentModerationResponse {
@@ -97,5 +118,8 @@ export interface CommentModerationResponse {
   author_name: string;
   blog_post_id: number;
   blog_post_title: string;
-  status?: string;
+  status: CommentStatus;
+  is_spam: boolean;
+  moderator_name?: string;
+  moderated_at?: string;
 }

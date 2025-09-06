@@ -89,6 +89,27 @@ export default function AdminDashboard() {
       color: 'orange',
       change: 'Active admins',
     },
+    {
+      title: 'Pending Posts',
+      value: stats?.pending_posts || 0,
+      icon: '⏳',
+      color: 'yellow',
+      change: 'Need review',
+    },
+    {
+      title: 'Pending Comments',
+      value: stats?.pending_comments || 0,
+      icon: '🔍',
+      color: 'red',
+      change: 'Need moderation',
+    },
+    {
+      title: 'Featured Posts',
+      value: stats?.featured_posts || 0,
+      icon: '⭐',
+      color: 'indigo',
+      change: 'Currently featured',
+    },
   ];
 
   const getCardColorClasses = (color: string) => {
@@ -101,6 +122,12 @@ export default function AdminDashboard() {
         return 'bg-purple-50 text-purple-600 border-purple-200';
       case 'orange':
         return 'bg-orange-50 text-orange-600 border-orange-200';
+      case 'yellow':
+        return 'bg-yellow-50 text-yellow-600 border-yellow-200';
+      case 'red':
+        return 'bg-red-50 text-red-600 border-red-200';
+      case 'indigo':
+        return 'bg-indigo-50 text-indigo-600 border-indigo-200';
       default:
         return 'bg-gray-50 text-gray-600 border-gray-200';
     }
@@ -120,7 +147,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {statCards.map((card) => (
           <div key={card.title} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div className="flex items-center justify-between">

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import func, and_, or_
 from app.database.connection import get_db
-from app.models.models import User, UserRole, BlogPost, Comment
+from app.models.models import User, UserRole, BlogPost, Comment, PostStatus, CommentStatus
 from app.schemas.schemas import User as UserSchema
 from app.admin.auth import require_admin_role, require_super_admin
 from typing import List, Optional, Dict, Any
@@ -34,6 +34,9 @@ class AdminStats(BaseModel):
     new_users_today: int
     new_posts_today: int
     new_comments_today: int
+    pending_posts: int = 0
+    pending_comments: int = 0
+    featured_posts: int = 0
 
 @router.get("/stats", response_model=AdminStats)
 async def get_admin_stats(
@@ -65,6 +68,17 @@ async def get_admin_stats(
         Comment.published >= today_start
     ).scalar()
     
+    # Get moderation queue counts
+    pending_posts = db.query(func.count(BlogPost.id)).filter(
+        BlogPost.status == PostStatus.PENDING
+    ).scalar() or 0
+    pending_comments = db.query(func.count(Comment.id)).filter(
+        Comment.status == CommentStatus.PENDING
+    ).scalar() or 0
+    featured_posts = db.query(func.count(BlogPost.id)).filter(
+        BlogPost.featured == True
+    ).scalar() or 0
+    
     return AdminStats(
         total_users=total_users or 0,
         total_posts=total_posts or 0,
@@ -72,7 +86,10 @@ async def get_admin_stats(
         admin_users=admin_users or 0,
         new_users_today=new_users_today or 0,
         new_posts_today=new_posts_today or 0,
-        new_comments_today=new_comments_today or 0
+        new_comments_today=new_comments_today or 0,
+        pending_posts=pending_posts,
+        pending_comments=pending_comments,
+        featured_posts=featured_posts
     )
 
 @router.get("/users", response_model=List[UserManagementResponse])

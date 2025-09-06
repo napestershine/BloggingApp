@@ -9,6 +9,19 @@ class UserRole(str, enum.Enum):
     ADMIN = "admin" 
     SUPER_ADMIN = "super_admin"
 
+class PostStatus(str, enum.Enum):
+    DRAFT = "draft"
+    PENDING = "pending"
+    PUBLISHED = "published"
+    REJECTED = "rejected"
+    SCHEDULED = "scheduled"
+
+class CommentStatus(str, enum.Enum):
+    PENDING = "pending"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+    SPAM = "spam"
+
 class User(Base):
     __tablename__ = "users"
     
@@ -41,8 +54,8 @@ class User(Base):
     notify_on_mentions = Column(Boolean, default=True)
     
     # Relationships
-    posts = relationship("BlogPost", back_populates="author")
-    comments = relationship("Comment", back_populates="author")
+    posts = relationship("BlogPost", back_populates="author", foreign_keys="BlogPost.author_id")
+    comments = relationship("Comment", back_populates="author", foreign_keys="Comment.author_id")
 
 class BlogPost(Base):
     __tablename__ = "blog_posts"
@@ -54,9 +67,23 @@ class BlogPost(Base):
     published = Column(DateTime(timezone=True), server_default=func.now())
     author_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     
+    # Moderation fields
+    status = Column(Enum(PostStatus), default=PostStatus.PUBLISHED, nullable=False)
+    moderated_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    moderated_at = Column(DateTime(timezone=True), nullable=True)
+    rejection_reason = Column(Text, nullable=True)
+    featured = Column(Boolean, default=False)
+    scheduled_publish = Column(DateTime(timezone=True), nullable=True)
+    
+    # SEO and analytics
+    views = Column(Integer, default=0)
+    tags = Column(Text, nullable=True)  # JSON string
+    meta_description = Column(Text, nullable=True)
+    
     # Relationships
-    author = relationship("User", back_populates="posts")
+    author = relationship("User", back_populates="posts", foreign_keys=[author_id])
     comments = relationship("Comment", back_populates="blog_post")
+    moderator = relationship("User", foreign_keys=[moderated_by])
 
 class Comment(Base):
     __tablename__ = "comments"
@@ -67,6 +94,13 @@ class Comment(Base):
     author_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     blog_post_id = Column(Integer, ForeignKey("blog_posts.id"), nullable=False)
     
+    # Moderation fields
+    status = Column(Enum(CommentStatus), default=CommentStatus.PENDING, nullable=False)
+    moderated_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    moderated_at = Column(DateTime(timezone=True), nullable=True)
+    is_spam = Column(Boolean, default=False)
+    
     # Relationships
-    author = relationship("User", back_populates="comments")
+    author = relationship("User", back_populates="comments", foreign_keys=[author_id])
     blog_post = relationship("BlogPost", back_populates="comments")
+    moderator = relationship("User", foreign_keys=[moderated_by])

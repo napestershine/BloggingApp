@@ -181,16 +181,8 @@ export const adminAPI = {
   },
 
   // User management
-  getUsers: async (
-    skip = 0, 
-    limit = 50, 
-    roleFilter?: UserRole, 
-    search?: string
-  ): Promise<UserManagementResponse[]> => {
-    let url = `/admin/users?skip=${skip}&limit=${limit}`;
-    if (roleFilter) url += `&role_filter=${roleFilter}`;
-    if (search) url += `&search=${encodeURIComponent(search)}`;
-    
+  getUsers: async (params?: string): Promise<UserManagementResponse[]> => {
+    const url = params ? `/admin/users?${params}` : '/admin/users';
     const response = await apiClient.get(url);
     return response.data;
   },
@@ -209,37 +201,38 @@ export const adminAPI = {
   },
 
   // Content moderation
-  getPosts: async (
-    skip = 0, 
-    limit = 50, 
-    authorId?: number, 
-    search?: string, 
-    days?: number
-  ): Promise<PostModerationResponse[]> => {
-    let url = `/admin/content/posts?skip=${skip}&limit=${limit}`;
-    if (authorId) url += `&author_id=${authorId}`;
-    if (search) url += `&search=${encodeURIComponent(search)}`;
-    if (days) url += `&days=${days}`;
-    
+  getPostsForModeration: async (params?: string): Promise<PostModerationResponse[]> => {
+    const url = params ? `/admin/content/posts?${params}` : '/admin/content/posts';
     const response = await apiClient.get(url);
     return response.data;
   },
 
-  getComments: async (
-    skip = 0, 
-    limit = 50, 
-    authorId?: number, 
-    postId?: number, 
-    search?: string, 
-    days?: number
-  ): Promise<CommentModerationResponse[]> => {
-    let url = `/admin/content/comments?skip=${skip}&limit=${limit}`;
-    if (authorId) url += `&author_id=${authorId}`;
-    if (postId) url += `&post_id=${postId}`;
-    if (search) url += `&search=${encodeURIComponent(search)}`;
-    if (days) url += `&days=${days}`;
-    
+  getCommentsForModeration: async (params?: string): Promise<CommentModerationResponse[]> => {
+    const url = params ? `/admin/content/comments?${params}` : '/admin/content/comments';
     const response = await apiClient.get(url);
+    return response.data;
+  },
+
+  getPendingPosts: async (): Promise<PostModerationResponse[]> => {
+    const response = await apiClient.get('/admin/content/posts/pending');
+    return response.data;
+  },
+
+  getPendingComments: async (): Promise<CommentModerationResponse[]> => {
+    const response = await apiClient.get('/admin/content/comments/pending');
+    return response.data;
+  },
+
+  updatePostStatus: async (postId: number, update: any): Promise<void> => {
+    await apiClient.put(`/admin/content/posts/${postId}/status`, update);
+  },
+
+  updateCommentStatus: async (commentId: number, update: any): Promise<void> => {
+    await apiClient.put(`/admin/content/comments/${commentId}/status`, update);
+  },
+
+  getContentAnalytics: async (days: number = 30): Promise<any> => {
+    const response = await apiClient.get(`/admin/content/analytics/content?days=${days}`);
     return response.data;
   },
 

@@ -2,10 +2,10 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import func, and_, or_, desc
 from app.database.connection import get_db
-from app.models.models import User, UserRole, BlogPost, Comment
+from app.models.models import User, UserRole, BlogPost, Comment, PostStatus, CommentStatus
 from app.admin.auth import require_admin_role
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, timedelta
 from pydantic import BaseModel
 from enum import Enum
 
@@ -27,7 +27,12 @@ class PostModerationResponse(BaseModel):
     author_username: str
     author_name: str
     total_comments: int
-    status: str = "published"
+    status: PostStatus
+    featured: bool = False
+    views: int = 0
+    moderator_name: Optional[str] = None
+    moderated_at: Optional[datetime] = None
+    rejection_reason: Optional[str] = None
 
 class CommentModerationResponse(BaseModel):
     id: int
@@ -38,11 +43,165 @@ class CommentModerationResponse(BaseModel):
     author_name: str
     blog_post_id: int
     blog_post_title: str
-    status: str = "published"
+    status: CommentStatus
+    is_spam: bool = False
+    moderator_name: Optional[str] = None
+    moderated_at: Optional[datetime] = None
 
 class ContentAction(BaseModel):
-    action: str  # "approve", "reject", "flag", "archive"
+    action: str  # "approve", "reject", "feature", "unfeature", "mark_spam"
     reason: Optional[str] = None
+
+class PostUpdateRequest(BaseModel):
+    status: Optional[PostStatus] = None
+    featured: Optional[bool] = None
+    rejection_reason: Optional[str] = None
+
+class CommentUpdateRequest(BaseModel):
+    status: Optional[CommentStatus] = None
+    is_spam: Optional[bool] = None
+
+@router.put("/posts/{post_id}/status")
+async def update_post_status(
+    post_id: int,
+    post_update: PostUpdateRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin_role())
+):
+    """
+    Update post status, featured status, etc.
+    """
+    post = db.query(BlogPost).filter(BlogPost.id == post_id).first()
+    if not post:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Post not found"
+        )
+    
+    if post_update.status:
+        post.status = post_update.status
+        post.moderated_by = current_user.id
+        post.moderated_at = datetime.now()
+        
+        if post_update.status == PostStatus.REJECTED and post_update.rejection_reason:
+            post.rejection_reason = post_update.rejection_reason
+    
+    if post_update.featured is not None:
+        post.featured = post_update.featured
+    
+    db.commit()
+    db.refresh(post)
+    
+    return {"message": f"Post status updated to {post.status.value}"}
+
+@router.put("/comments/{comment_id}/status")
+async def update_comment_status(
+    comment_id: int,
+    comment_update: CommentUpdateRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin_role())
+):
+    """
+    Update comment status (approve, reject, mark as spam)
+    """
+    comment = db.query(Comment).filter(Comment.id == comment_id).first()
+    if not comment:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Comment not found"
+        )
+    
+    if comment_update.status:
+        comment.status = comment_update.status
+        comment.moderated_by = current_user.id
+        comment.moderated_at = datetime.now()
+    
+    if comment_update.is_spam is not None:
+        comment.is_spam = comment_update.is_spam
+        if comment_update.is_spam:
+            comment.status = CommentStatus.SPAM
+    
+    db.commit()
+    db.refresh(comment)
+    
+    return {"message": f"Comment status updated to {comment.status.value}"}
+
+@router.get("/posts/pending", response_model=List[PostModerationResponse])
+async def get_pending_posts(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=100),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin_role())
+):
+    """
+    Get posts pending moderation
+    """
+    query = db.query(BlogPost).join(User, BlogPost.author_id == User.id).filter(
+        BlogPost.status == PostStatus.PENDING
+    )
+    
+    posts = query.order_by(desc(BlogPost.published)).offset(skip).limit(limit).all()
+    
+    result = []
+    for post in posts:
+        comment_count = db.query(func.count(Comment.id)).filter(
+            Comment.blog_post_id == post.id
+        ).scalar() or 0
+        
+        result.append(PostModerationResponse(
+            id=post.id,
+            title=post.title,
+            content=post.content[:500] + "..." if len(post.content) > 500 else post.content,
+            slug=post.slug,
+            published=post.published,
+            author_id=post.author_id,
+            author_username=post.author.username,
+            author_name=post.author.name,
+            total_comments=comment_count,
+            status=post.status,
+            featured=post.featured,
+            views=post.views,
+            moderator_name=post.moderator.name if post.moderator else None,
+            moderated_at=post.moderated_at,
+            rejection_reason=post.rejection_reason
+        ))
+    
+    return result
+
+@router.get("/comments/pending", response_model=List[CommentModerationResponse])
+async def get_pending_comments(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=100),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin_role())
+):
+    """
+    Get comments pending moderation
+    """
+    query = db.query(Comment).join(User, Comment.author_id == User.id).join(
+        BlogPost, Comment.blog_post_id == BlogPost.id
+    ).filter(Comment.status == CommentStatus.PENDING)
+    
+    comments = query.order_by(desc(Comment.published)).offset(skip).limit(limit).all()
+    
+    result = []
+    for comment in comments:
+        result.append(CommentModerationResponse(
+            id=comment.id,
+            content=comment.content[:200] + "..." if len(comment.content) > 200 else comment.content,
+            published=comment.published,
+            author_id=comment.author_id,
+            author_username=comment.author.username,
+            author_name=comment.author.name,
+            blog_post_id=comment.blog_post_id,
+            blog_post_title=comment.blog_post.title,
+            status=comment.status,
+            is_spam=comment.is_spam,
+            moderator_name=comment.moderator.name if comment.moderator else None,
+            moderated_at=comment.moderated_at
+        ))
+    
+    return result
 
 @router.get("/posts", response_model=List[PostModerationResponse])
 async def get_posts_for_moderation(
@@ -94,7 +253,13 @@ async def get_posts_for_moderation(
             author_id=post.author_id,
             author_username=post.author.username,
             author_name=post.author.name,
-            total_comments=comment_count
+            total_comments=comment_count,
+            status=post.status,
+            featured=post.featured,
+            views=post.views,
+            moderator_name=post.moderator.name if post.moderator else None,
+            moderated_at=post.moderated_at,
+            rejection_reason=post.rejection_reason
         ))
     
     return result
@@ -145,7 +310,11 @@ async def get_comments_for_moderation(
             author_username=comment.author.username,
             author_name=comment.author.name,
             blog_post_id=comment.blog_post_id,
-            blog_post_title=comment.blog_post.title
+            blog_post_title=comment.blog_post.title,
+            status=comment.status,
+            is_spam=comment.is_spam,
+            moderator_name=comment.moderator.name if comment.moderator else None,
+            moderated_at=comment.moderated_at
         ))
     
     return result
