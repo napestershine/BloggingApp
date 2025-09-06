@@ -118,7 +118,6 @@ def get_search_suggestions(
 ):
     """
     Get search suggestions based on partial query
-    
     Returns suggestions from:
     - Blog post titles
     - Category names
@@ -183,6 +182,7 @@ def get_search_suggestions(
     # Limit total suggestions and prioritize by type
     # (titles first, then categories, tags, authors)
     return suggestions[:limit]
+
 
 @router.get("/filters")
 def get_search_filters(db: Session = Depends(get_db)):

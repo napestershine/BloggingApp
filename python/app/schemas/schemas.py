@@ -1,9 +1,10 @@
 from pydantic import BaseModel, EmailStr
 from datetime import datetime
+from app.models.models import UserRole, PostStatus, CommentStatus
 from typing import Optional, List, Dict
 from enum import Enum
 
-# Reaction types enum for API
+# --- Enum definitions ---
 class ReactionTypeEnum(str, Enum):
     LIKE = "like"
     LOVE = "love"
@@ -12,7 +13,6 @@ class ReactionTypeEnum(str, Enum):
     SAD = "sad"
     ANGRY = "angry"
 
-# Sharing platforms enum for API
 class SharingPlatformEnum(str, Enum):
     TWITTER = "twitter"
     FACEBOOK = "facebook"
@@ -26,7 +26,7 @@ class PostStatus(str, Enum):
     DRAFT = "DRAFT"
     PUBLISHED = "PUBLISHED"
 
-# User schemas
+# --- User schemas ---
 class UserBase(BaseModel):
     username: str
     email: EmailStr
@@ -43,6 +43,7 @@ class UserUpdate(BaseModel):
 
 class UserInDB(UserBase):
     id: int
+    role: UserRole
     created_at: datetime
     
     class Config:
@@ -51,7 +52,73 @@ class UserInDB(UserBase):
 class User(UserInDB):
     pass
 
-# BlogPost schemas  
+class UserProfile(BaseModel):
+    id: int
+    username: str
+    name: str
+    email: EmailStr
+    bio: Optional[str] = None
+    avatar_url: Optional[str] = None
+    social_links: Optional[dict] = None
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+class UserProfileUpdate(BaseModel):
+    name: Optional[str] = None
+    bio: Optional[str] = None
+    social_links: Optional[dict] = None
+
+# --- Category and Tag schemas ---
+class CategoryBase(BaseModel):
+    name: str
+    description: Optional[str] = None
+    slug: Optional[str] = None
+
+class CategoryCreate(CategoryBase):
+    pass
+
+class CategoryUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    slug: Optional[str] = None
+
+class CategoryInDB(CategoryBase):
+    id: int
+    slug: str
+    created_at: datetime
+    created_by: int
+    
+    class Config:
+        from_attributes = True
+
+class Category(CategoryInDB):
+    creator: User
+
+class TagBase(BaseModel):
+    name: str
+    description: Optional[str] = None
+
+class TagCreate(TagBase):
+    pass
+
+class TagUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+
+class TagInDB(TagBase):
+    id: int
+    created_at: datetime
+    creator_id: int
+    
+    class Config:
+        from_attributes = True
+
+class Tag(TagInDB):
+    creator: User
+
+# --- BlogPost schemas ---
 class BlogPostBase(BaseModel):
     title: str
     content: str
@@ -59,19 +126,41 @@ class BlogPostBase(BaseModel):
     status: Optional[PostStatus] = PostStatus.DRAFT
 
 class BlogPostCreate(BlogPostBase):
-    pass
+    meta_title: Optional[str] = None
+    meta_description: Optional[str] = None
+    og_title: Optional[str] = None
+    og_description: Optional[str] = None
+    og_image: Optional[str] = None
+    tag_ids: Optional[List[int]] = None
+    category_ids: Optional[List[int]] = None
 
 class BlogPostUpdate(BaseModel):
     title: Optional[str] = None
     content: Optional[str] = None
     slug: Optional[str] = None
     status: Optional[PostStatus] = None
+    meta_title: Optional[str] = None
+    meta_description: Optional[str] = None
+    og_title: Optional[str] = None
+    og_description: Optional[str] = None
+    og_image: Optional[str] = None
+    tag_ids: Optional[List[int]] = None
+    category_ids: Optional[List[int]] = None
 
 class BlogPostInDB(BlogPostBase):
     id: int
     published: datetime
     last_modified: datetime
     author_id: int
+    view_count: int = 0
+    updated_at: Optional[datetime] = None
+    meta_title: Optional[str] = None
+    meta_description: Optional[str] = None
+    og_title: Optional[str] = None
+    og_description: Optional[str] = None
+    og_image: Optional[str] = None
+    tags: Optional[str] = None
+    category: Optional[str] = None
     
     class Config:
         from_attributes = True
@@ -85,13 +174,13 @@ class BlogPost(BlogPostInDB):
     categories: List["Category"] = []
     tags: List["Tag"] = []
 
-# Comment schemas
+# --- Comment schemas ---
 class CommentBase(BaseModel):
     content: str
 
 class CommentCreate(CommentBase):
     blog_post_id: int
-    parent_id: Optional[int] = None  # For threaded comments
+    parent_id: Optional[int] = None
 
 class CommentUpdate(BaseModel):
     content: Optional[str] = None
@@ -117,7 +206,7 @@ class Comment(CommentInDB):
     reactions_by_type: Optional[Dict[str, int]] = {}
     user_reaction: Optional[ReactionTypeEnum] = None
 
-# Comment reaction schemas
+# --- Other schemas ---
 class CommentReactionCreate(BaseModel):
     reaction_type: ReactionTypeEnum = ReactionTypeEnum.LIKE
 
@@ -137,12 +226,10 @@ class CommentReactionsSummary(BaseModel):
     reactions_by_type: Dict[str, int]
     user_reaction: Optional[ReactionTypeEnum] = None
 
-# Comment moderation schemas
 class CommentModerationAction(BaseModel):
-    action: str  # "approve", "hide", "delete"
+    action: str
     reason: Optional[str] = None
 
-# Post sharing schemas
 class PostShareCreate(BaseModel):
     platform: SharingPlatformEnum
 
@@ -168,67 +255,16 @@ class PostReactionsSummary(BaseModel):
     reactions_by_type: Dict[str, int]
     user_reaction: Optional[ReactionTypeEnum] = None
 
-
-# Category schemas
-class CategoryBase(BaseModel):
-    name: str
-    description: Optional[str] = None
-    slug: Optional[str] = None
-
-class CategoryCreate(CategoryBase):
-    pass
-
-class CategoryUpdate(BaseModel):
-    name: Optional[str] = None
-    description: Optional[str] = None
-    slug: Optional[str] = None
-
-class CategoryInDB(CategoryBase):
-    id: int
-    slug: str
-    created_at: datetime
-    created_by: int
-    
-    class Config:
-        from_attributes = True
-
-class Category(CategoryInDB):
-    creator: User
-
-# Tag schemas  
-class TagBase(BaseModel):
-    name: str
-
-class TagCreate(TagBase):
-    pass
-
-class TagInDB(TagBase):
-    id: int
-    created_at: datetime
-    created_by: int
-    
-    class Config:
-        from_attributes = True
-
-class Tag(TagInDB):
-    creator: User
-
-# Blog post tag/category management schemas
 class BlogPostTagsUpdate(BaseModel):
     tag_ids: List[int]
 
 class BlogPostCategoriesUpdate(BaseModel):
     category_ids: List[int]
 
-# Draft management schemas
 class DraftAutoSave(BaseModel):
     title: Optional[str] = None
     content: Optional[str] = None
 
-# Update forward references after all classes are defined
-BlogPost.model_rebuild()
-Comment.model_rebuild()
-# Token schemas
 class Token(BaseModel):
     access_token: str
     token_type: str
@@ -236,14 +272,12 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     username: Optional[str] = None
 
-# Email verification schemas
 class EmailVerificationRequest(BaseModel):
     email: EmailStr
 
 class EmailVerificationConfirm(BaseModel):
     token: str
 
-# Password reset schemas
 class PasswordResetRequest(BaseModel):
     email: EmailStr
 
@@ -251,26 +285,6 @@ class PasswordResetConfirm(BaseModel):
     token: str
     new_password: str
 
-# User profile schemas
-class UserProfile(BaseModel):
-    id: int
-    username: str
-    name: str
-    email: EmailStr
-    bio: Optional[str] = None
-    avatar_url: Optional[str] = None
-    social_links: Optional[dict] = None
-    created_at: datetime
-    
-    class Config:
-        from_attributes = True
-
-class UserProfileUpdate(BaseModel):
-    name: Optional[str] = None
-    bio: Optional[str] = None
-    social_links: Optional[dict] = None
-
-# WhatsApp notification schemas
 class WhatsAppSettings(BaseModel):
     whatsapp_number: Optional[str] = None
     whatsapp_notifications_enabled: bool = False
@@ -285,7 +299,54 @@ class WhatsAppSettingsUpdate(BaseModel):
     notify_on_comments: Optional[bool] = None
     notify_on_mentions: Optional[bool] = None
 
-# Media schemas  
+class SEOData(BaseModel):
+    meta_title: Optional[str] = None
+    meta_description: Optional[str] = None
+    og_title: Optional[str] = None
+    og_description: Optional[str] = None
+    og_image: Optional[str] = None
+
+class SEOPreview(BaseModel):
+    title: str
+    description: str
+    url: str
+    image: Optional[str] = None
+
+class SearchQuery(BaseModel):
+    q: str
+    category: Optional[str] = None
+    tags: Optional[List[str]] = None
+    author: Optional[str] = None
+    sort_by: Optional[str] = "relevance"
+    limit: int = 10
+    offset: int = 0
+
+class SearchResult(BaseModel):
+    posts: List[BlogPost]
+    total: int
+    suggestions: List[str] = []
+
+class SearchSuggestion(BaseModel):
+    query: str
+    suggestions: List[str]
+
+class SlugValidation(BaseModel):
+    slug: str
+    is_available: bool
+    suggestions: List[str] = []
+
+class SlugSuggestion(BaseModel):
+    title: str
+    suggestions: List[str]
+
+class TrendingPost(BaseModel):
+    post: BlogPost
+    score: float
+
+class RelatedPost(BaseModel):
+    post: BlogPost
+    similarity_score: float
+
 class MediaBase(BaseModel):
     filename: str
     original_filename: str
@@ -307,7 +368,6 @@ class MediaInDB(MediaBase):
 class Media(MediaInDB):
     uploader: User
 
-# Post Like schemas
 class PostLikeCreate(BaseModel):
     reaction_type: ReactionTypeEnum = ReactionTypeEnum.LIKE
 
@@ -320,62 +380,6 @@ class PostLike(BaseModel):
     
     class Config:
         from_attributes = True
-
-# Category schemas
-class CategoryBase(BaseModel):
-    name: str
-    description: Optional[str] = None
-    slug: Optional[str] = None
-
-class CategoryCreate(CategoryBase):
-    pass
-
-class CategoryUpdate(BaseModel):
-    name: Optional[str] = None
-    description: Optional[str] = None
-    slug: Optional[str] = None
-
-class CategoryInDB(CategoryBase):
-    id: int
-    slug: str
-    created_at: datetime
-    created_by: int
-    
-    class Config:
-        from_attributes = True
-
-class Category(CategoryInDB):
-    creator: User
-
-# Tag schemas  
-class TagBase(BaseModel):
-    name: str
-
-class TagCreate(TagBase):
-    pass
-
-class TagInDB(TagBase):
-    id: int
-    created_at: datetime
-    created_by: int
-    
-    class Config:
-        from_attributes = True
-
-class Tag(TagInDB):
-    creator: User
-
-# Blog post tag/category management schemas
-class BlogPostTagsUpdate(BaseModel):
-    tag_ids: List[int]
-
-class BlogPostCategoriesUpdate(BaseModel):
-    category_ids: List[int]
-
-# Draft management schemas
-class DraftAutoSave(BaseModel):
-    title: Optional[str] = None
-    content: Optional[str] = None
 
 # Update forward references after all classes are defined
 BlogPost.model_rebuild()

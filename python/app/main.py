@@ -58,7 +58,7 @@ app.add_exception_handler(RequestValidationError, validation_exception_handler)
 app.add_exception_handler(SQLAlchemyError, database_exception_handler)
 app.add_exception_handler(Exception, general_exception_handler)
 
-# Include routers - original routers
+# Include routers
 app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(blog_posts.router)
@@ -87,9 +87,24 @@ app.include_router(notifications.router)
 app.include_router(notification_system.router)
 app.include_router(bookmarks.router)
 
+# Import and include admin routers
+from app.admin import users as admin_users, content as admin_content
+app.include_router(admin_users.router)
+app.include_router(admin_content.router)
+
+# Include new SEO & Discovery routers
+app.include_router(search.router, prefix="/api")
+app.include_router(seo.router, prefix="/api")
+app.include_router(sitemap.router, prefix="/api")
+app.include_router(slugs.router, prefix="/api")
+app.include_router(recommendations.router, prefix="/api")
+app.include_router(feed.router, prefix="/api")
+app.include_router(rss.router, prefix="/api")
+
+
 @app.get("/")
 def read_root():
-    return {"message": "Welcome to the Blog API"}
+    return {"message": "Welcome to the Blog API", "status": "healthy", "version": "1.0.0"}
 
 @app.get("/health", response_model=HealthCheckResponse)
 def health_check():

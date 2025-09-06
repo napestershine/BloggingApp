@@ -35,6 +35,8 @@ def get_blog_posts(
     # If no status filter specified, only show published posts
     if status_filter is None:
         query = query.filter(BlogPost.status == PostStatus.PUBLISHED)
+    elif status_filter.upper() in ["DRAFT", "PUBLISHED"]:
+        query = query.filter(BlogPost.status == PostStatus(status_filter.upper()))
     else:
         # Convert string to enum
         try:
@@ -73,13 +75,40 @@ async def create_blog_post(
         content=post.content,
         slug=slug,
         status=post.status or PostStatus.DRAFT,
-        author_id=current_user.id
+        author_id=current_user.id,
+        # SEO fields
+        meta_title=post.meta_title,
+        meta_description=post.meta_description,
+        og_title=post.og_title,
+        og_description=post.og_description,
+        og_image=post.og_image,
+        tags=post.tags,
+        category=post.category
     )
     
     db.add(db_post)
     db.commit()
     db.refresh(db_post)
-    
+
+    # Send WhatsApp notifications to followers (for now, we'll skip this as we don't have a follower system yet)
+    # Only send for published posts
+    # In the future, this would notify users who follow this author
+    try:
+        # For demonstration, we could notify the author themselves about their post
+        if (current_user.whatsapp_notifications_enabled and 
+            current_user.whatsapp_number and 
+            current_user.notify_on_new_posts):
+            
+            asyncio.create_task(
+                whatsapp_service.notify_new_blog_post(
+                    current_user.name,
+                    post.title,
+                    current_user.whatsapp_number
+                )
+            )
+    except Exception as e:
+        logger.error(f"Failed to send notification: {str(e)}")
+
     # Send WhatsApp notifications to followers only for published posts
     if db_post.status == PostStatus.PUBLISHED:
         try:
@@ -121,6 +150,11 @@ def get_blog_post(post_id: int, db: Session = Depends(get_db)):
     post = db.query(BlogPost).filter(BlogPost.id == post_id).first()
     if not post:
         raise HTTPException(status_code=404, detail="Blog post not found")
+    
+    # Increment view count
+    post.view_count = (post.view_count or 0) + 1
+    db.commit()
+    
     return post
 
 @router.put("/{post_id}", response_model=BlogPostSchema)
@@ -160,6 +194,22 @@ def update_blog_post(
                 detail="Slug already exists"
             )
         post.slug = post_update.slug
+    
+    # Update SEO fields
+    if post_update.meta_title is not None:
+        post.meta_title = post_update.meta_title
+    if post_update.meta_description is not None:
+        post.meta_description = post_update.meta_description
+    if post_update.og_title is not None:
+        post.og_title = post_update.og_title
+    if post_update.og_description is not None:
+        post.og_description = post_update.og_description
+    if post_update.og_image is not None:
+        post.og_image = post_update.og_image
+    if post_update.tags is not None:
+        post.tags = post_update.tags
+    if post_update.category is not None:
+        post.category = post_update.category
     
     db.commit()
     db.refresh(post)

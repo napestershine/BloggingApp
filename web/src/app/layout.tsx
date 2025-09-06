@@ -56,31 +56,29 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="font-sans" suppressHydrationWarning> {/* Using system fonts instead of Inter */}
-        <ThemeProvider>
-          <AuthProvider>
-            {children}
-            <Toaster
-              position="top-right"
-              toastOptions={{
-                duration: 4000,
-                style: {
-                  background: 'var(--toast-bg, #363636)',
-                  color: 'var(--toast-color, #fff)',
-                  borderRadius: '8px',
-                },
-                success: {
-                  duration: 3000,
-                  iconTheme: {
-                    primary: 'var(--success-color, #4ade80)',
-                    secondary: 'var(--success-text, #fff)',
+      <body className="font-sans">
+        <AuthProvider>
+          {children}
+          <Toaster
+            position="top-right"
+            toastOptions={{
+              duration: 4000,
+              style: {
+                background: '#363636',
+                color: '#fff',
+              },
+              success: {
+                duration: 3000,
+                iconTheme: {
+                  primary: '#4ade80',
+                  secondary: '#fff',
                   },
                 },
                 error: {
                   duration: 5000,
                   iconTheme: {
-                    primary: 'var(--error-color, #ef4444)',
-                    secondary: 'var(--error-text, #fff)',
+                    primary: '#ef4444',
+                    secondary: '#fff',
                   },
                 },
               }}
