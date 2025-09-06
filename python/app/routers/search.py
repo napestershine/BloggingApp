@@ -7,15 +7,24 @@ from app.models.models import BlogPost, User, Tag, Category, PostStatus
 from app.schemas.schemas import (
     BlogPost as BlogPostSchema,
     SearchResult,
-    SearchSuggestion
+    SearchSuggestion,
+    SearchQuery
 )
+# Try to import from service first, fallback to direct implementation
+try:
+    from app.services.search_service import SearchService
+    search_service = SearchService()
+    USE_SERVICE = True
+except ImportError:
+    USE_SERVICE = False
+    
 import logging
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/search", tags=["search"])
 
-@router.get("/", response_model=List[BlogPostSchema])
+@router.get("/", response_model=SearchResult if USE_SERVICE else List[BlogPostSchema])
 def search_posts(
     q: str = Query(..., min_length=1, description="Search query"),
     category: Optional[str] = Query(None, description="Filter by category"),
@@ -23,6 +32,7 @@ def search_posts(
     author: Optional[str] = Query(None, description="Filter by author username"),
     skip: int = Query(0, ge=0, description="Number of posts to skip"),
     limit: int = Query(20, ge=1, le=100, description="Number of posts to return"),
+    sort_by: str = Query("relevance", description="Sort by: relevance, date, views, updated"),
     db: Session = Depends(get_db)
 ):
     """
@@ -34,55 +44,71 @@ def search_posts(
     - **author**: Filter by author username
     - **skip**: Pagination offset
     - **limit**: Number of results per page
+    - **sort_by**: Sort by relevance, date, views, or updated
     """
     
-    # Start with base query for published posts
-    query = db.query(BlogPost).filter(BlogPost.status == PostStatus.PUBLISHED)
-    
-    # Search in title and content
-    search_terms = q.strip().split()
-    if search_terms:
-        search_conditions = []
-        for term in search_terms:
-            search_pattern = f"%{term}%"
-            search_conditions.append(
+    if USE_SERVICE:
+        # Use the service-based approach
+        tags = [tag] if tag else []
+        search_query = SearchQuery(
+            q=q,
+            category=category,
+            tags=tags,
+            author=author,
+            sort_by=sort_by,
+            limit=limit,
+            offset=skip
+        )
+        return search_service.search_posts(db, search_query)
+    else:
+        # Fallback to direct implementation
+        # Start with base query for published posts
+        query = db.query(BlogPost).filter(BlogPost.status == PostStatus.PUBLISHED)
+        
+        # Search in title and content
+        search_terms = q.strip().split()
+        if search_terms:
+            search_conditions = []
+            for term in search_terms:
+                search_pattern = f"%{term}%"
+                search_conditions.append(
+                    or_(
+                        BlogPost.title.ilike(search_pattern),
+                        BlogPost.content.ilike(search_pattern)
+                    )
+                )
+            # All terms should match (AND logic)
+            query = query.filter(and_(*search_conditions))
+        
+        # Filter by category if specified
+        if category:
+            query = query.join(BlogPost.categories).filter(
                 or_(
-                    BlogPost.title.ilike(search_pattern),
-                    BlogPost.content.ilike(search_pattern)
+                    Category.name.ilike(f"%{category}%"),
+                    Category.slug.ilike(f"%{category}%")
                 )
             )
-        # All terms should match (AND logic)
-        query = query.filter(and_(*search_conditions))
-    
-    # Filter by category if specified
-    if category:
-        query = query.join(BlogPost.categories).filter(
-            or_(
-                Category.name.ilike(f"%{category}%"),
-                Category.slug.ilike(f"%{category}%")
+        
+        # Filter by tag if specified  
+        if tag:
+            query = query.join(BlogPost.tags).filter(
+                Tag.name.ilike(f"%{tag}%")
             )
-        )
-    
-    # Filter by tag if specified  
-    if tag:
-        query = query.join(BlogPost.tags).filter(
-            Tag.name.ilike(f"%{tag}%")
-        )
-    
-    # Filter by author if specified
-    if author:
-        query = query.join(BlogPost.author).filter(
-            User.username.ilike(f"%{author}%")
-        )
-    
-    # Order by relevance (title matches first, then by date)
-    # Simple ordering by published date for now
-    query = query.order_by(BlogPost.published.desc())
-    
-    # Apply pagination
-    posts = query.offset(skip).limit(limit).all()
-    
-    return posts
+        
+        # Filter by author if specified
+        if author:
+            query = query.join(BlogPost.author).filter(
+                User.username.ilike(f"%{author}%")
+            )
+        
+        # Order by relevance (title matches first, then by date)
+        # Simple ordering by published date for now
+        query = query.order_by(BlogPost.published.desc())
+        
+        # Apply pagination
+        posts = query.offset(skip).limit(limit).all()
+        
+        return posts
 
 @router.get("/suggestions")
 def get_search_suggestions(

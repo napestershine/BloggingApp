@@ -1,3 +1,24 @@
+export enum PostStatus {
+  DRAFT = "draft",
+  PENDING = "pending", 
+  PUBLISHED = "published",
+  REJECTED = "rejected",
+  SCHEDULED = "scheduled"
+}
+
+export enum CommentStatus {
+  PENDING = "pending",
+  APPROVED = "approved",
+  REJECTED = "rejected",
+  SPAM = "spam"
+}
+
+export enum UserRole {
+  USER = "user",
+  ADMIN = "admin",
+  SUPER_ADMIN = "super_admin"
+}
+
 // TypeScript interfaces matching the FastAPI backend models
 export interface BlogPost {
   id: number;
@@ -13,6 +34,8 @@ export interface User {
   id: number;
   username: string;
   email: string;
+  name: string;
+  role: UserRole;
   created_at: string;
 }
 
@@ -41,6 +64,30 @@ export interface PaginatedResponse<T> {
   page: number;
   size: number;
   pages: number;
+}
+
+// Admin interfaces
+export interface AdminStats {
+  total_users: number;
+  total_posts: number;
+  total_comments: number;
+  pending_posts: number;
+  pending_comments: number;
+}
+
+export interface UserManagementResponse {
+  users: User[];
+  total: number;
+}
+
+export interface PostModerationResponse {
+  posts: BlogPost[];
+  total: number;
+}
+
+export interface CommentModerationResponse {
+  comments: Comment[];
+  total: number;
 }
 
 // Search interfaces
