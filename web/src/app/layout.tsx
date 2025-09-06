@@ -57,35 +57,36 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="font-sans">
-        <AuthProvider>
-          {children}
-          <Toaster
-            position="top-right"
-            toastOptions={{
-              duration: 4000,
-              style: {
-                background: '#363636',
-                color: '#fff',
-              },
-              success: {
-                duration: 3000,
-                iconTheme: {
-                  primary: '#4ade80',
-                  secondary: '#fff',
-                  },
+        <ThemeProvider>
+          <AuthProvider>
+            {children}
+            <Toaster
+              position="top-right"
+              toastOptions={{
+                duration: 4000,
+                style: {
+                  background: '#363636',
+                  color: '#fff',
                 },
-                error: {
-                  duration: 5000,
+                success: {
+                  duration: 3000,
                   iconTheme: {
-                    primary: '#ef4444',
+                    primary: '#4ade80',
                     secondary: '#fff',
+                    },
                   },
-                },
-              }}
-            />
-          </AuthProvider>
-        </ThemeProvider>
-      </body>
-    </html>
-  );
-}
+                  error: {
+                    duration: 5000,
+                    iconTheme: {
+                      primary: '#ef4444',
+                      secondary: '#fff',
+                    },
+                  },
+                }}
+              />
+            </AuthProvider>
+          </ThemeProvider>
+        </body>
+      </html>
+    );
+  }
