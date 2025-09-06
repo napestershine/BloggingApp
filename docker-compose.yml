@@ -8,10 +8,16 @@ services:
     environment:
       - DATABASE_URL=sqlite:///./blog.db
       - SECRET_KEY=your-secret-key-here-change-in-production
-      - CORS_ORIGINS=http://localhost:3000
+      - CORS_ORIGINS=http://localhost:3000,http://web:3000
     volumes:
       - ./python:/app
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     networks:
       - blogging-network
 
@@ -25,10 +31,12 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=production
-      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
+      - API_INTERNAL_URL=http://api:8000
       - NEXT_PUBLIC_SITE_URL=http://localhost:3000
     depends_on:
-      - api
+      api:
+        condition: service_healthy
     networks:
       - blogging-network
 

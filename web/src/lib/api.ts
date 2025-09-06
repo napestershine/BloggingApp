@@ -22,7 +22,18 @@ import {
   BookmarkStats
 } from '@/types';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+// Get the appropriate API base URL based on environment
+const getApiBaseUrl = (): string => {
+  // If we're in a browser context, use the public API URL
+  if (typeof window !== 'undefined') {
+    return process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+  }
+  
+  // If we're in server-side context (SSR, API routes), use internal URL if available
+  return process.env.API_INTERNAL_URL || process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 // Create axios instance with default configuration
 const apiClient = axios.create({
