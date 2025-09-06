@@ -1,12 +1,15 @@
 # app/core/config.py
+from functools import lru_cache
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import Field, SecretStr, field_validator
+from pydantic import Field, SecretStr
 from typing import Optional
 
 class Settings(BaseSettings):
     # Core
-    database_url: SecretStr = Field(..., alias="DATABASE_URL")  # SecretStr masks value in repr/logs
-    secret_key: SecretStr = Field("your-secret-key-here", alias="SECRET_KEY")
+    testing: bool = False
+    database_url: str | None = None
+    secret_key: str = "test-secret"
+    jwt_alg: str = "HS256"
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
 
@@ -34,10 +37,17 @@ class Settings(BaseSettings):
 
     # Settings behavior
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=(".env", ".env.test"),
         env_file_encoding="utf-8",
-        case_sensitive=True,   # EMAIL_HOST or email_host both work (if you add those later)
+        case_sensitive=False,
         extra="ignore",         # ✨ prevents “Extra inputs are not permitted … value='XYZ'” logs
     )
 
-settings = Settings()
+@lru_cache
+def get_settings() -> Settings:
+    s = Settings()
+    if s.testing and not s.database_url:
+        s.database_url = "sqlite+aiosqlite:///./test.db"
+    if not s.database_url:
+        raise ValueError("DATABASE_URL required")
+    return s
