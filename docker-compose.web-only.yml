@@ -1,0 +1,16 @@
+# Simple docker-compose for frontend only testing
+# Run: docker compose -f docker-compose.web-only.yml up
+
+services:
+  # Next.js Frontend Only
+  web:
+    build: 
+      context: ./web
+      dockerfile: Dockerfile
+    container_name: blogging-app-web-only
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - NEXT_PUBLIC_SITE_URL=http://localhost:3000
