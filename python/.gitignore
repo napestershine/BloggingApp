@@ -24,7 +24,7 @@ wheels/
 *.db
 *.sqlite
 *.sqlite3
-blog.db
+
 
 # Environment
 .env

@@ -12,11 +12,11 @@ jobs:
 
     services:
       postgres:
-        image: postgres:15
+        image: postgres:17
         env:
           POSTGRES_PASSWORD: postgres
           POSTGRES_USER: postgres
-          POSTGRES_DB: blog_test
+          POSTGRES_DB: blog
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -31,7 +31,7 @@ jobs:
     - name: Setup Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.11'
+        python-version: '3.13'
 
     - name: Cache pip packages
       uses: actions/cache@v3
@@ -47,4 +47,4 @@ jobs:
     - name: Run Python tests
       run: cd python && python -m pytest app/tests/ -v
       env:
-        TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/blog_test
+        TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/blog

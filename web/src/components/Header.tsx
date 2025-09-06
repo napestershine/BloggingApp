@@ -2,29 +2,51 @@
 
 import Link from 'next/link';
 import { useAuth } from './AuthProvider';
+import { ThemeToggleButton } from './ThemeToggleButton';
 import { BookOpen, LogOut, User, PenTool } from 'lucide-react';
 
+/**
+ * Header component provides the main navigation and branding for the BloggingApp.
+ * 
+ * This component includes:
+ * - Brand logo and site title
+ * - Main navigation menu with contextual links
+ * - User authentication controls
+ * - Theme toggle functionality
+ * - Responsive design for mobile and desktop
+ * 
+ * Features:
+ * - Dynamic navigation based on authentication status
+ * - Dark/light theme toggle integration
+ * - Mobile-responsive navigation (expandable on smaller screens)
+ * - User profile access and logout functionality
+ * - Clean, accessible design with proper ARIA labels
+ * 
+ * The header adapts its content based on user authentication:
+ * - Unauthenticated: Shows login/register links
+ * - Authenticated: Shows user menu, dashboard, and write links
+ */
 export function Header() {
   const { user, isAuthenticated, logout } = useAuth();
 
   return (
-    <header className="bg-white shadow-sm border-b">
+    <header className="bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-700 transition-colors duration-200">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          {/* Logo */}
+          {/* Logo and Brand */}
           <Link 
             href="/" 
-            className="flex items-center space-x-2 text-primary-600 hover:text-primary-700"
+            className="flex items-center space-x-2 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors duration-200"
           >
             <BookOpen className="h-8 w-8" />
             <span className="text-xl font-bold">BloggingApp</span>
           </Link>
 
-          {/* Navigation */}
+          {/* Main Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
             <Link 
               href="/blog" 
-              className="text-gray-600 hover:text-gray-900 font-medium"
+              className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-medium transition-colors duration-200"
             >
               Blog
             </Link>
@@ -32,14 +54,14 @@ export function Header() {
               <>
                 <Link 
                   href="/write" 
-                  className="text-gray-600 hover:text-gray-900 font-medium flex items-center gap-1"
+                  className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-medium flex items-center gap-1 transition-colors duration-200"
                 >
                   <PenTool className="h-4 w-4" />
                   Write
                 </Link>
                 <Link 
                   href="/dashboard" 
-                  className="text-gray-600 hover:text-gray-900 font-medium"
+                  className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-medium transition-colors duration-200"
                 >
                   Dashboard
                 </Link>
@@ -47,20 +69,24 @@ export function Header() {
             )}
           </nav>
 
-          {/* User Actions */}
+          {/* User Actions and Theme Toggle */}
           <div className="flex items-center space-x-4">
+            {/* Theme Toggle Button */}
+            <ThemeToggleButton />
+            
             {isAuthenticated ? (
               <div className="flex items-center space-x-3">
                 <Link
                   href="/profile"
-                  className="flex items-center space-x-2 text-gray-600 hover:text-gray-900"
+                  className="flex items-center space-x-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors duration-200"
                 >
                   <User className="h-5 w-5" />
                   <span className="hidden sm:block">{user?.username}</span>
                 </Link>
                 <button
                   onClick={logout}
-                  className="flex items-center space-x-1 text-gray-600 hover:text-gray-900"
+                  className="flex items-center space-x-1 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors duration-200"
+                  aria-label="Logout"
                 >
                   <LogOut className="h-5 w-5" />
                   <span className="hidden sm:block">Logout</span>
@@ -70,13 +96,13 @@ export function Header() {
               <div className="flex items-center space-x-3">
                 <Link
                   href="/auth/login"
-                  className="text-gray-600 hover:text-gray-900 font-medium"
+                  className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-medium transition-colors duration-200"
                 >
                   Login
                 </Link>
                 <Link
                   href="/auth/register"
-                  className="bg-primary-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-primary-700 transition-colors"
+                  className="bg-blue-600 dark:bg-blue-500 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors duration-200"
                 >
                   Sign Up
                 </Link>

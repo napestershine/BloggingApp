@@ -26,7 +26,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     else:
         expire = datetime.utcnow() + timedelta(minutes=15)
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, settings.secret_key, algorithm=settings.algorithm)
+    encoded_jwt = jwt.encode(to_encode, settings.secret_key.get_secret_value(), algorithm=settings.algorithm)
     return encoded_jwt
 
 def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
@@ -36,7 +36,7 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        payload = jwt.decode(credentials.credentials, settings.secret_key, algorithms=[settings.algorithm])
+        payload = jwt.decode(credentials.credentials, settings.secret_key.get_secret_value(), algorithms=[settings.algorithm])
         username: str = payload.get("sub")
         if username is None:
             raise credentials_exception
@@ -54,3 +54,19 @@ def get_current_user(token_data: TokenData = Depends(verify_token), db: Session 
             headers={"WWW-Authenticate": "Bearer"},
         )
     return user
+
+def get_current_user_optional(credentials: Optional[HTTPAuthorizationCredentials] = Depends(HTTPBearer(auto_error=False)), db: Session = Depends(get_db)):
+    """Get current user if authenticated, otherwise return None"""
+    if not credentials:
+        return None
+    
+    try:
+        payload = jwt.decode(credentials.credentials, settings.secret_key.get_secret_value(), algorithms=[settings.algorithm])
+        username: str = payload.get("sub")
+        if username is None:
+            return None
+        
+        user = db.query(User).filter(User.username == username).first()
+        return user
+    except JWTError:
+        return None

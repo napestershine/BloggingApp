@@ -33,18 +33,20 @@
 
 ## Task 4: Dark Mode Support
 - **Priority**: P2
-- **Status**: ❌ TODO
+- **Status**: ✅ COMPLETE
 - **Description**: Add dark/light theme toggle with system preference detection
 - **FastAPI Requirements**: None (client-side only)
-- **Flutter Integration**: Theme provider, shared preferences, system detection
+- **Flutter Integration**: ✅ Theme provider, shared preferences, system detection (implemented)
+- **NextJS Integration**: ✅ Theme provider with localStorage persistence and system detection (implemented)
 - **Estimated Time**: 4 hours (Flutter only)
 
 ## Task 5: Enhanced Error Handling
 - **Priority**: P0
-- **Status**: 🚧 PARTIAL (basic FastAPI errors)
+- **Status**: ✅ COMPLETE
 - **Description**: Implement comprehensive error handling with user-friendly messages
-- **FastAPI Requirements**: Standardize error response format, proper HTTP codes
-- **Flutter Integration**: Global error handler, snackbars, retry mechanisms
+- **FastAPI Requirements**: ✅ Standardize error response format, proper HTTP codes (implemented)
+- **Flutter Integration**: ✅ Global error handler, snackbars, retry mechanisms (implemented)
+- **NextJS Integration**: ✅ TypeScript error service with toast notifications and form validation (implemented)
 - **Estimated Time**: 3 hours (FastAPI) + 3 hours (Flutter)
 
 ## Task 6: Authentication State Management

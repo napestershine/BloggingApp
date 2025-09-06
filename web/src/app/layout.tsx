@@ -1,7 +1,11 @@
 import '@/styles/globals.css';
+// import { Inter } from 'next/font/google'; // Disabled for offline environment
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from '@/components/AuthProvider';
+import { ThemeProvider } from '@/components/ThemeProvider';
 import { Metadata } from 'next';
+
+// const inter = Inter({ subsets: ['latin'] }); // Disabled for offline environment
 
 export const metadata: Metadata = {
   title: {
@@ -68,18 +72,19 @@ export default function RootLayout({
                 iconTheme: {
                   primary: '#4ade80',
                   secondary: '#fff',
+                  },
                 },
-              },
-              error: {
-                duration: 5000,
-                iconTheme: {
-                  primary: '#ef4444',
-                  secondary: '#fff',
+                error: {
+                  duration: 5000,
+                  iconTheme: {
+                    primary: '#ef4444',
+                    secondary: '#fff',
+                  },
                 },
-              },
-            }}
-          />
-        </AuthProvider>
+              }}
+            />
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
