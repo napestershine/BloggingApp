@@ -159,6 +159,79 @@ The web app integrates with the FastAPI backend through:
 - `npm start` - Start production server
 - `npm run lint` - Run ESLint
 - `npm run type-check` - Run TypeScript compiler check
+- `npm run test` - Run unit tests
+- `npm run test:watch` - Run tests in watch mode
+- `npm run test:coverage` - Run tests with coverage report
+- `npm run test:e2e` - Run end-to-end tests with Playwright
+- `npm run test:e2e:ui` - Run E2E tests with Playwright UI
+
+## Testing
+
+This project includes a comprehensive testing setup with multiple testing layers:
+
+### Unit & Integration Tests
+- **Framework**: Vitest with React Testing Library
+- **API Mocking**: MSW (Mock Service Worker) for API interception
+- **Coverage**: V8 coverage provider
+- **Setup**: Automated test environment with jsdom
+
+```bash
+# Run all unit tests
+npm run test
+
+# Run tests in watch mode during development
+npm run test:watch
+
+# Generate coverage report
+npm run test:coverage
+```
+
+### End-to-End Tests
+- **Framework**: Playwright for cross-browser testing
+- **Coverage**: User journey testing from browser perspective
+- **Browsers**: Chromium, Firefox, and WebKit
+
+```bash
+# Run E2E tests
+npm run test:e2e
+
+# Run with interactive UI
+npm run test:e2e:ui
+
+# Install Playwright browsers (first time only)
+npx playwright install
+```
+
+### Test Structure
+```
+src/
+├── test/                    # Unit & integration tests
+│   ├── setup.ts            # Test configuration
+│   ├── *.test.tsx          # Component tests
+│   └── *Integration.test.tsx # Integration tests
+├── mocks/                   # MSW API mocks
+│   ├── handlers.ts         # Mock API handlers
+│   └── index.ts           # Mock exports
+└── e2e/                    # Playwright E2E tests
+    └── *.spec.ts          # E2E test files
+```
+
+### Test Coverage
+The test suite covers:
+- ✅ Component rendering and interaction
+- ✅ API integration with mocked responses
+- ✅ User authentication flows
+- ✅ Search functionality
+- ✅ Error handling scenarios
+- ✅ Cross-browser compatibility (E2E)
+
+### Continuous Integration
+Tests run automatically on:
+- Pull requests to main branch
+- Pushes to main branch
+- Changes in web directory or workflows
+
+Coverage reports are uploaded to Codecov for tracking.
 
 ## Contributing
 
