@@ -1,16 +1,26 @@
-# Simple development Dockerfile for Next.js application
-FROM node:18-alpine
+# Development stage for Next.js - extends main Dockerfile
+FROM node:20-alpine AS deps
 
 WORKDIR /app
 
-# Copy everything
-COPY . .
+# Copy package files and install all dependencies (including dev)
+COPY package.json package-lock.json ./
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci --legacy-peer-deps
 
-# Install dependencies
-RUN npm install --legacy-peer-deps
+# Development stage
+FROM deps AS dev
+
+WORKDIR /app
+
+# Copy source code
+COPY . .
 
 # Expose port
 EXPOSE 3000
+
+# Set environment
+ENV NODE_ENV=development
 
 # Start development server
 CMD ["npm", "run", "dev"]

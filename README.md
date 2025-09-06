@@ -22,7 +22,9 @@ A modern, full-stack blogging platform featuring a Flutter mobile application, N
 - **Python**: 3.12+ for the API backend
 - **Docker**: (Optional) For containerized deployment
 
-### Option 1: Docker Setup (Recommended for Testing)
+### Option 1: Docker Setup (Recommended)
+
+The project includes a consolidated Docker setup with profile-driven configurations for different environments.
 
 1. Clone the repository:
    ```bash
@@ -30,22 +32,48 @@ A modern, full-stack blogging platform featuring a Flutter mobile application, N
    cd BloggingApp
    ```
 
-2. **Frontend Only (Web)**: Test the Next.js app in isolation:
+2. **Quick Setup with Makefile**:
    ```bash
-   docker compose -f docker-compose.web-only.yml up
-   # Access at http://localhost:3000
+   # Development with hot reload
+   make up-dev
+   
+   # Production build
+   make up
+   
+   # Run tests
+   make test
+   
+   # Show all available commands
+   make help
    ```
 
-3. **Full Stack**:
+3. **Manual Docker Commands**:
+
+   **Development Mode** (with hot reloading and bind mounts):
    ```bash
-   docker compose up --build
+   docker compose -f compose.yml -f compose.dev.yml up --build
+   # Web: http://localhost:3000
+   # API: http://localhost:8000/docs
+   # Database: localhost:5432
+   ```
+
+   **Production Mode** (optimized images, no bind mounts):
+   ```bash
+   docker compose up --build -d
    # Web: http://localhost:3000
    # API: http://localhost:8000/docs
    ```
 
-4. **Development Mode** with hot reloading:
+   **CI/Testing Mode**:
    ```bash
-   docker compose -f docker-compose.dev.yml up
+   docker compose -f compose.yml -f compose.ci.yml up --build --abort-on-container-exit
+   ```
+
+4. **Environment Configuration**:
+   ```bash
+   # Copy and customize environment variables
+   cp .env.example .env
+   # Edit .env with your configuration
    ```
 
 ### Database Seeding (Quick Demo Data)
@@ -54,7 +82,7 @@ The FastAPI backend includes a seeding system for quick setup with demo data:
 
 ```bash
 # Using Docker (recommended)
-docker compose exec python python seed.py up
+docker compose exec api python seed.py up
 
 # Or manually in the python directory
 cd python
@@ -68,29 +96,7 @@ This creates sample users, blog posts, and comments. You can login with:
 
 For automatic seeding on Docker startup, set `SEED_ON_START=true` in your environment.
 
-### Option 2: Legacy Docker Setup (Python Backend Only)
-
-1. Start the backend API:
-   ```bash
-   cd python
-   docker-compose up --build
-   ```
-
-2. Run the Flutter app (mobile):
-   ```bash
-   cd app
-   flutter pub get
-   flutter run
-   ```
-
-3. Run the Next.js web app:
-   ```bash
-   cd web
-   npm install --legacy-peer-deps
-   npm run dev
-   ```
-
-### Option 3: Manual Setup
+### Option 2: Manual Setup
 
 1. **Set up the API backend**:
    ```bash
@@ -184,20 +190,49 @@ BloggingApp/
 ├── web/                    # Next.js web application
 │   ├── src/               # TypeScript source code
 │   ├── public/            # Static assets
-│   ├── Dockerfile         # Container configuration
+│   ├── Dockerfile         # Production container configuration
+│   ├── Dockerfile.dev     # Development container configuration
 │   └── README.md          # Web app documentation
 ├── python/                # FastAPI backend
 │   ├── app/               # Python source code
-│   ├── Dockerfile         # Container configuration
+│   ├── Dockerfile         # Multi-stage container configuration
 │   └── README.md          # API documentation
+├── infra/                  # Infrastructure and deployment
+│   └── docker/            # Additional Docker configurations
+│       └── Dockerfile.flutter.ci  # Flutter CI-only container
 ├── tasks/                 # Development roadmap
 │   ├── 01-user-experience/
 │   ├── 02-content-management/
 │   └── ...                # Task categories
-└── README.md              # This file
+├── compose.yml            # Main Docker Compose configuration
+├── compose.dev.yml        # Development overrides
+├── compose.ci.yml         # CI/testing overrides
+├── Makefile              # Convenient Docker commands
+├── .env.example          # Environment variables template
+└── README.md             # This file
 ```
 
 ### Running Tests
+
+**All tests with Docker (Recommended)**:
+```bash
+# Run all tests in CI environment
+make test
+
+# Or manually
+docker compose -f compose.yml -f compose.ci.yml up --build --abort-on-container-exit
+```
+
+**Individual services**:
+```bash
+# API tests only
+make test-api
+
+# Web tests only  
+make test-web
+```
+
+**Manual testing**:
 
 **Flutter App**:
 ```bash
@@ -208,7 +243,7 @@ flutter test
 **Next.js Web App**:
 ```bash
 cd web
-npm run test # (if tests are configured)
+npm run test
 npm run lint
 npm run type-check
 ```
@@ -220,6 +255,56 @@ pytest
 
 # For PostgreSQL testing (CI environment)
 TEST_DATABASE_URL=postgresql://user:password@host:port/db pytest
+```
+
+### 🐳 Docker Architecture
+
+The project uses a consolidated Docker setup with the following key features:
+
+**Multi-stage Dockerfiles**:
+- **API (FastAPI)**: `base` → `deps` → `dev` → `prod` stages
+- **Web (Next.js)**: `deps` → `builder` → `runner` stages
+- **Security**: Non-root users in production containers
+- **Performance**: BuildKit caching for faster builds
+
+**Profile-driven Compose**:
+- **Development**: `compose.yml` + `compose.dev.yml` (bind mounts, hot reload)
+- **Production**: `compose.yml` only (optimized images)
+- **CI/Testing**: `compose.yml` + `compose.ci.yml` (automated testing)
+
+**Services**:
+- **db**: PostgreSQL 16 with health checks
+- **api**: FastAPI backend with database migrations
+- **web**: Next.js frontend with SSR support
+
+**Environment Configuration**:
+- Centralized `.env.example` with all configuration options
+- Support for different environments (dev/test/prod)
+- Secure secret management (no secrets in images)
+
+**Convenience Commands**:
+```bash
+# Show all available make commands
+make help
+
+# Quick development setup
+make up-dev
+
+# Production deployment  
+make up
+
+# View logs
+make logs
+
+# Run tests
+make test
+
+# Database operations
+make db-shell
+make db-backup
+
+# Cleanup
+make clean
 ```
 
 ### Code Quality

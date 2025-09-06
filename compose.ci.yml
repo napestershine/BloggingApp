@@ -1,0 +1,59 @@
+# CI overrides for docker-compose
+# Use: docker compose -f compose.yml -f compose.ci.yml up
+services:
+  # FastAPI Backend - CI overrides
+  api:
+    build:
+      target: dev
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD:-password}@db:5432/${POSTGRES_DB:-blog_test}
+      - SECRET_KEY=test-secret-key
+      - NODE_ENV=test
+    command: |
+      sh -c "
+        echo 'Waiting for database...' &&
+        while ! pg_isready -h db -U $${POSTGRES_USER:-user} -d $${POSTGRES_DB:-blog_test}; do
+          sleep 1
+        done &&
+        echo 'Running API tests...' &&
+        python -m pytest --cov=app --cov-report=xml --cov-report=term-missing
+      "
+    depends_on:
+      db:
+        condition: service_healthy
+    labels:
+      - "blogging.env=ci"
+
+  # Next.js Frontend - CI overrides
+  web:
+    build:
+      target: deps
+      dockerfile: Dockerfile.dev
+    environment:
+      - NODE_ENV=test
+      - NEXT_PUBLIC_API_BASE_URL=http://api:8000
+    command: |
+      sh -c "
+        echo 'Running Web tests...' &&
+        npm run test:coverage &&
+        echo 'Running type check...' &&
+        npm run type-check &&
+        echo 'Running linting...' &&
+        npm run lint
+      "
+    depends_on:
+      api:
+        condition: service_started
+    labels:
+      - "blogging.env=ci"
+
+  # PostgreSQL - CI overrides
+  db:
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-blog_test}
+    volumes:
+      # Override the volume with tmpfs for testing
+      - type: tmpfs
+        target: /var/lib/postgresql/data
+    labels:
+      - "blogging.env=ci"
