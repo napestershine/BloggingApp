@@ -47,4 +47,4 @@ jobs:
     - name: Run Python tests
       run: cd python && python -m pytest app/tests/ -v
       env:
-        TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/blog_test
+        TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/blog
