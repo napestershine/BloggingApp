@@ -69,6 +69,9 @@ class User(Base):
     # Follow relationships - added for social features
     following = relationship("UserFollow", foreign_keys="UserFollow.follower_id", back_populates="follower")
     followers = relationship("UserFollow", foreign_keys="UserFollow.following_id", back_populates="following")
+    
+    # Bookmark relationship
+    bookmarks = relationship("Bookmark", back_populates="user")
 
 class BlogPost(Base):
     __tablename__ = "blog_posts"
@@ -89,6 +92,9 @@ class BlogPost(Base):
     shares = relationship("PostShare", back_populates="post")
     tags = relationship("Tag", secondary=blog_post_tags, back_populates="blog_posts")
     categories = relationship("Category", secondary=blog_post_categories, back_populates="blog_posts")
+    
+    # Bookmark relationship
+    bookmarked_by = relationship("Bookmark", back_populates="post")
 
 class Comment(Base):
     __tablename__ = "comments"
@@ -265,3 +271,18 @@ class Notification(Base):
     related_user = relationship("User", foreign_keys=[related_user_id])
     related_post = relationship("BlogPost", foreign_keys=[related_post_id])
     related_comment = relationship("Comment", foreign_keys=[related_comment_id])
+
+class Bookmark(Base):
+    __tablename__ = "bookmarks"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    post_id = Column(Integer, ForeignKey("blog_posts.id"), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Unique constraint to prevent duplicate bookmarks
+    __table_args__ = (UniqueConstraint('user_id', 'post_id', name='unique_bookmark'),)
+    
+    # Relationships
+    user = relationship("User", back_populates="bookmarks")
+    post = relationship("BlogPost", back_populates="bookmarked_by")

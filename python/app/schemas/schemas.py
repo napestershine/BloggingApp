@@ -472,3 +472,28 @@ class NotificationStats(BaseModel):
     """Notification statistics"""
     total_count: int
     unread_count: int
+
+# Bookmark schemas
+class BookmarkBase(BaseModel):
+    """Base bookmark schema"""
+    pass
+
+class BookmarkCreate(BookmarkBase):
+    """Schema for creating a bookmark"""
+    pass  # post_id comes from URL, user_id from auth
+
+class BookmarkResponse(BaseModel):
+    """Bookmark response schema"""
+    id: int
+    user_id: int
+    post_id: int
+    created_at: datetime
+    post: Optional[dict] = None  # Basic post info
+    
+    class Config:
+        from_attributes = True
+
+class BookmarkStats(BaseModel):
+    """Bookmark statistics"""
+    total_bookmarks: int
+    is_bookmarked: Optional[bool] = None  # For specific post
