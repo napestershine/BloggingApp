@@ -11,6 +11,10 @@ import 'screens/user_profile_screen.dart';
 import 'screens/blog_list_screen.dart';
 import 'screens/blog_detail_screen.dart';
 import 'screens/create_post_screen.dart';
+import 'screens/search_screen.dart';
+import 'screens/user_follow_screen.dart';
+import 'screens/notifications_screen.dart';
+import 'screens/bookmarks_screen.dart';
 import 'widgets/main_layout.dart';
 
 void main() {
@@ -89,6 +93,26 @@ class MyApp extends StatelessWidget {
           GoRoute(
             path: '/profile',
             builder: (context, state) => const UserProfileScreen(),
+          ),
+          GoRoute(
+            path: '/search',
+            builder: (context, state) => const SearchScreen(),
+          ),
+          GoRoute(
+            path: '/user/:id/follows',
+            builder: (context, state) {
+              final id = int.parse(state.pathParameters['id']!);
+              final username = state.queryParameters['username'] ?? 'Unknown';
+              return UserFollowScreen(userId: id, username: username);
+            },
+          ),
+          GoRoute(
+            path: '/notifications',
+            builder: (context, state) => const NotificationsScreen(),
+          ),
+          GoRoute(
+            path: '/bookmarks',
+            builder: (context, state) => const BookmarksScreen(),
           ),
         ],
       ),

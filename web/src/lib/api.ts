@@ -1,5 +1,21 @@
 import axios from 'axios';
-import { BlogPost, User, AuthResponse, Comment, PaginatedResponse } from '@/types';
+import { 
+  BlogPost, 
+  User, 
+  AuthResponse, 
+  Comment, 
+  PaginatedResponse,
+  SearchSuggestion,
+  SearchFilters,
+  UserFollowResponse,
+  UserFollowStats,
+  FollowerUser,
+  NotificationModel,
+  WhatsAppSettings,
+  WhatsAppSettingsUpdate,
+  BookmarkResponse,
+  BookmarkStats
+} from '@/types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -89,6 +105,171 @@ export const blogAPI = {
   // Search blog posts
   searchPosts: async (query: string, page = 1, size = 10): Promise<PaginatedResponse<BlogPost>> => {
     const response = await apiClient.get(`/posts/search?q=${encodeURIComponent(query)}&page=${page}&size=${size}`);
+    return response.data;
+  },
+};
+
+// Search API functions
+export const searchAPI = {
+  // Search posts with filters
+  searchPosts: async (params: {
+    q: string;
+    category?: string;
+    tag?: string;
+    author?: string;
+    skip?: number;
+    limit?: number;
+  }): Promise<BlogPost[]> => {
+    const queryParams = new URLSearchParams();
+    queryParams.append('q', params.q);
+    if (params.category) queryParams.append('category', params.category);
+    if (params.tag) queryParams.append('tag', params.tag);
+    if (params.author) queryParams.append('author', params.author);
+    if (params.skip) queryParams.append('skip', params.skip.toString());
+    if (params.limit) queryParams.append('limit', params.limit.toString());
+    
+    const response = await apiClient.get(`/search/?${queryParams.toString()}`);
+    return response.data;
+  },
+
+  // Get search suggestions
+  getSuggestions: async (q: string, limit = 5): Promise<SearchSuggestion[]> => {
+    const response = await apiClient.get(`/search/suggestions?q=${encodeURIComponent(q)}&limit=${limit}`);
+    return response.data;
+  },
+
+  // Get search filters
+  getFilters: async (): Promise<SearchFilters> => {
+    const response = await apiClient.get('/search/filters');
+    return response.data;
+  },
+};
+
+// User Follow API functions
+export const followAPI = {
+  // Follow a user
+  followUser: async (userId: number): Promise<UserFollowResponse> => {
+    const response = await apiClient.post(`/follow/users/${userId}`);
+    return response.data;
+  },
+
+  // Unfollow a user
+  unfollowUser: async (userId: number): Promise<UserFollowResponse> => {
+    const response = await apiClient.delete(`/follow/users/${userId}`);
+    return response.data;
+  },
+
+  // Get user's followers
+  getFollowers: async (userId: number, skip = 0, limit = 20): Promise<FollowerUser[]> => {
+    const response = await apiClient.get(`/follow/users/${userId}/followers?skip=${skip}&limit=${limit}`);
+    return response.data;
+  },
+
+  // Get users that a user is following
+  getFollowing: async (userId: number, skip = 0, limit = 20): Promise<FollowerUser[]> => {
+    const response = await apiClient.get(`/follow/users/${userId}/following?skip=${skip}&limit=${limit}`);
+    return response.data;
+  },
+
+  // Get follow statistics
+  getStats: async (userId: number): Promise<UserFollowStats> => {
+    const response = await apiClient.get(`/follow/users/${userId}/stats`);
+    return response.data;
+  },
+
+  // Get current user's following
+  getMyFollowing: async (skip = 0, limit = 20): Promise<FollowerUser[]> => {
+    const response = await apiClient.get(`/follow/me/following?skip=${skip}&limit=${limit}`);
+    return response.data;
+  },
+
+  // Get current user's followers
+  getMyFollowers: async (skip = 0, limit = 20): Promise<FollowerUser[]> => {
+    const response = await apiClient.get(`/follow/me/followers?skip=${skip}&limit=${limit}`);
+    return response.data;
+  },
+};
+
+// Notification API functions
+export const notificationAPI = {
+  // Get notifications
+  getNotifications: async (params?: {
+    is_read?: boolean;
+    skip?: number;
+    limit?: number;
+  }): Promise<NotificationModel[]> => {
+    const queryParams = new URLSearchParams();
+    if (params?.is_read !== undefined) queryParams.append('is_read', params.is_read.toString());
+    if (params?.skip) queryParams.append('skip', params.skip.toString());
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    
+    const response = await apiClient.get(`/notifications/?${queryParams.toString()}`);
+    return response.data;
+  },
+
+  // Mark notification as read
+  markAsRead: async (notificationId: number): Promise<void> => {
+    await apiClient.patch(`/notifications/${notificationId}/read`);
+  },
+
+  // Mark all notifications as read
+  markAllAsRead: async (): Promise<void> => {
+    await apiClient.patch('/notifications/read-all');
+  },
+
+  // Get WhatsApp settings
+  getWhatsAppSettings: async (): Promise<WhatsAppSettings> => {
+    const response = await apiClient.get('/notifications/whatsapp');
+    return response.data;
+  },
+
+  // Update WhatsApp settings
+  updateWhatsAppSettings: async (settings: WhatsAppSettingsUpdate): Promise<WhatsAppSettings> => {
+    const response = await apiClient.put('/notifications/whatsapp', settings);
+    return response.data;
+  },
+
+  // Test WhatsApp notification
+  testWhatsApp: async (): Promise<{ message: string }> => {
+    const response = await apiClient.post('/notifications/whatsapp/test');
+    return response.data;
+  },
+};
+
+// Bookmark API functions
+export const bookmarkAPI = {
+  // Bookmark a post
+  bookmarkPost: async (postId: number): Promise<BookmarkResponse> => {
+    const response = await apiClient.post(`/bookmarks/posts/${postId}`);
+    return response.data;
+  },
+
+  // Remove bookmark
+  removeBookmark: async (postId: number): Promise<void> => {
+    await apiClient.delete(`/bookmarks/posts/${postId}`);
+  },
+
+  // Get user's bookmarks
+  getBookmarks: async (skip = 0, limit = 20): Promise<BlogPost[]> => {
+    const response = await apiClient.get(`/bookmarks/?skip=${skip}&limit=${limit}`);
+    return response.data;
+  },
+
+  // Get bookmark stats for a post
+  getPostStats: async (postId: number): Promise<BookmarkStats> => {
+    const response = await apiClient.get(`/bookmarks/posts/${postId}`);
+    return response.data;
+  },
+
+  // Get user's bookmark stats
+  getUserStats: async (): Promise<BookmarkStats> => {
+    const response = await apiClient.get('/bookmarks/stats');
+    return response.data;
+  },
+
+  // Get recent bookmarks
+  getRecentBookmarks: async (limit = 5): Promise<BlogPost[]> => {
+    const response = await apiClient.get(`/bookmarks/recent?limit=${limit}`);
     return response.data;
   },
 };
