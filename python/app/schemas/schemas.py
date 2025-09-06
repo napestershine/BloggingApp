@@ -321,13 +321,6 @@ class PostLike(BaseModel):
     class Config:
         from_attributes = True
 
-class PostReactionsSummary(BaseModel):
-    post_id: int
-    total_reactions: int
-    reactions_by_type: Dict[str, int]
-    user_reaction: Optional[ReactionTypeEnum] = None
-
-
 # Category schemas
 class CategoryBase(BaseModel):
     name: str
