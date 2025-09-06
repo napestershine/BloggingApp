@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.database.connection import engine
+from app.database.connection import get_engine
 from app.models import models
 from app.routers import auth, users, blog_posts, comments, search, seo, sitemap, slugs, recommendations, feed, rss, post_likes, post_sharing, media, categories, tags, user_follows, notification_system, bookmarks
 
@@ -18,7 +18,7 @@ from app.middleware.error_handler import (
 )
 from app.schemas.responses import HealthCheckResponse
 from app.services.health_service import health_service
-from app.core.config import settings
+from app.core.config import get_settings
 
 # Configure logging
 logging.basicConfig(
@@ -28,6 +28,7 @@ logging.basicConfig(
 
 # Create database tables (only if database is available)
 try:
+    engine = get_engine()
     models.Base.metadata.create_all(bind=engine)
 except Exception as e:
     logging.warning(f"Database not available during startup: {str(e)}")
@@ -44,6 +45,7 @@ app = FastAPI(
 app.add_middleware(LoggingMiddleware)
 
 # Add CORS middleware with configurable origins
+settings = get_settings()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins_list,  # Use parsed origins property

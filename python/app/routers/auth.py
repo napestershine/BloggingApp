@@ -18,7 +18,7 @@ from app.auth.auth import (
 )
 from app.services.user_service import user_service
 from app.utils.security import SecurityValidator
-from app.core.config import settings
+from app.core.config import get_settings
 import secrets
 import uuid
 
@@ -56,6 +56,7 @@ def login_user(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = D
             headers={"WWW-Authenticate": "Bearer"},
         )
     
+    settings = get_settings()
     access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
     access_token = create_access_token(
         data={"sub": user.username}, expires_delta=access_token_expires
@@ -175,6 +176,7 @@ def reset_password(
 @router.post("/refresh", response_model=Token)
 def refresh_token(current_user: User = Depends(get_current_user)):
     """Refresh access token for authenticated user"""
+    settings = get_settings()
     access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
     access_token = create_access_token(
         data={"sub": current_user.username}, expires_delta=access_token_expires

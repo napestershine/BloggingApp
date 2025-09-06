@@ -3,7 +3,7 @@ from typing import Optional
 from datetime import datetime, timedelta
 from collections import defaultdict
 from twilio.rest import Client
-from app.core.config import settings
+from app.core.config import get_settings
 
 logger = logging.getLogger(__name__)
 
@@ -11,6 +11,7 @@ class WhatsAppNotificationService:
     """Service for sending WhatsApp notifications using Twilio API with rate limiting"""
     
     def __init__(self):
+        settings = get_settings()
         self.account_sid = settings.twilio_account_sid
         self.auth_token = settings.twilio_auth_token  
         self.whatsapp_number = settings.twilio_whatsapp_number
@@ -27,6 +28,7 @@ class WhatsAppNotificationService:
     
     def is_enabled(self) -> bool:
         """Check if WhatsApp notification service is properly configured"""
+        settings = get_settings()
         return (self.client is not None and 
                 self.whatsapp_number is not None and 
                 settings.whatsapp_notifications_enabled)
@@ -52,6 +54,7 @@ class WhatsAppNotificationService:
         minute_count = len(self.message_counts_per_minute[to_number])
         hour_count = len(self.message_counts_per_hour[to_number])
         
+        settings = get_settings()
         if minute_count >= settings.whatsapp_rate_limit_per_minute:
             logger.warning(f"Rate limit exceeded for {to_number}: {minute_count} messages in last minute")
             return False

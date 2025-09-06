@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
 // Mock the api module's getApiBaseUrl function

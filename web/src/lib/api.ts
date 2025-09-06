@@ -80,6 +80,7 @@ const addResponseInterceptor = (client: any) => {
 };
 
 // Enhanced client factory with interceptors
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const createApiClient = () => {
   let client = getClient();
   client = addAuthInterceptor(client);
