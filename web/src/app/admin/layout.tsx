@@ -22,19 +22,19 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     setMounted(true);
   }, []);
 
+  // Check for mobile access once after mount
   useEffect(() => {
     if (!mounted) return;
-
-    // Check for mobile access
     if (shouldBlockMobileAccess()) {
       router.push('/admin/mobile-blocked');
-      return;
     }
+  }, [mounted, router]);
 
-    // Check authentication and admin privileges
+  // Check authentication and admin privileges
+  useEffect(() => {
+    if (!mounted) return;
     if (!isLoading && (!user || !isAdmin(user))) {
       router.push('/auth/login?redirect=/admin');
-      return;
     }
   }, [user, isLoading, router, mounted]);
 
