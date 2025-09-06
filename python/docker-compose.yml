@@ -4,7 +4,6 @@ services:
     ports:
       - "8000:8000"
     environment:
-      # - DATABASE_URL=sqlite:///./blog.db  # (removed, now using .env for DATABASE_URL)
       - SECRET_KEY=your-secret-key-here-change-in-production
     volumes:
       - .:/app
@@ -15,7 +14,7 @@ services:
   
   # Optional: PostgreSQL database for production
   db:
-    image: postgres:15
+    image: postgres:17
     environment:
       POSTGRES_DB: blog_db
       POSTGRES_USER: user
