@@ -48,6 +48,26 @@ A modern, full-stack blogging platform featuring a Flutter mobile application, N
    docker compose -f docker-compose.dev.yml up
    ```
 
+### Database Seeding (Quick Demo Data)
+
+The FastAPI backend includes a seeding system for quick setup with demo data:
+
+```bash
+# Using Docker (recommended)
+docker compose exec python python seed.py up
+
+# Or manually in the python directory
+cd python
+python seed.py up
+```
+
+This creates sample users, blog posts, and comments. You can login with:
+- **Admin**: `admin` / `admin123`
+- **Editor**: `editor` / `editor123`
+- **User**: `user1` / `user123`
+
+For automatic seeding on Docker startup, set `SEED_ON_START=true` in your environment.
+
 ### Option 2: Legacy Docker Setup (Python Backend Only)
 
 1. Start the backend API:

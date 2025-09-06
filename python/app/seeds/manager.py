@@ -14,8 +14,19 @@ logger = logging.getLogger(__name__)
 class SeedManager:
     """Manager for database seeding operations"""
     
-    def __init__(self):
-        self.db = SessionLocal()
+    def __init__(self, db=None):
+        if db is None:
+            self.db = SessionLocal()
+            self._external_db = False
+        else:
+            # Handle both session instances and sessionmaker
+            if hasattr(db, 'query'):
+                # Already a session
+                self.db = db
+            else:
+                # Assume it's a sessionmaker
+                self.db = db()
+            self._external_db = True
         self.registry = SeederRegistry()
         self._register_seeders()
     
@@ -45,7 +56,9 @@ class SeedManager:
             self.db.rollback()
             raise
         finally:
-            self.db.close()
+            # Only close if we created the session
+            if not self._external_db:
+                self.db.close()
     
     def seed_down(self):
         """Clear all seeded data"""
@@ -63,7 +76,8 @@ class SeedManager:
             self.db.rollback()
             raise
         finally:
-            self.db.close()
+            if not self._external_db:
+                self.db.close()
     
     def seed_reset(self):
         """Clear and re-seed all data"""
@@ -71,7 +85,8 @@ class SeedManager:
         self.seed_down()
         
         # Create new session for seeding
-        self.db = SessionLocal()
+        if not self._external_db:
+            self.db = SessionLocal()
         self._register_seeders()
         
         return self.seed_up()
@@ -84,6 +99,6 @@ class SeedManager:
         return self.seed_up()
 
 
-def get_seed_manager():
+def get_seed_manager(db=None):
     """Get a new instance of SeedManager"""
-    return SeedManager()
+    return SeedManager(db)

@@ -86,6 +86,67 @@ For production, update the `DATABASE_URL` in your `.env` file:
 DATABASE_URL=postgresql://user:password@localhost:5432/blog_db
 ```
 
+### Database Seeding
+
+The application includes a comprehensive seeding system for development and testing. The seeder creates sample data including users, blog posts, and comments.
+
+#### CLI Commands
+
+```bash
+# Seed the database with sample data (idempotent)
+python seed.py up
+
+# Check seeding status
+python seed.py status
+
+# Clear seeded data
+python seed.py down
+
+# Reset (clear and re-seed)
+python seed.py reset
+
+# Seed with demo data
+python seed.py demo
+```
+
+#### Docker Integration
+
+You can automatically seed the database when starting the Docker container by setting the `SEED_ON_START` environment variable:
+
+```bash
+# docker-compose.yml or environment variables
+SEED_ON_START=true
+```
+
+Or run it manually in Docker:
+```bash
+docker compose exec python python seed.py up
+```
+
+#### Sample Credentials
+
+After seeding, you can use these credentials to test the application:
+
+- **Admin**: `admin` / `admin123`
+- **Editor**: `editor` / `editor123`  
+- **User**: `user1` / `user123`
+
+#### Test Fixtures
+
+For automated testing, the seeding system provides pytest fixtures:
+
+```python
+def test_with_seed_data(seed_data):
+    # Full seed data including users, posts, comments
+    admin_user = seed_data["admin_user"]
+    welcome_post = seed_data["welcome_post"]
+    
+def test_with_minimal_data(minimal_seed_data):
+    # Minimal data for lightweight tests
+    admin_user = minimal_seed_data["admin_user"]
+    test_post = minimal_seed_data["test_post"]
+```
+
 ## Usage Examples
 
 ### Register a User
