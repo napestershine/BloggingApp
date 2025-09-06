@@ -1,5 +1,16 @@
 import axios from 'axios';
-import { BlogPost, User, AuthResponse, Comment, PaginatedResponse } from '@/types';
+import { 
+  BlogPost, 
+  User, 
+  AuthResponse, 
+  Comment, 
+  PaginatedResponse,
+  UserRole,
+  AdminStats,
+  UserManagementResponse,
+  PostModerationResponse,
+  CommentModerationResponse
+} from '@/types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -158,6 +169,84 @@ export const tokenUtils = {
 
   isAuthenticated: (): boolean => {
     return !!tokenUtils.getToken();
+  },
+};
+
+// Admin API functions
+export const adminAPI = {
+  // Get admin dashboard statistics
+  getStats: async (): Promise<AdminStats> => {
+    const response = await apiClient.get('/admin/stats');
+    return response.data;
+  },
+
+  // User management
+  getUsers: async (params?: string): Promise<UserManagementResponse[]> => {
+    const url = params ? `/admin/users?${params}` : '/admin/users';
+    const response = await apiClient.get(url);
+    return response.data;
+  },
+
+  getUser: async (userId: number): Promise<UserManagementResponse> => {
+    const response = await apiClient.get(`/admin/users/${userId}`);
+    return response.data;
+  },
+
+  updateUserRole: async (userId: number, role: UserRole): Promise<void> => {
+    await apiClient.put(`/admin/users/${userId}/role`, { role });
+  },
+
+  deleteUser: async (userId: number): Promise<void> => {
+    await apiClient.delete(`/admin/users/${userId}`);
+  },
+
+  // Content moderation
+  getPostsForModeration: async (params?: string): Promise<PostModerationResponse[]> => {
+    const url = params ? `/admin/content/posts?${params}` : '/admin/content/posts';
+    const response = await apiClient.get(url);
+    return response.data;
+  },
+
+  getCommentsForModeration: async (params?: string): Promise<CommentModerationResponse[]> => {
+    const url = params ? `/admin/content/comments?${params}` : '/admin/content/comments';
+    const response = await apiClient.get(url);
+    return response.data;
+  },
+
+  getPendingPosts: async (): Promise<PostModerationResponse[]> => {
+    const response = await apiClient.get('/admin/content/posts/pending');
+    return response.data;
+  },
+
+  getPendingComments: async (): Promise<CommentModerationResponse[]> => {
+    const response = await apiClient.get('/admin/content/comments/pending');
+    return response.data;
+  },
+
+  updatePostStatus: async (postId: number, update: any): Promise<void> => {
+    await apiClient.put(`/admin/content/posts/${postId}/status`, update);
+  },
+
+  updateCommentStatus: async (commentId: number, update: any): Promise<void> => {
+    await apiClient.put(`/admin/content/comments/${commentId}/status`, update);
+  },
+
+  getContentAnalytics: async (days: number = 30): Promise<any> => {
+    const response = await apiClient.get(`/admin/content/analytics/content?days=${days}`);
+    return response.data;
+  },
+
+  deletePost: async (postId: number): Promise<void> => {
+    await apiClient.delete(`/admin/content/posts/${postId}`);
+  },
+
+  deleteComment: async (commentId: number): Promise<void> => {
+    await apiClient.delete(`/admin/content/comments/${commentId}`);
+  },
+
+  getFlaggedPosts: async (skip = 0, limit = 50): Promise<PostModerationResponse[]> => {
+    const response = await apiClient.get(`/admin/content/posts/flagged?skip=${skip}&limit=${limit}`);
+    return response.data;
   },
 };
 

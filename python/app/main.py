@@ -38,6 +38,11 @@ app.include_router(tags.router)
 from app.routers import notifications
 app.include_router(notifications.router)
 
+# Import and include admin routers
+from app.admin import users as admin_users, content as admin_content
+app.include_router(admin_users.router)
+app.include_router(admin_content.router)
+
 # Include new SEO & Discovery routers
 app.include_router(search.router, prefix="/api")
 app.include_router(seo.router, prefix="/api")
@@ -46,6 +51,7 @@ app.include_router(slugs.router, prefix="/api")
 app.include_router(recommendations.router, prefix="/api")
 app.include_router(feed.router, prefix="/api")
 app.include_router(rss.router, prefix="/api")
+
 
 @app.get("/")
 def read_root():

@@ -1,5 +1,6 @@
 from pydantic import BaseModel, EmailStr
 from datetime import datetime
+from app.models.models import UserRole, PostStatus, CommentStatus
 from typing import Optional, List, Dict
 from enum import Enum
 
@@ -42,6 +43,7 @@ class UserUpdate(BaseModel):
 
 class UserInDB(UserBase):
     id: int
+    role: UserRole
     created_at: datetime
     
     class Config:

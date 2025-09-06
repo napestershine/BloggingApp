@@ -4,10 +4,24 @@ from sqlalchemy.sql import func
 from app.database.connection import Base
 import enum
 
+class UserRole(str, enum.Enum):
+    USER = "user"
+    ADMIN = "admin" 
+    SUPER_ADMIN = "super_admin"
+
 # Enums for post status
-class PostStatus(enum.Enum):
-    DRAFT = "DRAFT"
-    PUBLISHED = "PUBLISHED"
+class PostStatus(str, enum.Enum):
+    DRAFT = "draft"
+    PENDING = "pending"
+    PUBLISHED = "published"
+    REJECTED = "rejected"
+    SCHEDULED = "scheduled"
+
+class CommentStatus(str, enum.Enum):
+    PENDING = "pending"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+    SPAM = "spam"
 
 
 # Enum for reaction types
@@ -43,6 +57,7 @@ class User(Base):
     email = Column(String(255), unique=True, index=True, nullable=False)
     name = Column(String(255), nullable=False)
     hashed_password = Column(String(255), nullable=False)
+    role = Column(Enum(UserRole), default=UserRole.USER, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
     # Email verification
@@ -66,7 +81,7 @@ class User(Base):
     notify_on_mentions = Column(Boolean, default=True)
     
     # Relationships
-    posts = relationship("BlogPost", back_populates="author")
+    posts = relationship("BlogPost", back_populates="author", foreign_keys="BlogPost.author_id")
     comments = relationship("Comment", back_populates="author", foreign_keys="Comment.author_id")
 
 class BlogPost(Base):
@@ -81,9 +96,17 @@ class BlogPost(Base):
     last_modified = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     author_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     
+    # Moderation fields
+    status = Column(Enum(PostStatus), default=PostStatus.PUBLISHED, nullable=False)
+    moderated_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    moderated_at = Column(DateTime(timezone=True), nullable=True)
+    rejection_reason = Column(Text, nullable=True)
+    featured = Column(Boolean, default=False)
+    scheduled_publish = Column(DateTime(timezone=True), nullable=True)
+
     # SEO fields
     meta_title = Column(String(255), nullable=True)
-    meta_description = Column(String(500), nullable=True)
+    meta_description = Column(Text, nullable=True)
     og_title = Column(String(255), nullable=True)
     og_description = Column(String(500), nullable=True)
     og_image = Column(String(255), nullable=True)
@@ -97,8 +120,9 @@ class BlogPost(Base):
     category = Column(String(100), nullable=True)
     
     # Relationships
-    author = relationship("User", back_populates="posts")
+    author = relationship("User", back_populates="posts", foreign_keys=[author_id])
     comments = relationship("Comment", back_populates="blog_post")
+    moderator = relationship("User", foreign_keys=[moderated_by])
     likes = relationship("PostLike", back_populates="post")
     shares = relationship("PostShare", back_populates="post")
     tags = relationship("Tag", secondary=blog_post_tags, back_populates="blog_posts")
@@ -112,7 +136,17 @@ class Comment(Base):
     published = Column(DateTime(timezone=True), server_default=func.now())
     author_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     blog_post_id = Column(Integer, ForeignKey("blog_posts.id"), nullable=False)
+
+    # Moderation fields
+    status = Column(Enum(CommentStatus), default=CommentStatus.PENDING, nullable=False)
+    moderated_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    moderated_at = Column(DateTime(timezone=True), nullable=True)
+    is_spam = Column(Boolean, default=False)
     
+    # Relationships
+    author = relationship("User", back_populates="comments", foreign_keys=[author_id])
+    blog_post = relationship("BlogPost", back_populates="comments")
+
     # Threading support - parent comment for replies
     parent_id = Column(Integer, ForeignKey("comments.id"), nullable=True)
     
@@ -121,10 +155,6 @@ class Comment(Base):
     moderation_reason = Column(String(255), nullable=True)
     moderated_at = Column(DateTime(timezone=True), nullable=True)
     moderated_by = Column(Integer, ForeignKey("users.id"), nullable=True)
-    
-    # Relationships
-    author = relationship("User", back_populates="comments", foreign_keys=[author_id])
-    blog_post = relationship("BlogPost", back_populates="comments")
     
     # Self-referential relationship for threading
     parent = relationship("Comment", remote_side=[id], backref="replies")
