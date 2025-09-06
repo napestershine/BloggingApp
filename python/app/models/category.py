@@ -2,7 +2,7 @@ from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.database.connection import Base
-from .blog_post import blog_post_categories
+# from .blog_post import blog_post_categories
 
 
 class Category(Base):
@@ -17,4 +17,4 @@ class Category(Base):
     
     # Relationships
     creator = relationship("User")
-    blog_posts = relationship("BlogPost", secondary=blog_post_categories, back_populates="categories")
+    # blog_posts = relationship("BlogPost", secondary=blog_post_categories, back_populates="categories")

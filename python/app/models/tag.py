@@ -2,7 +2,7 @@ from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.database.connection import Base
-from .blog_post import blog_post_tags
+# from .blog_post import blog_post_tags
 
 
 class Tag(Base):
@@ -15,4 +15,4 @@ class Tag(Base):
     
     # Relationships 
     creator = relationship("User")
-    blog_posts = relationship("BlogPost", secondary=blog_post_tags, back_populates="tags")
+    # blog_posts = relationship("BlogPost", secondary=blog_post_tags, back_populates="tags")

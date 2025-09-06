@@ -2,94 +2,101 @@
 
 This document provides sample credentials and testing instructions for the BloggingApp user experience features.
 
-## 🔐 Sample User Accounts
+## 🌱 Database Seeding (Recommended)
 
-The following test accounts have been pre-created in the database for testing purposes:
+The fastest way to get started is using the built-in database seeding system:
+
+```bash
+cd python
+python seed.py up
+```
+
+This creates a complete dataset with users, blog posts, and comments for immediate testing.
+
+## 🔐 Seeded User Accounts
+
+After running `python seed.py up`, you'll have these accounts available:
 
 ### 👤 Admin Account
 - **Username**: `admin`
 - **Password**: `admin123`
-- **Email**: `admin@example.com`
+- **Email**: `admin@blogapp.com`
 - **Name**: Admin User
+- **Role**: Admin
 - **Status**: Email verified ✅
-- **Features**: System administrator with full access
+- **Bio**: Site administrator with full privileges.
+- **Features**: Full system access, content moderation
+
+### ✍️ Editor Account
+- **Username**: `editor`
+- **Password**: `editor123`
+- **Email**: `editor@blogapp.com`
+- **Name**: Editor Smith
+- **Role**: User (with editor capabilities)
+- **Status**: Email verified ✅
+- **Bio**: Content editor and writer.
+- **Features**: Content creation and editing
 
 ### 👥 Regular User Accounts
 
-#### John Doe - Developer
-- **Username**: `johndoe`
-- **Password**: `john123`
-- **Email**: `john@example.com`
+#### User 1 - John Doe
+- **Username**: `user1`
+- **Password**: `user123`
+- **Email**: `user1@blogapp.com`
 - **Name**: John Doe
-- **Bio**: Software developer and tech enthusiast
+- **Role**: User
 - **Status**: Email verified ✅
-- **Social Links**: GitHub, Twitter, Personal website
+- **Bio**: Regular user who loves reading and commenting on blogs.
 
-#### Jane Smith - Designer  
-- **Username**: `janesmith`
-- **Password**: `jane123`
-- **Email**: `jane@example.com`
+#### User 2 - Jane Smith
+- **Username**: `user2`
+- **Password**: `user123`
+- **Email**: `user2@blogapp.com`
 - **Name**: Jane Smith
-- **Bio**: UX Designer and blogger
+- **Role**: User
 - **Status**: Email verified ✅
-- **Social Links**: Dribbble, Twitter, Portfolio
+- **Bio**: Technology enthusiast and blogger.
 
-#### Test User
-- **Username**: `testuser`
-- **Password**: `test123`
-- **Email**: `test@example.com`
-- **Name**: Test User
-- **Bio**: Test account for development
-- **Status**: Email NOT verified ❌
-- **Features**: Ideal for testing email verification flow
+## 📝 Sample Content
+
+The seeding system also creates sample blog posts and comments:
+
+### Blog Posts
+1. **"Welcome to Our Blog Platform"** - Featured welcome post
+2. **"Getting Started with Blogging"** - Tips for beginners
+3. **"The Future of Web Development"** - Technology insights
+4. **"Draft Post - Work in Progress"** - Example draft content
+
+### Comments
+- Interactive comments on published posts
+- Threaded discussions between users
+- Approved comments ready for testing
 
 ## 🚀 Quick Start Testing
 
-### 1. Start the Backend API
+### 1. Seed the Database
 ```bash
 cd python
+python seed.py up
+```
+
+### 2. Start the Backend API
+```bash
 uvicorn app.main:app --reload
 ```
 
-### 2. Test Authentication Endpoints
-
-#### Login Example
+### 3. Test Authentication
 ```bash
 curl -X POST "http://localhost:8000/auth/login" \
      -H "Content-Type: application/x-www-form-urlencoded" \
      -d "username=admin&password=admin123"
 ```
 
-#### Response
-```json
-{
-  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "token_type": "bearer"
-}
-```
-
-### 3. Test User Profile Management
-
-#### Get User Profile
-```bash
-curl -X GET "http://localhost:8000/users/1/profile" \
-     -H "Authorization: Bearer YOUR_TOKEN_HERE"
-```
-
-#### Update User Profile
-```bash
-curl -X PUT "http://localhost:8000/users/1/profile" \
-     -H "Authorization: Bearer YOUR_TOKEN_HERE" \
-     -H "Content-Type: application/json" \
-     -d '{
-       "name": "Updated Name",
-       "bio": "Updated bio text",
-       "social_links": {
-         "twitter": "@mynewhandle",
-         "github": "github.com/myusername"
-       }
-     }'
-```
+### 4. Explore Sample Data
+- **API Documentation**: http://localhost:8000/docs
+- **View Posts**: `GET /blog_posts/`
+- **View Comments**: `GET /comments/`
+- **User Profiles**: `GET /users/{user_id}/`
 
 ## 📱 Flutter App Testing
 

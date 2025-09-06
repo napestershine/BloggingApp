@@ -4,7 +4,7 @@
 # For now, import from the backup until modular files are created
 try:
     from .user import User, UserRole
-    from .blog_post import BlogPost, PostStatus, blog_post_tags, blog_post_categories
+    from .blog_post import BlogPost, PostStatus  # Removed blog_post_tags, blog_post_categories
     from .comment import Comment, CommentStatus, CommentReaction, ReactionType
     from .media import Media
     from .category import Category
