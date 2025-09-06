@@ -46,7 +46,7 @@ app.add_middleware(LoggingMiddleware)
 # Add CORS middleware with configurable origins
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins,  # Use configured origins instead of wildcard
+    allow_origins=settings.cors_origins_list,  # Use parsed origins property
     allow_credentials=settings.cors_allow_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -107,8 +107,8 @@ def read_root():
     return {"message": "Welcome to the Blog API", "status": "healthy", "version": "1.0.0"}
 
 @app.get("/health", response_model=HealthCheckResponse)
-def health_check():
+async def health_check():
     """
     Health check endpoint that returns system status and basic metrics
     """
-    return health_service.get_health_status()
+    return await health_service.get_health_status()

@@ -26,48 +26,70 @@ import {
 const getApiBaseUrl = (): string => {
   // If we're in a browser context, use the public API URL
   if (typeof window !== 'undefined') {
-    return process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+    return process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
   }
   
   // If we're in server-side context (SSR, API routes), use internal URL if available
-  return process.env.API_INTERNAL_URL || process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+  return process.env.API_INTERNAL_URL || process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
 };
 
-const API_BASE_URL = getApiBaseUrl();
+// Create a function to get axios client with dynamic base URL
+const getClient = () => 
+  axios.create({
+    baseURL: getApiBaseUrl(),
+    withCredentials: true,
+    timeout: 15000,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
 
-// Create axios instance with default configuration
-const apiClient = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
+// Legacy axios instance for backward compatibility - will be removed gradually
+const apiClient = getClient();
 
 // Add request interceptor to include auth token
-apiClient.interceptors.request.use((config) => {
-  if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('access_token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-  }
-  return config;
-});
-
-// Add response interceptor for error handling
-apiClient.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      // Token expired or invalid
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('access_token');
-        window.location.href = '/auth/login';
+const addAuthInterceptor = (client: any) => {
+  client.interceptors.request.use((config: any) => {
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('access_token');
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
       }
     }
-    return Promise.reject(error);
-  }
-);
+    return config;
+  });
+  return client;
+};
+
+// Add response interceptor for error handling
+const addResponseInterceptor = (client: any) => {
+  client.interceptors.response.use(
+    (response: any) => response,
+    (error: any) => {
+      if (error.response?.status === 401) {
+        // Token expired or invalid
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('access_token');
+          window.location.href = '/auth/login';
+        }
+      }
+      return Promise.reject(error);
+    }
+  );
+  return client;
+};
+
+// Enhanced client factory with interceptors
+const createApiClient = () => {
+  let client = getClient();
+  client = addAuthInterceptor(client);
+  client = addResponseInterceptor(client);
+  return client;
+};
+
+// Apply interceptors to legacy client
+addAuthInterceptor(apiClient);
+addResponseInterceptor(apiClient);
 
 // Blog Post API functions
 export const blogAPI = {
