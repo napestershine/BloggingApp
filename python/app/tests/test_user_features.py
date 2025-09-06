@@ -135,47 +135,8 @@ def test_sample_credentials(client):
         {"username": "johndoe", "password": "john123", "email": "john@test.com", "name": "John Doe"},
         {"username": "janesmith", "password": "jane123", "email": "jane@test.com", "name": "Jane Smith"},
     ]
-    for user_data in sample_users:
-        registration_data = {
-            "username": user_data["username"],
-            "password": user_data["password"],
-            "retyped_password": user_data["password"],
-            "name": user_data["name"],
-            "email": user_data["email"]
-        }
-        response = client.post("/auth/register", json=registration_data)
-        assert response.status_code == 201, f"Failed to create user {user_data['username']}"
-    for user_data in sample_users:
-        login_cred = {"username": user_data["username"], "password": user_data["password"]}
-        response = client.post("/auth/login", data=login_cred)
-        assert response.status_code == 200, f"Failed to login with {user_data['username']}"
-        token_data = response.json()
-        assert "access_token" in token_data
-        assert token_data["token_type"] == "bearer"
-        {"username": "janesmith", "password": "jane123", "email": "jane@example.com", "name": "Jane Smith"},
-    ]
     
     # First create the users using the registration endpoint
-    for user_data in sample_users_data:
-        registration_data = {
-            "username": user_data["username"],
-            "password": user_data["password"],
-            "retyped_password": user_data["password"],
-            "name": user_data["name"],
-            "email": user_data["email"]
-        }
-        response = client.post("/auth/register", json=registration_data)
-        # It's okay if the user already exists (201 for created, other codes for existing)
-        assert response.status_code in [201, 400]  # 400 might be returned if user exists
-    
-    # Now test login with the credentials
-    sample_credentials = [
-        {"username": "admin", "password": "admin123"},
-        {"username": "johndoe", "password": "john123"},
-        {"username": "janesmith", "password": "jane123"},
-    ]
-    
-    # Create each user first
     for user_data in sample_users:
         registration_data = {
             "username": user_data["username"],
