@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useAuth } from './AuthProvider';
 import { ThemeToggleButton } from './ThemeToggleButton';
-import { BookOpen, LogOut, User, PenTool } from 'lucide-react';
+import { BookOpen, LogOut, User, PenTool, Search, Bookmark, Bell } from 'lucide-react';
 
 /**
  * Header component provides the main navigation and branding for the BloggingApp.
@@ -43,15 +43,40 @@ export function Header() {
           </Link>
 
           {/* Main Navigation */}
-          <nav className="hidden md:flex items-center space-x-8">
+          <nav className="hidden md:flex items-center space-x-6">
             <Link 
               href="/blog" 
               className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-medium transition-colors duration-200"
             >
               Blog
             </Link>
+            
+            <Link 
+              href="/search" 
+              className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-medium flex items-center gap-1 transition-colors duration-200"
+            >
+              <Search className="h-4 w-4" />
+              Search
+            </Link>
+            
             {isAuthenticated && (
               <>
+                <Link 
+                  href="/bookmarks" 
+                  className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-medium flex items-center gap-1 transition-colors duration-200"
+                >
+                  <Bookmark className="h-4 w-4" />
+                  Bookmarks
+                </Link>
+                
+                <Link 
+                  href="/notifications" 
+                  className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-medium flex items-center gap-1 transition-colors duration-200"
+                >
+                  <Bell className="h-4 w-4" />
+                  Notifications
+                </Link>
+                
                 <Link 
                   href="/write" 
                   className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-medium flex items-center gap-1 transition-colors duration-200"
@@ -59,6 +84,7 @@ export function Header() {
                   <PenTool className="h-4 w-4" />
                   Write
                 </Link>
+                
                 <Link 
                   href="/dashboard" 
                   className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-medium transition-colors duration-200"

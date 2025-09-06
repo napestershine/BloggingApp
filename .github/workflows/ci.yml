@@ -44,7 +44,12 @@ jobs:
     - name: Install dependencies
       run: cd python && pip install -r requirements.txt
 
-    - name: Run Python tests
-      run: cd python && python -m pytest app/tests/ -v
+    - name: Run Python tests with coverage
+      run: cd python && python -m pytest app/tests/ -v --cov=app --cov-report=xml --cov-report=html
+      env:
+        TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/blog
+        
+    - name: Test social features specifically
+      run: cd python && python -m pytest app/tests/test_search.py app/tests/test_user_follows.py app/tests/test_bookmarks.py app/tests/test_notification_system.py -v
       env:
         TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/blog

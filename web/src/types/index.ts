@@ -19,6 +19,7 @@ export enum UserRole {
   SUPER_ADMIN = "super_admin"
 }
 
+// TypeScript interfaces matching the FastAPI backend models
 export interface BlogPost {
   id: number;
   title: string;
@@ -65,61 +66,125 @@ export interface PaginatedResponse<T> {
   pages: number;
 }
 
-// Admin-specific types
+// Admin interfaces
 export interface AdminStats {
   total_users: number;
   total_posts: number;
   total_comments: number;
-  admin_users: number;
-  new_users_today: number;
-  new_posts_today: number;
-  new_comments_today: number;
   pending_posts: number;
   pending_comments: number;
-  featured_posts: number;
 }
 
 export interface UserManagementResponse {
-  id: number;
-  username: string;
-  email: string;
-  name: string;
-  role: UserRole;
-  created_at: string;
-  email_verified: boolean;
-  total_posts: number;
-  total_comments: number;
+  users: User[];
+  total: number;
 }
 
 export interface PostModerationResponse {
-  id: number;
-  title: string;
-  content: string;
-  slug?: string;
-  published: string;
-  author_id: number;
-  author_username: string;
-  author_name: string;
-  total_comments: number;
-  status: PostStatus;
-  featured: boolean;
-  views: number;
-  moderator_name?: string;
-  moderated_at?: string;
-  rejection_reason?: string;
+  posts: BlogPost[];
+  total: number;
 }
 
 export interface CommentModerationResponse {
+  comments: Comment[];
+  total: number;
+}
+
+// Search interfaces
+export interface SearchSuggestion {
+  text: string;
+  type: string;
+  description: string;
+}
+
+export interface SearchFilters {
+  categories: CategoryFilter[];
+  tags: TagFilter[];
+  authors: AuthorFilter[];
+}
+
+export interface CategoryFilter {
+  name: string;
+  slug: string;
+}
+
+export interface TagFilter {
+  name: string;
+  post_count: number;
+}
+
+export interface AuthorFilter {
+  username: string;
+  post_count: number;
+}
+
+// User follow interfaces
+export interface UserFollowResponse {
+  following_id: number;
+  follower_id: number;
+  is_following: boolean;
+  created_at: string | null;
+}
+
+export interface UserFollowStats {
+  followers_count: number;
+  following_count: number;
+  is_following: boolean | null;
+}
+
+export interface FollowerUser {
   id: number;
-  content: string;
-  published: string;
-  author_id: number;
-  author_username: string;
-  author_name: string;
-  blog_post_id: number;
-  blog_post_title: string;
-  status: CommentStatus;
-  is_spam: boolean;
-  moderator_name?: string;
-  moderated_at?: string;
+  username: string;
+  name: string;
+  email?: string;
+}
+
+// Notification interfaces
+export interface NotificationModel {
+  id: number;
+  user_id: number;
+  type: string;
+  message: string;
+  is_read: boolean;
+  created_at: string;
+  post_id?: number;
+  from_user_id?: number;
+  from_user_name?: string;
+}
+
+export interface WhatsAppSettings {
+  whatsapp_number?: string;
+  whatsapp_notifications_enabled: boolean;
+  notify_on_new_posts: boolean;
+  notify_on_comments: boolean;
+  notify_on_mentions: boolean;
+}
+
+export interface WhatsAppSettingsUpdate {
+  whatsapp_number?: string;
+  whatsapp_notifications_enabled?: boolean;
+  notify_on_new_posts?: boolean;
+  notify_on_comments?: boolean;
+  notify_on_mentions?: boolean;
+}
+
+// Bookmark interfaces
+export interface BookmarkResponse {
+  id: number;
+  user_id: number;
+  post_id: number;
+  created_at: string;
+  post?: BookmarkPost;
+}
+
+export interface BookmarkPost {
+  id: number;
+  title: string;
+  slug: string;
+  author: string;
+}
+
+export interface BookmarkStats {
+  total_bookmarks: number;
+  is_bookmarked?: boolean;
 }

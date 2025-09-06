@@ -384,3 +384,120 @@ class PostLike(BaseModel):
 # Update forward references after all classes are defined
 BlogPost.model_rebuild()
 Comment.model_rebuild()
+
+# Search schemas
+class SearchResult(BaseModel):
+    """Search result item"""
+    title: str
+    content: str
+    slug: str
+    author: str
+    published: datetime
+    relevance_score: Optional[float] = None
+
+class SearchSuggestion(BaseModel):
+    """Search suggestion item"""
+    text: str
+    type: str  # "title", "category", "tag", "author"
+    description: str
+
+# User Follow schemas
+class UserFollowCreate(BaseModel):
+    """Schema for following a user"""
+    pass  # No additional fields needed, user IDs come from URL and auth
+
+class UserFollowResponse(BaseModel):
+    """Response when following/unfollowing a user"""
+    following_id: int
+    follower_id: int
+    is_following: bool
+    created_at: Optional[datetime] = None
+
+class UserFollowStats(BaseModel):
+    """User follow statistics"""
+    followers_count: int
+    following_count: int
+    is_following: Optional[bool] = None  # Only populated when requesting for another user
+
+class FollowerUser(BaseModel):
+    """User info for follower/following lists"""
+    id: int
+    username: str
+    name: str
+    bio: Optional[str] = None
+    avatar_url: Optional[str] = None
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+# Notification schemas
+class NotificationTypeEnum(str, Enum):
+    FOLLOW = "follow"
+    POST_LIKE = "post_like"
+    POST_COMMENT = "post_comment"
+    COMMENT_REPLY = "comment_reply"
+    POST_MENTION = "post_mention"
+    COMMENT_MENTION = "comment_mention"
+
+class NotificationBase(BaseModel):
+    """Base notification schema"""
+    type: NotificationTypeEnum
+    title: str
+    message: str
+    related_user_id: Optional[int] = None
+    related_post_id: Optional[int] = None
+    related_comment_id: Optional[int] = None
+
+class NotificationCreate(NotificationBase):
+    """Schema for creating notifications"""
+    user_id: int
+
+class NotificationResponse(NotificationBase):
+    """Full notification response"""
+    id: int
+    user_id: int
+    is_read: bool
+    created_at: datetime
+    read_at: Optional[datetime] = None
+    
+    # Related entity details
+    related_user: Optional[FollowerUser] = None
+    related_post: Optional[dict] = None  # Basic post info
+    
+    class Config:
+        from_attributes = True
+
+class NotificationUpdate(BaseModel):
+    """Schema for updating notifications"""
+    is_read: Optional[bool] = None
+
+class NotificationStats(BaseModel):
+    """Notification statistics"""
+    total_count: int
+    unread_count: int
+
+# Bookmark schemas
+class BookmarkBase(BaseModel):
+    """Base bookmark schema"""
+    pass
+
+class BookmarkCreate(BookmarkBase):
+    """Schema for creating a bookmark"""
+    pass  # post_id comes from URL, user_id from auth
+
+class BookmarkResponse(BaseModel):
+    """Bookmark response schema"""
+    id: int
+    user_id: int
+    post_id: int
+    created_at: datetime
+    post: Optional[dict] = None  # Basic post info
+    
+    class Config:
+        from_attributes = True
+
+class BookmarkStats(BaseModel):
+    """Bookmark statistics"""
+    total_bookmarks: int
+    is_bookmarked: Optional[bool] = None  # For specific post

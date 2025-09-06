@@ -6,7 +6,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from app.database.connection import engine
 from app.models import models
-from app.routers import auth, users, blog_posts, comments, search, seo, sitemap, slugs, recommendations, feed, rss, post_likes, post_sharing, media, categories, tags
+from app.routers import auth, users, blog_posts, comments, search, seo, sitemap, slugs, recommendations, feed, rss, post_likes, post_sharing, media, categories, tags, user_follows, notification_system, bookmarks
 
 # Import middleware and error handlers
 from app.middleware.logging import LoggingMiddleware
@@ -18,6 +18,7 @@ from app.middleware.error_handler import (
 )
 from app.schemas.responses import HealthCheckResponse
 from app.services.health_service import health_service
+from app.core.config import settings
 
 # Configure logging
 logging.basicConfig(
@@ -42,12 +43,12 @@ app = FastAPI(
 # Add middleware
 app.add_middleware(LoggingMiddleware)
 
-# Add CORS middleware with more restrictive settings
+# Add CORS middleware with configurable origins
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:8080"],  # Configure for your frontend
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH"],
+    allow_origins=settings.cors_origins,  # Use configured origins instead of wildcard
+    allow_credentials=settings.cors_allow_credentials,
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 
@@ -68,9 +69,23 @@ app.include_router(media.router)
 app.include_router(categories.router)
 app.include_router(tags.router)
 
+# Include existing enhanced routers
+app.include_router(search.router)
+app.include_router(seo.router)
+app.include_router(sitemap.router)
+app.include_router(slugs.router)
+app.include_router(recommendations.router)
+app.include_router(feed.router)
+app.include_router(rss.router)
+
+# Include new social features routers
+app.include_router(user_follows.router)
+
 # Import and include notifications router
 from app.routers import notifications
 app.include_router(notifications.router)
+app.include_router(notification_system.router)
+app.include_router(bookmarks.router)
 
 # Import and include admin routers
 from app.admin import users as admin_users, content as admin_content
@@ -92,6 +107,8 @@ def read_root():
     return {"message": "Welcome to the Blog API", "status": "healthy", "version": "1.0.0"}
 
 @app.get("/health", response_model=HealthCheckResponse)
-async def health_check():
-    """Enhanced health check with system status monitoring"""
-    return await health_service.get_health_status()
+def health_check():
+    """
+    Health check endpoint that returns system status and basic metrics
+    """
+    return health_service.get_health_status()

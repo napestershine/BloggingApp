@@ -48,9 +48,19 @@ class _MainLayoutState extends State<MainLayout> {
       route: '/blogs',
     ),
     NavigationItem(
-      icon: Icons.create,
-      label: 'Create',
-      route: '/create-post',
+      icon: Icons.search,
+      label: 'Search',
+      route: '/search',
+    ),
+    NavigationItem(
+      icon: Icons.bookmark,
+      label: 'Bookmarks',
+      route: '/bookmarks',
+    ),
+    NavigationItem(
+      icon: Icons.notifications,
+      label: 'Notifications',
+      route: '/notifications',
     ),
     NavigationItem(
       icon: Icons.person,
@@ -100,6 +110,14 @@ class _MainLayoutState extends State<MainLayout> {
         foregroundColor: Theme.of(context).colorScheme.onSurface,
         elevation: 0,
         actions: [
+          // Create post button
+          if (!widget.location.startsWith('/create-post'))
+            IconButton(
+              onPressed: () => context.go('/create-post'),
+              icon: const Icon(Icons.create),
+              tooltip: 'Create Post',
+            ),
+          
           // Theme toggle button
           const ThemeToggleButton(),
           
@@ -139,6 +157,14 @@ class _MainLayoutState extends State<MainLayout> {
       return 'Blog Posts';
     } else if (widget.location.startsWith('/blog/')) {
       return 'Blog Details';
+    } else if (widget.location.startsWith('/search')) {
+      return 'Search';
+    } else if (widget.location.startsWith('/bookmarks')) {
+      return 'Bookmarks';
+    } else if (widget.location.startsWith('/notifications')) {
+      return 'Notifications';
+    } else if (widget.location.startsWith('/user/') && widget.location.contains('/follows')) {
+      return 'User Network';
     } else if (widget.location.startsWith('/create-post')) {
       return 'Create Post';
     } else if (widget.location.startsWith('/profile')) {
