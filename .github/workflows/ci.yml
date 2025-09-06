@@ -7,12 +7,15 @@ on:
     branches: [ main ]
 
 jobs:
-  test-python:
+  test-api:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./apps/api
 
     services:
       postgres:
-        image: postgres:17
+        image: postgres:16
         env:
           POSTGRES_PASSWORD: postgres
           POSTGRES_USER: postgres
@@ -31,20 +34,171 @@ jobs:
     - name: Setup Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.13'
+        python-version: '3.12'
 
     - name: Cache pip packages
       uses: actions/cache@v3
       with:
         path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('python/requirements.txt') }}
+        key: ${{ runner.os }}-pip-${{ hashFiles('apps/api/requirements.txt') }}
         restore-keys: |
           ${{ runner.os }}-pip-
 
     - name: Install dependencies
-      run: cd python && pip install -r requirements.txt
+      run: pip install -r requirements.txt
 
-    - name: Run Python tests
-      run: cd python && python -m pytest app/tests/ -v
+    - name: Create environment file
+      run: |
+        echo "DATABASE_URL=postgresql://postgres:postgres@localhost:5432/blog" > .env
+        echo "SECRET_KEY=test-secret-key-for-ci" >> .env
+
+    - name: Run database migrations
+      run: alembic upgrade head
       env:
-        TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/blog
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/blog
+
+    - name: Run API tests with coverage
+      run: |
+        python -m pytest app/tests/ -v --cov=app --cov-report=xml --cov-report=term --cov-fail-under=85
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/blog
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./apps/api/coverage.xml
+        flags: api
+        name: codecov-api
+
+  test-web:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./apps/web
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: apps/web/package-lock.json
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Run type checking
+      run: npm run type-check
+
+    - name: Run linting
+      run: npm run lint
+
+    - name: Run unit tests with coverage
+      run: npm run test:coverage
+
+    - name: Install Playwright browsers
+      run: npx playwright install --with-deps
+
+    - name: Run E2E tests
+      run: npm run test:e2e
+
+    - name: Upload test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: playwright-report
+        path: apps/web/playwright-report/
+        retention-days: 30
+
+  test-mobile:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./apps/mobile
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.19.0'
+        cache: true
+
+    - name: Install dependencies
+      run: flutter pub get
+
+    - name: Analyze code
+      run: flutter analyze
+
+    - name: Run unit tests
+      run: flutter test --coverage
+
+    - name: Run integration tests
+      uses: reactivecircus/android-emulator-runner@v2
+      with:
+        api-level: 29
+        script: cd apps/mobile && flutter test integration_test/
+
+    - name: Upload coverage
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./apps/mobile/coverage/lcov.info
+        flags: mobile
+        name: codecov-mobile
+
+  build-and-test-docker:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Build Docker images
+      run: |
+        cd infra/docker
+        docker-compose build
+
+    - name: Start services
+      run: |
+        cd infra/docker
+        docker-compose up -d
+        
+    - name: Wait for services to be ready
+      run: |
+        timeout 60s bash -c 'until curl -s http://localhost:8000/health; do sleep 2; done'
+        timeout 60s bash -c 'until curl -s http://localhost:3000; do sleep 2; done'
+
+    - name: Test API health
+      run: |
+        curl -f http://localhost:8000/health
+        curl -f http://localhost:8000/openapi.json
+
+    - name: Test Web health
+      run: curl -f http://localhost:3000
+
+    - name: Cleanup
+      run: |
+        cd infra/docker
+        docker-compose down
+
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Python for MkDocs
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+
+    - name: Install MkDocs
+      run: |
+        pip install mkdocs-material mkdocs-git-revision-date-localized-plugin
+
+    - name: Build documentation
+      run: mkdocs build --strict
+
+    - name: Deploy to GitHub Pages
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      run: mkdocs gh-deploy --force

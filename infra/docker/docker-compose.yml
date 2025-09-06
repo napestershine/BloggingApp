@@ -1,0 +1,64 @@
+services:
+  # PostgreSQL 16 Database
+  db:
+    image: postgres:16-alpine
+    container_name: blogging-app-db
+    environment:
+      POSTGRES_DB: blog_db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - blogging-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d blog_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # FastAPI Backend
+  api:
+    build: ../../apps/api
+    container_name: blogging-app-api
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://user:password@db:5432/blog_db
+      - SECRET_KEY=your-secret-key-here-change-in-production
+      - CORS_ORIGINS=http://localhost:3000
+    volumes:
+      - ../../apps/api:/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - blogging-network
+
+  # Next.js Frontend
+  web:
+    build: 
+      context: ../../apps/web
+      dockerfile: Dockerfile
+    container_name: blogging-app-web
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - API_BASE_URL=http://localhost:8000
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - NEXT_PUBLIC_SITE_URL=http://localhost:3000
+    depends_on:
+      - api
+    networks:
+      - blogging-network
+
+volumes:
+  postgres_data:
+
+networks:
+  blogging-network:
+    driver: bridge

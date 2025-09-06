@@ -6,12 +6,28 @@ A modern, full-stack blogging platform featuring a Flutter mobile application, N
 
 ## 🏗️ Architecture
 
-- **Mobile Frontend**: Flutter mobile application with Material Design 3 UI
-- **Web Frontend**: Next.js web application with TypeScript, Tailwind CSS, and SSR
-- **Backend**: FastAPI-based REST API with JWT authentication
-- **Database**: SQLAlchemy ORM with SQLite (dev) / PostgreSQL (prod) support
-- **Authentication**: JWT token-based security
-- **Documentation**: Auto-generated OpenAPI/Swagger docs
+This project follows a **monorepo structure** with clearly separated applications and infrastructure:
+
+```
+BloggingApp/
+├── apps/
+│   ├── api/              # FastAPI backend with JWT auth & SQLAlchemy
+│   ├── web/              # Next.js TypeScript frontend with SSR
+│   └── mobile/           # Flutter mobile app with Material Design 3
+├── infra/
+│   └── docker/           # Docker configurations for all environments
+├── docs/                 # MkDocs Material documentation
+└── .github/workflows/    # CI/CD pipelines
+```
+
+### Key Technologies
+- **Backend**: FastAPI + Pydantic v2 + SQLAlchemy (async) + Alembic + PostgreSQL 16
+- **Web Frontend**: Next.js + TypeScript + Tailwind CSS + openapi-typescript
+- **Mobile**: Flutter + dio HTTP client + Material Design 3
+- **Infrastructure**: Docker + PostgreSQL 16 + GitHub Actions CI
+- **Quality**: pytest+httpx (≥85% cov) + Vitest/RTL + Playwright + flutter_test
+- **Admin**: SQLAdmin at `/admin` endpoint
+- **Docs**: MkDocs Material with automated deployment
 
 ## 🚀 Quick Start
 
@@ -36,16 +52,19 @@ A modern, full-stack blogging platform featuring a Flutter mobile application, N
    # Access at http://localhost:3000
    ```
 
-3. **Full Stack** (when API network issues are resolved):
+2. **Full Stack** with PostgreSQL 16:
    ```bash
-   docker compose up --build
+   cd infra/docker
+   docker-compose up --build
    # Web: http://localhost:3000
    # API: http://localhost:8000/docs
+   # Admin: http://localhost:8000/admin
    ```
 
-4. **Development Mode** with hot reloading:
+3. **Development Mode** with hot reloading:
    ```bash
-   docker compose -f docker-compose.dev.yml up
+   cd infra/docker
+   docker-compose -f docker-compose.dev.yml up
    ```
 
 ### Option 2: Legacy Docker Setup (Python Backend Only)
@@ -96,25 +115,31 @@ A modern, full-stack blogging platform featuring a Flutter mobile application, N
 
 ## 📱 Components
 
-### [Flutter Mobile App](./app/README.md)
-- Modern Material Design 3 interface
-- User authentication with JWT tokens
-- Blog post creation and management
-- Comments and social interactions
-- Responsive UI for different screen sizes
+### [Flutter Mobile App](./apps/mobile/README.md)
+- Modern Material Design 3 interface with responsive layouts
+- User authentication with JWT tokens and secure storage
+- Blog post creation, editing, and management
+- Comments and social interactions with real-time updates
+- dio HTTP client with type-safe API integration
+- Comprehensive testing with flutter_test and integration_test
+- Cross-platform support for iOS and Android
 
-### [Next.js Web App](./web/README.md)
+### [Next.js Web App](./apps/web/README.md)
 - Modern web platform with TypeScript and Tailwind CSS
-- Server-side rendering for excellent SEO
+- Server-side rendering for excellent SEO performance
+- openapi-typescript for type-safe API client generation
 - Responsive design with mobile-first approach
-- Complete authentication flow and API integration
-- Docker-ready with production configuration
+- Complete authentication flow with JWT integration
+- Testing with Vitest, React Testing Library, and Playwright
+- Docker-ready with optimized production builds
 
-### [FastAPI Backend](./python/README.md)
-- RESTful API with automatic documentation
+### [FastAPI Backend](./apps/api/README.md)
+- RESTful API with automatic OpenAPI documentation at `/openapi.json`
 - JWT-based authentication and authorization
-- SQLAlchemy ORM with database migrations
-- User, blog post, and comment management
+- Async SQLAlchemy ORM with PostgreSQL 16 and Alembic migrations
+- User, blog post, and comment management with full CRUD operations
+- SQLAdmin interface at `/admin` for easy administration
+- Comprehensive test suite with pytest+httpx (≥85% coverage)
 - CORS support for cross-origin requests
 
 ### [Development Tasks](./tasks/README.md)

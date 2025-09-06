@@ -1,0 +1,90 @@
+site_name: BloggingApp Documentation
+site_description: Complete documentation for BloggingApp - a modern full-stack blogging platform
+site_author: BloggingApp Team
+site_url: https://napestershine.github.io/BloggingApp/
+
+repo_name: napestershine/BloggingApp
+repo_url: https://github.com/napestershine/BloggingApp
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  palette:
+    # Palette toggle for light mode
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    # Palette toggle for dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - navigation.tracking
+    - search.highlight
+    - search.share
+    - content.code.copy
+    - content.action.edit
+    - content.action.view
+
+plugins:
+  - search
+  - git-revision-date-localized:
+      type: date
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - tables
+  - toc:
+      permalink: true
+  - attr_list
+  - md_in_html
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Quick Start: getting-started/quick-start.md
+    - Installation: getting-started/installation.md
+    - Configuration: getting-started/configuration.md
+  - Applications:
+    - API (FastAPI): apps/api.md
+    - Web (Next.js): apps/web.md
+    - Mobile (Flutter): apps/mobile.md
+  - Infrastructure:
+    - Docker Setup: infra/docker.md
+    - Database: infra/database.md
+    - CI/CD: infra/cicd.md
+  - Development:
+    - Contributing: development/contributing.md
+    - Testing: development/testing.md
+    - Code Quality: development/code-quality.md
+  - API Reference:
+    - Authentication: api/auth.md
+    - Blog Posts: api/posts.md
+    - Comments: api/comments.md
+    - Users: api/users.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/napestershine/BloggingApp
+  generator: false
