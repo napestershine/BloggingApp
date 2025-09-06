@@ -1,6 +1,6 @@
 # app/core/config.py
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import Field, SecretStr
+from pydantic import Field, SecretStr, field_validator
 from typing import Optional
 
 class Settings(BaseSettings):
@@ -20,9 +20,17 @@ class Settings(BaseSettings):
     whatsapp_rate_limit_per_minute: int = Field(default=10, alias="WHATSAPP_RATE_LIMIT_PER_MINUTE")
     whatsapp_rate_limit_per_hour: int = Field(default=100, alias="WHATSAPP_RATE_LIMIT_PER_HOUR")
     
-    # CORS configuration
-    cors_origins: list[str] = Field(default=["http://localhost:3000", "http://localhost:8080"], alias="CORS_ORIGINS")
+    # CORS configuration - accepts comma-separated string or list
+    cors_origins: str = Field(default="http://localhost:3000,http://localhost:8080", alias="CORS_ORIGINS")
     cors_allow_credentials: bool = Field(default=True, alias="CORS_ALLOW_CREDENTIALS")
+
+    @property
+    def cors_origins_list(self) -> list[str]:
+        """Parse CORS origins from comma-separated string"""
+        if isinstance(self.cors_origins, str):
+            # Split by comma and strip whitespace
+            return [origin.strip() for origin in self.cors_origins.split(',') if origin.strip()]
+        return self.cors_origins
 
     # Settings behavior
     model_config = SettingsConfigDict(

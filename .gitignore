@@ -11,3 +11,4 @@ build/
 
 # Ignore environment files
 */.env
+test-compose.sh
