@@ -186,7 +186,7 @@ def update_notification(
         "related_post": None
     }
 
-@router.put("/mark-all-read")
+@router.patch("/read-all")
 def mark_all_notifications_read(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
