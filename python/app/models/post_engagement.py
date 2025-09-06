@@ -27,7 +27,7 @@ class PostLike(Base):
     
     # Relationships
     user = relationship("User")
-    post = relationship("BlogPost", back_populates="likes")
+    # post = relationship("BlogPost", back_populates="likes")  # Commented out for now
     
     # Ensure a user can only have one reaction per post
     __table_args__ = (
@@ -47,5 +47,5 @@ class PostShare(Base):
     ip_address = Column(String(45), nullable=True)  # For basic analytics
     
     # Relationships
-    post = relationship("BlogPost", back_populates="shares")
+    # post = relationship("BlogPost", back_populates="shares")  # Commented out for now
     user = relationship("User")

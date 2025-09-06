@@ -13,20 +13,20 @@ class PostStatus(str, enum.Enum):
     SCHEDULED = "scheduled"
 
 
-# Association tables for many-to-many relationships
-blog_post_tags = Table(
-    'blog_post_tags',
-    Base.metadata,
-    Column('blog_post_id', Integer, ForeignKey('blog_posts.id'), primary_key=True),
-    Column('tag_id', Integer, ForeignKey('tags.id'), primary_key=True)
-)
+# Association tables for many-to-many relationships (commented out for now)
+# blog_post_tags = Table(
+#     'blog_post_tags',
+#     Base.metadata,
+#     Column('blog_post_id', Integer, ForeignKey('blog_posts.id'), primary_key=True),
+#     Column('tag_id', Integer, ForeignKey('tags.id'), primary_key=True)
+# )
 
-blog_post_categories = Table(
-    'blog_post_categories', 
-    Base.metadata,
-    Column('blog_post_id', Integer, ForeignKey('blog_posts.id'), primary_key=True),
-    Column('category_id', Integer, ForeignKey('categories.id'), primary_key=True)
-)
+# blog_post_categories = Table(
+#     'blog_post_categories', 
+#     Base.metadata,
+#     Column('blog_post_id', Integer, ForeignKey('blog_posts.id'), primary_key=True),
+#     Column('category_id', Integer, ForeignKey('categories.id'), primary_key=True)
+# )
 
 
 class BlogPost(Base):
@@ -68,7 +68,8 @@ class BlogPost(Base):
     author = relationship("User", back_populates="posts", foreign_keys=[author_id])
     comments = relationship("Comment", back_populates="blog_post")
     moderator = relationship("User", foreign_keys=[moderated_by])
-    likes = relationship("PostLike", back_populates="post")
-    shares = relationship("PostShare", back_populates="post")
-    tags = relationship("Tag", secondary=blog_post_tags, back_populates="blog_posts")
-    categories = relationship("Category", secondary=blog_post_categories, back_populates="blog_posts")
+    # likes = relationship("PostLike", back_populates="post")
+    # shares = relationship("PostShare", back_populates="post")
+    # Note: Tags and categories use simple text fields for now
+    # tags = relationship("Tag", secondary=blog_post_tags, back_populates="blog_posts")
+    # categories = relationship("Category", secondary=blog_post_categories, back_populates="blog_posts")
