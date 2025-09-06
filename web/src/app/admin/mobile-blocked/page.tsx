@@ -6,9 +6,13 @@ export default function MobileBlockedPage() {
   useEffect(() => {
     // Prevent back navigation to admin routes on mobile
     window.history.pushState(null, '', window.location.href);
-    window.addEventListener('popstate', () => {
+    const handlePopState = () => {
       window.history.pushState(null, '', window.location.href);
-    });
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
   }, []);
 
   return (
