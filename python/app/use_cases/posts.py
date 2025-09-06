@@ -167,7 +167,8 @@ class GetPostUseCase:
         
         if increment_views and post.is_published():
             self.post_write_repository.increment_view_count(post_id)
-            post.view_count += 1
+            # Get updated post from repository after view count increment
+            post = self.post_read_repository.get_by_id(post_id)
         
         return post
 
@@ -191,7 +192,8 @@ class GetPostBySlugUseCase:
         
         if increment_views and post.is_published():
             self.post_write_repository.increment_view_count(post.id)
-            post.view_count += 1
+            # Get updated post from repository after view count increment
+            post = self.post_read_repository.get_by_id(post.id)
         
         return post
 

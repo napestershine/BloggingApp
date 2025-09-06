@@ -13,7 +13,7 @@ class SqlAlchemyUserRepository:
     def __init__(self, db: Session):
         self.db = db
     
-    def create(self, user: UserEntity) -> UserEntity:
+    def create(self, user: UserEntity, hashed_password: str = None) -> UserEntity:
         """Create a new user"""
         # Check for existing user
         if self.get_by_username(user.username):
@@ -27,7 +27,7 @@ class SqlAlchemyUserRepository:
             username=user.username,
             email=user.email,
             name=user.name,
-            hashed_password="",  # This should be set by use case
+            hashed_password=hashed_password or "",
             role=user.role,
             email_verified=user.email_verified,
             bio=user.bio,
@@ -57,6 +57,18 @@ class SqlAlchemyUserRepository:
         """Get user by email"""
         db_user = self.db.query(UserModel).filter(UserModel.email == email).first()
         return self._to_entity(db_user) if db_user else None
+    
+    def get_hashed_password(self, username_or_email: str) -> Optional[str]:
+        """Get hashed password for authentication"""
+        db_user = (
+            self.db.query(UserModel)
+            .filter(
+                (UserModel.username == username_or_email) | 
+                (UserModel.email == username_or_email)
+            )
+            .first()
+        )
+        return db_user.hashed_password if db_user else None
     
     def update(self, user: UserEntity) -> UserEntity:
         """Update existing user"""

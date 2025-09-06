@@ -6,7 +6,7 @@ from app.domain.entities import User, BlogPost, Tag, Category
 class UserRepository(Protocol):
     """User repository interface"""
     
-    def create(self, user: User) -> User:
+    def create(self, user: User, hashed_password: str = None) -> User:
         """Create a new user"""
         ...
     
@@ -20,6 +20,10 @@ class UserRepository(Protocol):
     
     def get_by_email(self, email: str) -> Optional[User]:
         """Get user by email"""
+        ...
+    
+    def get_hashed_password(self, username_or_email: str) -> Optional[str]:
+        """Get hashed password for authentication"""
         ...
     
     def update(self, user: User) -> User:

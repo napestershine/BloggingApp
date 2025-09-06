@@ -78,9 +78,7 @@ class RegisterUserUseCase:
         
         # Hash password and save user
         hashed_password = self.password_hasher.hash_password(request.password)
-        # Note: We need to handle the hashed password in the repository adapter
-        # For now, we'll create the user and update the password separately
-        created_user = self.user_repository.create(user)
+        created_user = self.user_repository.create(user, hashed_password)
         
         # Generate access token
         token_data = {"sub": created_user.username, "user_id": created_user.id}
@@ -115,10 +113,12 @@ class LoginUserUseCase:
         if not user:
             raise InvalidCredentialsError()
         
-        # Verify password
-        # Note: We need access to the hashed password from the repository
-        # For now, we'll assume the password verification is handled elsewhere
-        # This is a limitation of our current domain model
+        # Get hashed password and verify
+        hashed_password = self.user_repository.get_hashed_password(request.username)
+        if not hashed_password or not self.password_hasher.verify_password(
+            request.password, hashed_password
+        ):
+            raise InvalidCredentialsError()
         
         # Generate access token
         token_data = {"sub": user.username, "user_id": user.id}
