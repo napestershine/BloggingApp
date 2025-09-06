@@ -1,0 +1,1 @@
+# Ports layer - Protocol/ABC interfaces for dependency inversion

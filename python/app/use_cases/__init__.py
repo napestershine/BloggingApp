@@ -1,0 +1,1 @@
+# Use cases layer - business logic separated from infrastructure concerns
