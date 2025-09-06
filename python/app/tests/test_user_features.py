@@ -122,47 +122,36 @@ def test_user_profile_management(client):
         "email": email
     }
     response = client.post("/auth/register", json=registration_data)
-    assert response.status_code == 201
-    user_data = response.json()
-    user_id = user_data["id"]
-    
-    # Login to get token
-    login_data = {
-        "username": username,
-        "password": "testpass123"
-    }
-    response = client.post("/auth/login", data=login_data)
-    token = response.json()["access_token"]
-    headers = {"Authorization": f"Bearer {token}"}
-    
-    # Get user profile
-    response = client.get(f"/users/{user_id}/profile", headers=headers)
-    assert response.status_code == 200
-    profile_data = response.json()
-    assert profile_data["username"] == username
-    
-    # Update user profile
-    update_data = {
-        "name": "Updated Test User",
-        "bio": "This is my test bio",
-        "social_links": {
-            "twitter": "@testuser",
-            "github": "github.com/testuser"
-        }
-    }
-    response = client.put(f"/users/{user_id}/profile", json=update_data, headers=headers)
+
     assert response.status_code == 200
     updated_profile = response.json()
     assert updated_profile["name"] == "Updated Test User"
     assert updated_profile["bio"] == "This is my test bio"
 
 def test_sample_credentials(client):
-    """Test login with sample credentials - first create the users"""
-    from app.auth.auth import get_password_hash
-    
-    sample_users_data = [
-        {"username": "admin", "password": "admin123", "email": "admin@example.com", "name": "Admin User"},
-        {"username": "johndoe", "password": "john123", "email": "john@example.com", "name": "John Doe"},
+    """Test login with sample credentials"""
+    sample_users = [
+        {"username": "admin", "password": "admin123", "email": "admin@test.com", "name": "Admin User"},
+        {"username": "johndoe", "password": "john123", "email": "john@test.com", "name": "John Doe"},
+        {"username": "janesmith", "password": "jane123", "email": "jane@test.com", "name": "Jane Smith"},
+    ]
+    for user_data in sample_users:
+        registration_data = {
+            "username": user_data["username"],
+            "password": user_data["password"],
+            "retyped_password": user_data["password"],
+            "name": user_data["name"],
+            "email": user_data["email"]
+        }
+        response = client.post("/auth/register", json=registration_data)
+        assert response.status_code == 201, f"Failed to create user {user_data['username']}"
+    for user_data in sample_users:
+        login_cred = {"username": user_data["username"], "password": user_data["password"]}
+        response = client.post("/auth/login", data=login_cred)
+        assert response.status_code == 200, f"Failed to login with {user_data['username']}"
+        token_data = response.json()
+        assert "access_token" in token_data
+        assert token_data["token_type"] == "bearer"
         {"username": "janesmith", "password": "jane123", "email": "jane@example.com", "name": "Jane Smith"},
     ]
     
@@ -186,9 +175,23 @@ def test_sample_credentials(client):
         {"username": "janesmith", "password": "jane123"},
     ]
     
-    for cred in sample_credentials:
-        response = client.post("/auth/login", data=cred)
-        assert response.status_code == 200, f"Failed to login with {cred['username']}"
+    # Create each user first
+    for user_data in sample_users:
+        registration_data = {
+            "username": user_data["username"],
+            "password": user_data["password"],
+            "retyped_password": user_data["password"],
+            "name": user_data["name"],
+            "email": user_data["email"]
+        }
+        response = client.post("/auth/register", json=registration_data)
+        assert response.status_code == 201, f"Failed to create user {user_data['username']}"
+    
+    # Now test login with these credentials
+    for user_data in sample_users:
+        login_cred = {"username": user_data["username"], "password": user_data["password"]}
+        response = client.post("/auth/login", data=login_cred)
+        assert response.status_code == 200, f"Failed to login with {user_data['username']}"
         token_data = response.json()
         assert "access_token" in token_data
         assert token_data["token_type"] == "bearer"

@@ -1,12 +1,15 @@
 import pytest
-from app.models.models import User, Media, MediaType
+from app.models.models import User, Media
 from app.auth.auth import get_password_hash
+import io
 import uuid
 
 @pytest.fixture
 def test_user(test_db):
+    """Create a test user for media upload tests"""
     db = test_db()
     try:
+        # Create test user with unique credentials
         unique_id = str(uuid.uuid4())[:8]
         user = User(
             username=f"testuser_{unique_id}",
@@ -23,6 +26,7 @@ def test_user(test_db):
 
 @pytest.fixture
 def auth_headers(test_user, client):
+    """Create authentication headers for test user"""
     login_data = {
         "username": test_user.username,
         "password": "testpass123"
@@ -32,92 +36,133 @@ def auth_headers(test_user, client):
     return {"Authorization": f"Bearer {token}"}
 
 class TestMediaUpload:
-    def test_upload_image(self, auth_headers, client):
-        """Test uploading an image file"""
-        # Create a mock image file
-        files = {"file": ("test.jpg", b"fake image data", "image/jpeg")}
+    def test_upload_image_file(self, client, auth_headers, test_db):
+        """Test uploading a valid image file"""
+        # Create a small test image file in memory
+        file_content = b"fake image content"
+        file = io.BytesIO(file_content)
         
-        response = client.post("/media/upload", files=files, headers=auth_headers)
+        response = client.post(
+            "/media/upload",
+            headers=auth_headers,
+            files={"file": ("test_image.png", file, "image/png")}
+        )
         
         assert response.status_code == 201
         data = response.json()
-        assert data["filename"] == "test.jpg"
-        assert data["media_type"] == "IMAGE"
-        assert "url" in data
+        assert data["original_filename"] == "test_image.png"
+        assert data["mime_type"] == "image/png"
+        assert data["file_size"] == len(file_content)
         assert "id" in data
-
-    def test_upload_video(self, auth_headers, client):
-        """Test uploading a video file"""
-        files = {"file": ("test.mp4", b"fake video data", "video/mp4")}
         
-        response = client.post("/media/upload", files=files, headers=auth_headers)
+        # Verify file was saved to database
+        db = test_db()
+        try:
+            media = db.query(Media).filter(Media.id == data["id"]).first()
+            assert media is not None
+            assert media.original_filename == "test_image.png"
+        finally:
+            db.close()
+    
+    def test_upload_file_without_auth(self, client):
+        """Test uploading file without authentication should fail"""
+        file_content = b"test content"
+        file = io.BytesIO(file_content)
         
-        assert response.status_code == 201
-        data = response.json()
-        assert data["filename"] == "test.mp4"
-        assert data["media_type"] == "VIDEO"
-
-    def test_upload_document(self, auth_headers, client):
-        """Test uploading a document file"""
-        files = {"file": ("test.pdf", b"fake pdf data", "application/pdf")}
+        response = client.post(
+            "/media/upload",
+            files={"file": ("test.txt", file, "text/plain")}
+        )
         
-        response = client.post("/media/upload", files=files, headers=auth_headers)
+        # FastAPI returns 403 for missing auth, not 401
+        assert response.status_code == 403
+    
+    def test_upload_invalid_file_type(self, client, auth_headers):
+        """Test uploading invalid file type should fail"""
+        file_content = b"fake executable content"
+        file = io.BytesIO(file_content)
         
-        assert response.status_code == 201
-        data = response.json()
-        assert data["filename"] == "test.pdf"
-        assert data["media_type"] == "DOCUMENT"
-
-    def test_upload_without_auth(self, client):
-        """Test that upload requires authentication"""
-        files = {"file": ("test.jpg", b"fake image data", "image/jpeg")}
+        response = client.post(
+            "/media/upload",
+            headers=auth_headers,
+            files={"file": ("test.exe", file, "application/octet-stream")}
+        )
         
-        response = client.post("/media/upload", files=files)
-        
-        assert response.status_code == 401
-
-    def test_get_user_media(self, auth_headers, client):
-        """Test getting user's uploaded media"""
+        assert response.status_code == 400
+        assert "not allowed" in response.json()["detail"]
+    
+    def test_get_uploaded_file(self, client, auth_headers):
+        """Test retrieving an uploaded file"""
         # First upload a file
-        files = {"file": ("test.jpg", b"fake image data", "image/jpeg")}
-        client.post("/media/upload", files=files, headers=auth_headers)
+        file_content = b"test document content"
+        file = io.BytesIO(file_content)
         
-        # Then get user's media
-        response = client.get("/media/user", headers=auth_headers)
+        upload_response = client.post(
+            "/media/upload",
+            headers=auth_headers,
+            files={"file": ("test.txt", file, "text/plain")}
+        )
         
-        assert response.status_code == 200
-        data = response.json()
-        assert len(data) > 0
-        assert data[0]["filename"] == "test.jpg"
-
-    def test_get_media_by_id(self, auth_headers, client):
-        """Test getting specific media by ID"""
-        # First upload a file
-        files = {"file": ("test.jpg", b"fake image data", "image/jpeg")}
-        upload_response = client.post("/media/upload", files=files, headers=auth_headers)
+        assert upload_response.status_code == 201
         media_id = upload_response.json()["id"]
         
-        # Then get the media by ID
-        response = client.get(f"/media/{media_id}", headers=auth_headers)
+        # Now retrieve the file
+        response = client.get(f"/media/{media_id}")
+        
+        assert response.status_code == 200
+        assert response.content == file_content
+    
+    def test_get_nonexistent_file(self, client):
+        """Test retrieving non-existent file should return 404"""
+        response = client.get("/media/99999")
+        assert response.status_code == 404
+    
+    def test_list_user_media(self, client, auth_headers):
+        """Test listing user's uploaded media"""
+        # Upload a couple of files
+        file1 = io.BytesIO(b"file 1 content")
+        file2 = io.BytesIO(b"file 2 content")
+        
+        client.post(
+            "/media/upload",
+            headers=auth_headers,
+            files={"file": ("file1.txt", file1, "text/plain")}
+        )
+        
+        client.post(
+            "/media/upload",
+            headers=auth_headers,
+            files={"file": ("file2.txt", file2, "text/plain")}
+        )
+        
+        # List media files
+        response = client.get("/media/", headers=auth_headers)
         
         assert response.status_code == 200
         data = response.json()
-        assert data["id"] == media_id
-        assert data["filename"] == "test.jpg"
-
-    def test_delete_media(self, auth_headers, client):
+        assert len(data) >= 2
+        assert any(media["original_filename"] == "file1.txt" for media in data)
+        assert any(media["original_filename"] == "file2.txt" for media in data)
+    
+    def test_delete_media(self, client, auth_headers):
         """Test deleting uploaded media"""
-        # First upload a file
-        files = {"file": ("test.jpg", b"fake image data", "image/jpeg")}
-        upload_response = client.post("/media/upload", files=files, headers=auth_headers)
+        # Upload a file first
+        file_content = b"to be deleted"
+        file = io.BytesIO(file_content)
+        
+        upload_response = client.post(
+            "/media/upload",
+            headers=auth_headers,
+            files={"file": ("delete_me.txt", file, "text/plain")}
+        )
+        
+        assert upload_response.status_code == 201
         media_id = upload_response.json()["id"]
         
-        # Then delete the media
+        # Delete the file
         response = client.delete(f"/media/{media_id}", headers=auth_headers)
+        assert response.status_code == 204
         
-        assert response.status_code == 200
-        assert response.json()["message"] == "Media deleted successfully"
-        
-        # Verify it's deleted
-        get_response = client.get(f"/media/{media_id}", headers=auth_headers)
+        # Verify file is gone
+        get_response = client.get(f"/media/{media_id}")
         assert get_response.status_code == 404

@@ -122,7 +122,7 @@ export default function HomePage() {
               </h2>
               <p className="mx-auto mt-6 max-w-xl text-lg leading-8 text-gray-300">
                 Join thousands of writers who are already sharing their stories on BloggingApp. 
-                It's free to get started.
+                It&apos;s free to get started.
               </p>
               <div className="mt-10 flex items-center justify-center gap-x-6">
                 <Link

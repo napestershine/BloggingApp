@@ -5,6 +5,7 @@ import uuid
 
 @pytest.fixture
 def test_user(test_db):
+    """Create a test user for categories and tags tests"""
     db = test_db()
     try:
         unique_id = str(uuid.uuid4())[:8]
@@ -23,6 +24,7 @@ def test_user(test_db):
 
 @pytest.fixture
 def auth_headers(test_user, client):
+    """Create authentication headers for test user"""
     login_data = {
         "username": test_user.username,
         "password": "testpass123"
@@ -32,7 +34,7 @@ def auth_headers(test_user, client):
     return {"Authorization": f"Bearer {token}"}
 
 class TestCategories:
-    def test_create_category(self, auth_headers, client):
+    def test_create_category(self, client, auth_headers):
         """Test creating a new category"""
         category_data = {
             "name": "Technology",
@@ -48,7 +50,7 @@ class TestCategories:
         assert data["slug"] == "technology"
         assert "id" in data
     
-    def test_create_category_custom_slug(self, auth_headers, client):
+    def test_create_category_custom_slug(self, client, auth_headers):
         """Test creating category with custom slug"""
         category_data = {
             "name": "Web Development",
@@ -62,7 +64,7 @@ class TestCategories:
         data = response.json()
         assert data["slug"] == "webdev"
     
-    def test_create_duplicate_category(self, auth_headers, client):
+    def test_create_duplicate_category(self, client, auth_headers):
         """Test creating category with duplicate name should fail"""
         category_data = {
             "name": "Duplicate Category",
@@ -78,7 +80,7 @@ class TestCategories:
         assert response2.status_code == 400
         assert "already exists" in response2.json()["detail"]
     
-    def test_get_categories(self, auth_headers, client):
+    def test_get_categories(self, client, auth_headers):
         """Test getting list of categories"""
         # Create a few categories
         categories = [
@@ -98,7 +100,7 @@ class TestCategories:
         assert "Science" in category_names
         assert "Travel" in category_names
     
-    def test_get_category_by_id(self, auth_headers, client):
+    def test_get_category_by_id(self, client, auth_headers):
         """Test getting a specific category by ID"""
         category_data = {
             "name": "Specific Category",
@@ -114,7 +116,7 @@ class TestCategories:
         data = response.json()
         assert data["name"] == "Specific Category"
     
-    def test_update_category(self, auth_headers, client):
+    def test_update_category(self, client, auth_headers):
         """Test updating a category"""
         # Create category
         category_data = {
@@ -138,7 +140,7 @@ class TestCategories:
         assert data["name"] == "Updated Name"
         assert data["description"] == "Updated description"
     
-    def test_delete_category(self, auth_headers, client):
+    def test_delete_category(self, client, auth_headers):
         """Test deleting a category"""
         category_data = {
             "name": "To Be Deleted",
@@ -157,7 +159,7 @@ class TestCategories:
         assert get_response.status_code == 404
 
 class TestTags:
-    def test_create_tag(self, auth_headers, client):
+    def test_create_tag(self, client, auth_headers):
         """Test creating a new tag"""
         tag_data = {"name": "Python"}
         
@@ -168,7 +170,7 @@ class TestTags:
         assert data["name"] == "python"  # Should be lowercase
         assert "id" in data
     
-    def test_create_duplicate_tag_returns_existing(self, auth_headers, client):
+    def test_create_duplicate_tag_returns_existing(self, client, auth_headers):
         """Test creating duplicate tag returns existing tag"""
         tag_data = {"name": "JavaScript"}
         
@@ -185,7 +187,7 @@ class TestTags:
         # Should be the same tag
         assert tag1_id == tag2_id
     
-    def test_get_tags(self, auth_headers, client):
+    def test_get_tags(self, client, auth_headers):
         """Test getting list of tags"""
         tags = ["React", "Vue", "Angular"]
         
@@ -202,7 +204,7 @@ class TestTags:
         assert "vue" in tag_names
         assert "angular" in tag_names
     
-    def test_search_tags(self, auth_headers, client):
+    def test_search_tags(self, client, auth_headers):
         """Test searching tags"""
         tags = ["Machine Learning", "Machine Vision", "Deep Learning"]
         
@@ -218,7 +220,7 @@ class TestTags:
         assert "machine learning" in tag_names
         assert "machine vision" in tag_names
     
-    def test_delete_tag(self, auth_headers, client):
+    def test_delete_tag(self, client, auth_headers):
         """Test deleting a tag"""
         tag_data = {"name": "ToDelete"}
         
@@ -234,7 +236,7 @@ class TestTags:
         assert get_response.status_code == 404
 
 class TestBlogPostTagsCategories:
-    def test_assign_tags_to_blog_post(self, auth_headers, client):
+    def test_assign_tags_to_blog_post(self, client, auth_headers):
         """Test assigning tags to a blog post"""
         # Create tags
         tag1_response = client.post("/tags/", json={"name": "Python"}, headers=auth_headers)
@@ -261,7 +263,7 @@ class TestBlogPostTagsCategories:
         assert "python" in tag_names
         assert "fastapi" in tag_names
     
-    def test_assign_categories_to_blog_post(self, auth_headers, client):
+    def test_assign_categories_to_blog_post(self, client, auth_headers):
         """Test assigning categories to a blog post"""
         # Create categories
         cat1_response = client.post("/categories/", json={"name": "Programming"}, headers=auth_headers)
@@ -288,7 +290,7 @@ class TestBlogPostTagsCategories:
         assert "Programming" in category_names
         assert "Tutorial" in category_names
     
-    def test_get_blog_post_tags(self, auth_headers, client):
+    def test_get_blog_post_tags(self, client, auth_headers):
         """Test getting tags for a blog post"""
         # Create tag and blog post with tag
         tag_response = client.post("/tags/", json={"name": "TestTag"}, headers=auth_headers)

@@ -22,7 +22,7 @@ A modern, full-stack blogging platform featuring a Flutter mobile application, N
 - **Python**: 3.12+ for the API backend
 - **Docker**: (Optional) For containerized deployment
 
-### Option 1: Docker Setup (Recommended)
+### Option 1: Docker Setup (Recommended for Testing)
 
 1. Clone the repository:
    ```bash
@@ -30,27 +30,47 @@ A modern, full-stack blogging platform featuring a Flutter mobile application, N
    cd BloggingApp
    ```
 
-2. Start the backend API:
+2. **Frontend Only (Web)**: Test the Next.js app in isolation:
+   ```bash
+   docker compose -f docker-compose.web-only.yml up
+   # Access at http://localhost:3000
+   ```
+
+3. **Full Stack** (when API network issues are resolved):
+   ```bash
+   docker compose up --build
+   # Web: http://localhost:3000
+   # API: http://localhost:8000/docs
+   ```
+
+4. **Development Mode** with hot reloading:
+   ```bash
+   docker compose -f docker-compose.dev.yml up
+   ```
+
+### Option 2: Legacy Docker Setup (Python Backend Only)
+
+1. Start the backend API:
    ```bash
    cd python
    docker-compose up --build
    ```
 
-3. Run the Flutter app (mobile):
+2. Run the Flutter app (mobile):
    ```bash
    cd app
    flutter pub get
    flutter run
    ```
 
-4. Run the Next.js web app:
+3. Run the Next.js web app:
    ```bash
    cd web
-   npm install
+   npm install --legacy-peer-deps
    npm run dev
    ```
 
-### Option 2: Manual Setup
+### Option 3: Manual Setup
 
 1. **Set up the API backend**:
    ```bash
@@ -70,7 +90,7 @@ A modern, full-stack blogging platform featuring a Flutter mobile application, N
 3. **Set up the Next.js web app**:
    ```bash
    cd web
-   npm install
+   npm install --legacy-peer-deps
    npm run dev
    ```
 

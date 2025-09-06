@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 
 import '../services/auth_service.dart';
+import '../services/error_service.dart';
 import '../utils/responsive_layout.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -34,6 +35,19 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  /// Handles form submission for both login and registration
+  /// 
+  /// This method performs comprehensive validation and error handling:
+  /// 1. Validates form fields using Flutter's built-in validation
+  /// 2. Calls appropriate authentication service method
+  /// 3. Provides user feedback through error service
+  /// 4. Navigates to main app on success
+  /// 
+  /// Error scenarios handled:
+  /// - Network connectivity issues
+  /// - Invalid credentials
+  /// - Server errors
+  /// - Validation failures
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) {
       return;
@@ -41,31 +55,63 @@ class _LoginScreenState extends State<LoginScreen> {
 
     final authService = Provider.of<AuthService>(context, listen: false);
     
-    bool success;
-    if (_isLoginMode) {
-      success = await authService.login(
-        _usernameController.text,
-        _passwordController.text,
-      );
-    } else {
-      success = await authService.register(
-        _usernameController.text,
-        _passwordController.text,
-        _retypedPasswordController.text,
-        _nameController.text,
-        _emailController.text,
-      );
-    }
+    try {
+      bool success;
+      if (_isLoginMode) {
+        // Perform login with input validation
+        final username = _usernameController.text.trim();
+        final password = _passwordController.text;
+        
+        if (username.isEmpty || password.isEmpty) {
+          ErrorService.showError(context, 'Please fill in all required fields');
+          return;
+        }
+        
+        success = await authService.login(username, password);
+      } else {
+        // Perform registration with comprehensive validation
+        final username = _usernameController.text.trim();
+        final password = _passwordController.text;
+        final retypedPassword = _retypedPasswordController.text;
+        final name = _nameController.text.trim();
+        final email = _emailController.text.trim();
+        
+        // Additional password validation
+        if (password != retypedPassword) {
+          ErrorService.showError(context, 'Passwords do not match');
+          return;
+        }
+        
+        success = await authService.register(
+          username, password, retypedPassword, name, email,
+        );
+      }
 
-    if (success && mounted) {
-      context.go('/blogs');
-    } else if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_isLoginMode ? 'Login failed' : 'Registration failed'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (success && mounted) {
+        // Success - navigate to main app
+        ErrorService.showSuccess(
+          context, 
+          _isLoginMode ? 'Login successful!' : 'Registration successful!',
+        );
+        context.go('/blogs');
+      } else if (mounted) {
+        // Authentication failed - show appropriate error
+        final errorMessage = _isLoginMode 
+            ? 'Login failed. Please check your credentials and try again.'
+            : 'Registration failed. Please check your information and try again.';
+        ErrorService.showError(context, errorMessage);
+      }
+    } catch (e) {
+      // Handle unexpected errors
+      if (mounted) {
+        ErrorService.handleException(
+          context, 
+          e,
+          customMessage: _isLoginMode 
+              ? 'Login error occurred. Please try again.'
+              : 'Registration error occurred. Please try again.',
+        );
+      }
     }
   }
 
@@ -165,13 +211,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   prefixIcon: Icon(Icons.person),
                 ),
                 validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your username';
-                  }
-                  if (value.length < 6) {
-                    return 'Username must be at least 6 characters';
-                  }
-                  return null;
+                  return ErrorService.validateField(
+                    'Username', 
+                    value, 
+                    ['required', 'min:3']
+                  );
                 },
               ),
               const SizedBox(height: 16),
@@ -185,10 +229,11 @@ class _LoginScreenState extends State<LoginScreen> {
                     prefixIcon: Icon(Icons.badge),
                   ),
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your full name';
-                    }
-                    return null;
+                    return ErrorService.validateField(
+                      'Full name', 
+                      value, 
+                      ['required', 'min:2']
+                    );
                   },
                 ),
                 const SizedBox(height: 16),
@@ -202,13 +247,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   keyboardType: TextInputType.emailAddress,
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your email';
-                    }
-                    if (!value.contains('@')) {
-                      return 'Please enter a valid email';
-                    }
-                    return null;
+                    return ErrorService.validateField(
+                      'Email', 
+                      value, 
+                      ['required', 'email']
+                    );
                   },
                 ),
                 const SizedBox(height: 16),
@@ -231,13 +274,19 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 obscureText: _obscurePassword,
                 validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your password';
+                  if (_isLoginMode) {
+                    return ErrorService.validateField(
+                      'Password', 
+                      value, 
+                      ['required']
+                    );
+                  } else {
+                    return ErrorService.validateField(
+                      'Password', 
+                      value, 
+                      ['required', 'min:8', 'strong_password']
+                    );
                   }
-                  if (!_isLoginMode && value.length < 7) {
-                    return 'Password must be at least 7 characters';
-                  }
-                  return null;
                 },
               ),
               const SizedBox(height: 16),

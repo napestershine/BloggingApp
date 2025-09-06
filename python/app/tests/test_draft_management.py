@@ -5,6 +5,7 @@ import uuid
 
 @pytest.fixture
 def test_user(test_db):
+    """Create a test user for draft management tests"""
     db = test_db()
     try:
         unique_id = str(uuid.uuid4())[:8]
@@ -23,6 +24,7 @@ def test_user(test_db):
 
 @pytest.fixture
 def auth_headers(test_user, client):
+    """Create authentication headers for test user"""
     login_data = {
         "username": test_user.username,
         "password": "testpass123"
@@ -32,7 +34,7 @@ def auth_headers(test_user, client):
     return {"Authorization": f"Bearer {token}"}
 
 class TestDraftManagement:
-    def test_create_draft_post(self, auth_headers, client):
+    def test_create_draft_post(self, client, auth_headers):
         """Test creating a draft post"""
         post_data = {
             "title": "Draft Post",
@@ -48,7 +50,7 @@ class TestDraftManagement:
         assert data["status"] == "DRAFT"
         assert "slug" in data
     
-    def test_create_published_post(self, auth_headers, client):
+    def test_create_published_post(self, client, auth_headers):
         """Test creating a published post"""
         post_data = {
             "title": "Published Post",
@@ -63,7 +65,7 @@ class TestDraftManagement:
         assert data["title"] == "Published Post"
         assert data["status"] == "PUBLISHED"
     
-    def test_create_post_defaults_to_draft(self, auth_headers, client):
+    def test_create_post_defaults_to_draft(self, client, auth_headers):
         """Test creating post without status defaults to draft"""
         post_data = {
             "title": "Default Status Post",
@@ -76,7 +78,7 @@ class TestDraftManagement:
         data = response.json()
         assert data["status"] == "DRAFT"
     
-    def test_get_blog_posts_only_shows_published(self, auth_headers, client):
+    def test_get_blog_posts_only_shows_published(self, client, auth_headers):
         """Test that GET /blog_posts/ only shows published posts by default"""
         # Create both draft and published posts
         draft_data = {
@@ -104,7 +106,7 @@ class TestDraftManagement:
         assert "Published Post" in titles
         assert "Draft Post" not in titles
     
-    def test_get_blog_posts_with_draft_filter(self, auth_headers, client):
+    def test_get_blog_posts_with_draft_filter(self, client, auth_headers):
         """Test getting blog posts with draft status filter"""
         # Create both draft and published posts
         draft_data = {
@@ -131,7 +133,7 @@ class TestDraftManagement:
         for post in data:
             assert post["status"] == "DRAFT"
     
-    def test_get_user_drafts(self, auth_headers, client):
+    def test_get_user_drafts(self, client, auth_headers):
         """Test getting current user's draft posts"""
         # Create some draft posts
         draft_posts = [
@@ -159,7 +161,7 @@ class TestDraftManagement:
         assert "Draft 2" in titles
         assert "Published" not in titles
     
-    def test_autosave_draft(self, auth_headers, client):
+    def test_autosave_draft(self, client, auth_headers):
         """Test auto-saving draft changes"""
         # Create a draft post
         post_data = {
@@ -185,7 +187,7 @@ class TestDraftManagement:
         assert data["content"] == "Updated content"
         assert data["status"] == "DRAFT"
     
-    def test_autosave_published_post_fails(self, auth_headers, client):
+    def test_autosave_published_post_fails(self, client, auth_headers):
         """Test that auto-save fails for published posts"""
         # Create a published post with unique title
         import uuid
@@ -210,7 +212,7 @@ class TestDraftManagement:
         assert response.status_code == 400
         assert "only available for draft posts" in response.json()["detail"]
     
-    def test_publish_draft(self, auth_headers, client):
+    def test_publish_draft(self, client, auth_headers):
         """Test publishing a draft post"""
         # Create a draft post
         post_data = {
@@ -230,7 +232,7 @@ class TestDraftManagement:
         assert data["status"] == "PUBLISHED"
         assert data["title"] == "Draft to Publish"
     
-    def test_publish_already_published_post_fails(self, auth_headers, client):
+    def test_publish_already_published_post_fails(self, client, auth_headers):
         """Test that publishing an already published post fails"""
         # Create a published post
         post_data = {
@@ -248,7 +250,7 @@ class TestDraftManagement:
         assert response.status_code == 400
         assert "Only draft posts can be published" in response.json()["detail"]
     
-    def test_update_post_status(self, auth_headers, client):
+    def test_update_post_status(self, client, auth_headers):
         """Test updating post status through PUT endpoint"""
         # Create a draft post
         post_data = {

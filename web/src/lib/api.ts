@@ -127,7 +127,7 @@ export const authAPI = {
   logout: async (): Promise<void> => {
     try {
       await apiClient.post('/auth/logout');
-    } catch (error) {
+    } catch {
       // Handle logout error silently
     } finally {
       tokenUtils.removeToken();

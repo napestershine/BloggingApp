@@ -1,10 +1,11 @@
 import '@/styles/globals.css';
-import { Inter } from 'next/font/google';
+// import { Inter } from 'next/font/google'; // Disabled for offline environment
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from '@/components/AuthProvider';
+import { ThemeProvider } from '@/components/ThemeProvider';
 import { Metadata } from 'next';
 
-const inter = Inter({ subsets: ['latin'] });
+// const inter = Inter({ subsets: ['latin'] }); // Disabled for offline environment
 
 export const metadata: Metadata = {
   title: {
@@ -55,34 +56,37 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
-        <AuthProvider>
-          {children}
-          <Toaster
-            position="top-right"
-            toastOptions={{
-              duration: 4000,
-              style: {
-                background: '#363636',
-                color: '#fff',
-              },
-              success: {
-                duration: 3000,
-                iconTheme: {
-                  primary: '#4ade80',
-                  secondary: '#fff',
+      <body className="font-sans" suppressHydrationWarning> {/* Using system fonts instead of Inter */}
+        <ThemeProvider>
+          <AuthProvider>
+            {children}
+            <Toaster
+              position="top-right"
+              toastOptions={{
+                duration: 4000,
+                style: {
+                  background: 'var(--toast-bg, #363636)',
+                  color: 'var(--toast-color, #fff)',
+                  borderRadius: '8px',
                 },
-              },
-              error: {
-                duration: 5000,
-                iconTheme: {
-                  primary: '#ef4444',
-                  secondary: '#fff',
+                success: {
+                  duration: 3000,
+                  iconTheme: {
+                    primary: 'var(--success-color, #4ade80)',
+                    secondary: 'var(--success-text, #fff)',
+                  },
                 },
-              },
-            }}
-          />
-        </AuthProvider>
+                error: {
+                  duration: 5000,
+                  iconTheme: {
+                    primary: 'var(--error-color, #ef4444)',
+                    secondary: 'var(--error-text, #fff)',
+                  },
+                },
+              }}
+            />
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

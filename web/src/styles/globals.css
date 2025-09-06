@@ -24,6 +24,14 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 221.2 83.2% 53.3%;
     --radius: 0.5rem;
+    
+    /* Custom theme variables */
+    --toast-bg: #363636;
+    --toast-color: #fff;
+    --success-color: #4ade80;
+    --success-text: #fff;
+    --error-color: #ef4444;
+    --error-text: #fff;
   }
 
   .dark {
@@ -46,15 +54,20 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 224.3 76.3% 94.1%;
+    
+    /* Dark theme overrides */
+    --toast-bg: #1f2937;
+    --toast-color: #f9fafb;
+    --success-color: #10b981;
+    --success-text: #fff;
+    --error-color: #f87171;
+    --error-text: #fff;
   }
 }
 
 @layer base {
-  * {
-    @apply border-border;
-  }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
@@ -65,19 +78,19 @@
   }
   
   .prose-lg h1 {
-    @apply text-3xl font-bold text-gray-900 mb-4;
+    @apply text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4;
   }
   
   .prose-lg h2 {
-    @apply text-2xl font-semibold text-gray-900 mt-8 mb-4;
+    @apply text-2xl font-semibold text-gray-900 dark:text-gray-100 mt-8 mb-4;
   }
   
   .prose-lg h3 {
-    @apply text-xl font-semibold text-gray-900 mt-6 mb-3;
+    @apply text-xl font-semibold text-gray-900 dark:text-gray-100 mt-6 mb-3;
   }
   
   .prose-lg p {
-    @apply text-gray-700 leading-relaxed mb-4;
+    @apply text-gray-700 dark:text-gray-300 leading-relaxed mb-4;
   }
   
   .prose-lg ul {
@@ -89,15 +102,15 @@
   }
   
   .prose-lg blockquote {
-    @apply border-l-4 border-gray-300 pl-4 italic text-gray-600 my-4;
+    @apply border-l-4 border-gray-300 dark:border-gray-600 pl-4 italic text-gray-600 dark:text-gray-400 my-4;
   }
   
   .prose-lg code {
-    @apply bg-gray-100 rounded px-1 py-0.5 text-sm font-mono;
+    @apply bg-gray-100 dark:bg-gray-800 rounded px-1 py-0.5 text-sm font-mono text-gray-900 dark:text-gray-100;
   }
   
   .prose-lg pre {
-    @apply bg-gray-900 text-gray-100 rounded-lg p-4 overflow-x-auto my-4;
+    @apply bg-gray-900 dark:bg-gray-800 text-gray-100 dark:text-gray-200 rounded-lg p-4 overflow-x-auto my-4;
   }
   
   .prose-lg pre code {
@@ -114,13 +127,25 @@
   background: #f1f1f1;
 }
 
+.dark ::-webkit-scrollbar-track {
+  background: #374151;
+}
+
 ::-webkit-scrollbar-thumb {
   background: #c1c1c1;
   border-radius: 4px;
 }
 
+.dark ::-webkit-scrollbar-thumb {
+  background: #6b7280;
+}
+
 ::-webkit-scrollbar-thumb:hover {
   background: #a8a8a8;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
 }
 
 /* Loading animations */
@@ -139,13 +164,18 @@
 
 /* Button hover effects */
 .btn-primary {
-  @apply bg-primary-600 text-white px-4 py-2 rounded-md font-medium transition-colors duration-200 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+  @apply bg-blue-600 dark:bg-blue-500 text-white px-4 py-2 rounded-md font-medium transition-colors duration-200 hover:bg-blue-700 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900;
 }
 
 .btn-secondary {
-  @apply bg-gray-200 text-gray-900 px-4 py-2 rounded-md font-medium transition-colors duration-200 hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2;
+  @apply bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-4 py-2 rounded-md font-medium transition-colors duration-200 hover:bg-gray-300 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900;
 }
 
 .btn-outline {
-  @apply border border-gray-300 text-gray-700 px-4 py-2 rounded-md font-medium transition-colors duration-200 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+  @apply border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-md font-medium transition-colors duration-200 hover:bg-gray-50 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900;
+}
+
+/* Theme transition for smooth dark mode switching */
+* {
+  transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, color 0.2s ease-in-out;
 }
