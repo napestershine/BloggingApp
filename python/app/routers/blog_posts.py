@@ -3,10 +3,19 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.database.connection import get_db
 from app.models.models import BlogPost, User
+# TODO: Add these models when they are implemented  
+# from app.models.models import Tag, Category, PostStatus
 from app.schemas.schemas import (
     BlogPost as BlogPostSchema, 
     BlogPostCreate, 
     BlogPostUpdate
+    # TODO: Add these schemas when models are implemented
+    # BlogPostTagsUpdate,
+    # BlogPostCategoriesUpdate,
+    # Tag as TagSchema,
+    # Category as CategorySchema,
+    # DraftAutoSave,
+    # PostStatus as PostStatusSchema
 )
 from app.auth.auth import get_current_user
 from app.services.notification_service import whatsapp_service
@@ -19,6 +28,7 @@ router = APIRouter(prefix="/blog_posts", tags=["blog_posts"])
 
 @router.get("/", response_model=List[BlogPostSchema])
 def get_blog_posts(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    # TODO: Add status filtering when PostStatus model is implemented
     posts = db.query(BlogPost).offset(skip).limit(limit).all()
     return posts
 
@@ -45,6 +55,8 @@ async def create_blog_post(
         title=post.title,
         content=post.content,
         slug=slug,
+        # TODO: Add status when PostStatus model is implemented
+        # status=post.status or PostStatus.DRAFT,
         author_id=current_user.id,
         # SEO fields
         meta_title=post.meta_title,
@@ -61,6 +73,7 @@ async def create_blog_post(
     db.refresh(db_post)
     
     # Send WhatsApp notifications to followers (for now, we'll skip this as we don't have a follower system yet)
+    # TODO: Only send for published posts when PostStatus is implemented
     # In the future, this would notify users who follow this author
     try:
         # For demonstration, we could notify the author themselves about their post

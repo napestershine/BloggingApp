@@ -1,6 +1,12 @@
 from pydantic import BaseModel, EmailStr
 from datetime import datetime
 from typing import Optional, List
+from enum import Enum
+
+# Enum definitions
+class PostStatus(str, Enum):
+    DRAFT = "DRAFT"
+    PUBLISHED = "PUBLISHED"
 
 # User schemas
 class UserBase(BaseModel):
@@ -32,6 +38,7 @@ class BlogPostBase(BaseModel):
     title: str
     content: str
     slug: Optional[str] = None
+    status: Optional[PostStatus] = PostStatus.DRAFT
     
 class BlogPostCreate(BlogPostBase):
     # SEO fields (optional during creation)
@@ -47,6 +54,7 @@ class BlogPostUpdate(BaseModel):
     title: Optional[str] = None
     content: Optional[str] = None
     slug: Optional[str] = None
+    status: Optional[PostStatus] = None
     # SEO fields
     meta_title: Optional[str] = None
     meta_description: Optional[str] = None
@@ -101,6 +109,68 @@ class Comment(CommentInDB):
 
 # Update forward references
 BlogPost.model_rebuild()
+
+# Tag schemas
+class TagBase(BaseModel):
+    name: str
+    description: Optional[str] = None
+
+class TagCreate(TagBase):
+    pass
+
+class TagUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+
+class TagInDB(TagBase):
+    id: int
+    created_at: datetime
+    creator_id: int
+    
+    class Config:
+        from_attributes = True
+
+class Tag(TagInDB):
+    creator: User
+
+# Category schemas
+class CategoryBase(BaseModel):
+    name: str
+    description: Optional[str] = None
+
+class CategoryCreate(CategoryBase):
+    pass
+
+class CategoryUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+
+class CategoryInDB(CategoryBase):
+    id: int
+    created_at: datetime
+    creator_id: int
+    
+    class Config:
+        from_attributes = True
+
+class Category(CategoryInDB):
+    creator: User
+
+# Blog post tag/category management schemas
+class BlogPostTagsUpdate(BaseModel):
+    tag_ids: List[int]
+
+class BlogPostCategoriesUpdate(BaseModel):
+    category_ids: List[int]
+
+# Draft management schemas
+class DraftAutoSave(BaseModel):
+    title: Optional[str] = None
+    content: Optional[str] = None
+
+# PostStatus schema  
+class PostStatusSchema(BaseModel):
+    status: PostStatus
 
 # Token schemas
 class Token(BaseModel):
