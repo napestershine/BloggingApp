@@ -5,7 +5,7 @@ from .base import SeederRegistry
 from .users import UserSeeder
 from .posts import PostSeeder  
 from .comments import CommentSeeder
-from app.database.connection import SessionLocal, Base, engine
+from app.database.connection import get_session_local, Base, get_engine
 import logging
 
 logger = logging.getLogger(__name__)
@@ -16,6 +16,7 @@ class SeedManager:
     
     def __init__(self, db=None):
         if db is None:
+            SessionLocal = get_session_local()
             self.db = SessionLocal()
             self._external_db = False
         else:
@@ -42,6 +43,7 @@ class SeedManager:
             logger.info("Starting database seeding...")
             
             # Ensure tables exist
+            engine = get_engine()
             Base.metadata.create_all(bind=engine)
             logger.info("Database tables ensured")
             
@@ -86,6 +88,7 @@ class SeedManager:
         
         # Create new session for seeding
         if not self._external_db:
+            SessionLocal = get_session_local()
             self.db = SessionLocal()
         self._register_seeders()
         
