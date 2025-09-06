@@ -4,6 +4,37 @@ import { http, HttpResponse } from 'msw'
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'
 
 export const handlers = [
+  // Mock search posts endpoint - MUST be before single post endpoint
+  http.get(`${API_BASE_URL}/posts/search`, ({ request }) => {
+    const url = new URL(request.url)
+    const query = url.searchParams.get('q')
+    
+    if (!query) {
+      return HttpResponse.json({
+        results: [],
+        total: 0,
+        has_more: false,
+        offset: 0
+      })
+    }
+
+    return HttpResponse.json({
+      results: [
+        {
+          id: 1,
+          title: 'Search Result Post',
+          content: `This post matches the search term: ${query}`,
+          author_username: 'testuser',
+          published: '2024-01-01T00:00:00Z',
+          slug: 'search-result-post'
+        }
+      ],
+      total: 1,
+      has_more: false,
+      offset: 0
+    })
+  }),
+
   // Mock posts endpoint
   http.get(`${API_BASE_URL}/posts`, () => {
     return HttpResponse.json({
@@ -47,37 +78,6 @@ export const handlers = [
       slug: slug as string,
       total_comments: 3,
       views: 150
-    })
-  }),
-
-  // Mock search posts endpoint
-  http.get(`${API_BASE_URL}/posts/search`, ({ request }) => {
-    const url = new URL(request.url)
-    const query = url.searchParams.get('q')
-    
-    if (!query) {
-      return HttpResponse.json({
-        results: [],
-        total: 0,
-        has_more: false,
-        offset: 0
-      })
-    }
-
-    return HttpResponse.json({
-      results: [
-        {
-          id: 1,
-          title: 'Search Result Post',
-          content: `This post matches the search term: ${query}`,
-          author_username: 'testuser',
-          published: '2024-01-01T00:00:00Z',
-          slug: 'search-result-post'
-        }
-      ],
-      total: 1,
-      has_more: false,
-      offset: 0
     })
   }),
 
