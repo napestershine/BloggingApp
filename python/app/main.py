@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.database.connection import engine
 from app.models import models
 from app.routers import auth, users, blog_posts, comments, post_likes, post_sharing, media, categories, tags, search, user_follows, notification_system, bookmarks
+from app.core.config import settings
 
 # Create database tables
 models.Base.metadata.create_all(bind=engine)
@@ -13,11 +14,11 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Add CORS middleware
+# Add CORS middleware with configurable origins
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configure appropriately for production
-    allow_credentials=True,
+    allow_origins=settings.cors_origins,  # Use configured origins instead of wildcard
+    allow_credentials=settings.cors_allow_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
 )
