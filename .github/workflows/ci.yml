@@ -3,8 +3,14 @@ name: CI
 on:
   push:
     branches: [ main ]
+    paths: 
+      - 'python/**'
+      - '.github/workflows/**'
   pull_request:
     branches: [ main ]
+    paths: 
+      - 'python/**'
+      - '.github/workflows/**'
 
 jobs:
   test-python:
