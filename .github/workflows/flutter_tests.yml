@@ -2,12 +2,12 @@ name: Flutter App Test Suite
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main ]
     paths: 
       - 'app/**'
       - '.github/workflows/**'
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main ]
     paths: 
       - 'app/**'
       - '.github/workflows/**'
