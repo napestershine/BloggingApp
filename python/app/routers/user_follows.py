@@ -25,11 +25,12 @@ def follow_user(
     current_user: User = Depends(get_current_user)
 ):
     """
-    Follow a user
+    Follow a user with transactional integrity.
     
     - **user_id**: ID of the user to follow
     
-    Returns the follow relationship details
+    Returns the follow relationship details. Both follow and notification
+    are atomic - either both succeed or both fail.
     """
     
     # Check if user exists
@@ -64,32 +65,44 @@ def follow_user(
             created_at=existing_follow.created_at
         )
     
-    # Create new follow relationship
-    new_follow = UserFollow(
-        follower_id=current_user.id,
-        following_id=user_id
-    )
-    
-    db.add(new_follow)
-    db.commit()
-    db.refresh(new_follow)
-    
-    # Create follow notification
     try:
+        # Create new follow relationship
+        new_follow = UserFollow(
+            follower_id=current_user.id,
+            following_id=user_id
+        )
+        
+        db.add(new_follow)
+        # Don't commit yet - we need to ensure notification is created atomically
+        db.flush()  # Flush to get the ID if needed
+        
+        # Create follow notification - if this fails, the entire transaction rolls back
         notification_service.create_follow_notification(
             db=db,
             followed_user_id=user_id,
             follower_user=current_user
         )
+        
+        # Only commit if notification creation succeeded
+        db.commit()
+        db.refresh(new_follow)
+        
+        logger.info(f"User {current_user.id} followed user {user_id}")
+        
+        return UserFollowResponse(
+            following_id=user_id,
+            follower_id=current_user.id,
+            is_following=True,
+            created_at=new_follow.created_at
+        )
     except Exception as e:
-        logger.warning(f"Failed to create follow notification: {e}")
-    
-    return UserFollowResponse(
-        following_id=user_id,
-        follower_id=current_user.id,
-        is_following=True,
-        created_at=new_follow.created_at
-    )
+        # Rollback the entire transaction on any error
+        db.rollback()
+        logger.error(f"Failed to follow user {user_id}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to follow user. Please try again."
+        )
 
 @router.delete("/users/{user_id}", response_model=UserFollowResponse)
 def unfollow_user(

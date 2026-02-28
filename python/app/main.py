@@ -26,12 +26,11 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 
-# Create database tables (only if database is available)
-try:
-    engine = get_engine()
-    models.Base.metadata.create_all(bind=engine)
-except Exception as e:
-    logging.warning(f"Database not available during startup: {str(e)}")
+# Note: Database schema is managed by Alembic migrations only.
+# Do NOT call Base.metadata.create_all() here - migrations are the single source of truth.
+# Run "alembic upgrade head" before starting the application.
+
+logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="Blog API",

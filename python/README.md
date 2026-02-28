@@ -247,6 +247,135 @@ This FastAPI application replicates the core functionality of the original Symfo
 - **Authentication**: JWT-based authentication similar to LexikJWTAuthenticationBundle
 - **Access Control**: Route-level authorization matching Symfony's access control rules
 
+## Database Management
+
+### Schema Migrations
+
+**Schema is managed exclusively by Alembic migrations - NOT by `Base.metadata.create_all()`**
+
+Before running the application for the first time, apply migrations:
+
+```bash
+# Apply all pending migrations
+alembic upgrade head
+
+# Create a new migration (after schema changes)
+alembic revision --autogenerate -m "Description of changes"
+
+# Review migration before committing
+# Run in a test environment first
+```
+
+**Important**: The application will not auto-create schema. Always run migrations first.
+
+### Notifications & Follows System
+
+The notifications and follows system is hardened for production use with:
+
+#### Performance Optimizations
+
+- **N+1 Query Prevention**: Uses SQLAlchemy `joinedload()` eager loading
+  - Fetches 100+ notifications in only 2-3 queries (verified by tests)
+  - Related users and posts are loaded in single query pass
+  
+- **Indexed Queries**:
+  - Composite index on `(user_id, created_at DESC)` for efficient notification retrieval
+  - Partial index on unread notifications (`WHERE is_read = false`) for fast unread queries
+  - Indexes on `(follower_id, following_id)` for efficient follow lookups
+
+#### Data Integrity
+
+- **Cascade Deletes**: `ON DELETE CASCADE` on all notification/follow relationships
+  - Deleting a user automatically removes their notifications and follows
+  - Prevents orphaned records
+  
+- **Unique Constraints**:
+  - `UNIQUE (follower_id, following_id)` prevents duplicate follows
+  - `UNIQUE (user_id, blog_post_id)` for bookmarks
+  
+- **Transactional Safety**:
+  - Follow + notification creation is atomic
+  - If notification fails, follow is rolled back
+  - No partial state in database
+
+#### Bulk Operation Safety
+
+- **Limits**: `DELETE` limits capped at 1000 per operation (prevent accidental data loss)
+- **Per-User Scoping**: All bulk operations scoped to `current_user.id` (security)
+- **Logging**: Bulk operations logged for audit trail
+- **Response**: Returns count of affected rows
+
+Example: Mark all notifications as read (scoped to current user, limited count returned):
+```python
+# Request
+PATCH /notifications/read-all
+
+# Response
+{
+  "message": "Marked 25 notifications as read",
+  "count": 25
+}
+```
+
+#### SQLAlchemy Best Practices
+
+- Uses `.is_()` for boolean comparisons (not `== True/False`)
+- Uses `synchronize_session=False` for bulk operations (performance)
+- Uses `select()` and modern 2.x API patterns
+- Proper foreign key constraints with `ondelete='CASCADE'`
+
+#### Response Models
+
+All endpoints return Pydantic models (not raw dicts) for:
+- Type safety and validation
+- OpenAPI schema generation
+- Consistent API contracts
+
+Example response:
+```json
+{
+  "id": 1,
+  "user_id": 42,
+  "type": "follow",
+  "title": "New Follower",
+  "message": "Alice started following you",
+  "is_read": false,
+  "created_at": "2025-02-28T12:00:00+00:00",
+  "read_at": null,
+  "related_user_id": 10,
+  "related_user": {
+    "id": 10,
+    "username": "alice",
+    "name": "Alice"
+  },
+  "related_post_id": null,
+  "related_comment_id": null,
+  "related_post": null
+}
+```
+
+#### Enum Alignment
+
+Notification types are consistent across Python (Pydantic), database, and API clients:
+
+```python
+class NotificationType(enum.Enum):
+    FOLLOW = "follow"
+    POST_LIKE = "post_like"
+    POST_COMMENT = "post_comment"
+    POST_SHARE = "post_share"
+    COMMENT_LIKE = "comment_like"
+    COMMENT_REPLY = "comment_reply"
+    MENTION = "mention"
+    SYSTEM = "system"
+```
+
+These values are:
+- Persisted in the database as strings
+- Exposed in OpenAPI schema
+- Used for TypeScript client generation (via OpenAPI)
+- Available in Flutter generated models
+
 ## Security Notes
 
 - Change the `SECRET_KEY` in production

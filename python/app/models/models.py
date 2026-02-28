@@ -252,8 +252,8 @@ class UserFollow(Base):
     __tablename__ = "user_follows"
     
     id = Column(Integer, primary_key=True, index=True)
-    follower_id = Column(Integer, ForeignKey('users.id'), nullable=False)
-    following_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    follower_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    following_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
     # Ensure unique follower-following pairs
@@ -267,34 +267,33 @@ class Notification(Base):
     __tablename__ = "notifications"
     
     id = Column(Integer, primary_key=True, index=True)
-    recipient_id = Column(Integer, ForeignKey('users.id'), nullable=False)
-    sender_id = Column(Integer, ForeignKey('users.id'), nullable=True)
+    user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
     type = Column(Enum(NotificationType), nullable=False)
-    title = Column(String(200), nullable=False)
+    title = Column(String(255), nullable=False)
     message = Column(Text, nullable=False)
-    read = Column(Boolean, default=False, nullable=False)
+    
+    # Related entity IDs (for linking back to the source)
+    related_user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=True)
+    related_post_id = Column(Integer, ForeignKey('blog_posts.id', ondelete='CASCADE'), nullable=True)
+    related_comment_id = Column(Integer, ForeignKey('comments.id', ondelete='CASCADE'), nullable=True)
+    
+    # Notification status
+    is_read = Column(Boolean, default=False, nullable=False, index=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    read_at = Column(DateTime(timezone=True), nullable=True)
     
-    # Optional foreign keys for related objects
-    blog_post_id = Column(Integer, ForeignKey('blog_posts.id'), nullable=True)
-    comment_id = Column(Integer, ForeignKey('comments.id'), nullable=True)
-    
-    # WhatsApp notification tracking
-    whatsapp_sent = Column(Boolean, default=False, nullable=False)
-    whatsapp_sent_at = Column(DateTime(timezone=True), nullable=True)
-    
-    # Relationships
-    recipient = relationship("User", foreign_keys=[recipient_id], back_populates="notifications_received")
-    sender = relationship("User", foreign_keys=[sender_id], back_populates="notifications_sent")
-    blog_post = relationship("BlogPost", back_populates="notifications")
-    comment = relationship("Comment", back_populates="notifications")
+    # Relationships - with proper foreign key references
+    user = relationship("User", foreign_keys=[user_id], back_populates="notifications_received")
+    related_user = relationship("User", foreign_keys=[related_user_id])
+    related_post = relationship("BlogPost", foreign_keys=[related_post_id])
+    related_comment = relationship("Comment", foreign_keys=[related_comment_id])
 
 class Bookmark(Base):
     __tablename__ = "bookmarks"
     
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
-    blog_post_id = Column(Integer, ForeignKey('blog_posts.id'), nullable=False)
+    user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    blog_post_id = Column(Integer, ForeignKey('blog_posts.id', ondelete='CASCADE'), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
     # Ensure unique user-post bookmark pairs
@@ -310,13 +309,8 @@ class Bookmark(Base):
 # Add to User model
 User.following = relationship("UserFollow", foreign_keys="UserFollow.follower_id", back_populates="follower")
 User.followers = relationship("UserFollow", foreign_keys="UserFollow.following_id", back_populates="following")
-User.notifications_received = relationship("Notification", foreign_keys="Notification.recipient_id", back_populates="recipient")
-User.notifications_sent = relationship("Notification", foreign_keys="Notification.sender_id", back_populates="sender")
+User.notifications_received = relationship("Notification", foreign_keys="Notification.user_id")
 User.bookmarks = relationship("Bookmark", back_populates="user")
 
 # Add to BlogPost model  
-BlogPost.notifications = relationship("Notification", back_populates="blog_post")
 BlogPost.bookmarks = relationship("Bookmark", back_populates="blog_post")
-
-# Add to Comment model
-Comment.notifications = relationship("Notification", back_populates="comment")
