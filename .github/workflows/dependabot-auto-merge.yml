@@ -103,7 +103,7 @@ jobs:
           steps.metadata.outputs.update-type == 'version-update:semver-patch'
         run: |
           PR=${{ steps.prnum.outputs.number }}
-          echo "Enabling auto-merge for PR #$PR (${% raw %}{{% endraw %}}${{ steps.metadata.outputs.update-type }})"
+          echo "Enabling auto-merge for PR #$PR (${{ steps.metadata.outputs.update-type }})"
           gh pr merge "$PR" --squash --auto --repo "${{ github.repository }}"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
