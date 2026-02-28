@@ -16,7 +16,7 @@
     "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
-    "@tailwindcss/postcss": "^4.1.13",
+    "@tailwindcss/postcss": "^4.2.1",
     "@tailwindcss/typography": "^0.5.19",
     "autoprefixer": "^10.4.16",
     "axios": "^1.13.5",
@@ -29,7 +29,7 @@
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-hot-toast": "^2.4.1",
-    "tailwindcss": "^4.1.13"
+    "tailwindcss": "^4.2.1"
   },
   "devDependencies": {
     "@playwright/test": "^1.56.1",
