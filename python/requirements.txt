@@ -5,7 +5,7 @@ pydantic-settings==2.11.0
 email-validator==2.3.0
 sqlalchemy==2.0.44
 asyncpg==0.30.0
-aiosqlite==0.21.0
+aiosqlite==0.22.1
 psycopg2-binary==2.9.11
 python-jose[cryptography]==3.5.0
 passlib[bcrypt]==1.7.4
