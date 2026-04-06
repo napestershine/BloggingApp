@@ -1,5 +1,5 @@
 # Development stage for Next.js - extends main Dockerfile
-FROM node:20-alpine AS deps
+FROM node:24-alpine AS deps
 
 WORKDIR /app
 

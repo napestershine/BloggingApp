@@ -57,7 +57,7 @@ docker compose -f compose.yml -f compose.ci.yml up --build --abort-on-container-
 ### Multi-stage Dockerfiles
 
 **API (python/Dockerfile)**:
-- `base`: Python 3.12 with system dependencies
+- `base`: Python 3.13 with system dependencies
 - `deps`: Install Python packages with pip caching
 - `dev`: Development stage with hot reload
 - `prod`: Production stage with non-root user

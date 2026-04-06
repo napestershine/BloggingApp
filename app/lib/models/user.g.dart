@@ -1,10 +1,13 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
-// This is a minimal stub file for testing without Flutter SDK
 
 part of 'user.dart';
 
+// **************************************************************************
+// JsonSerializableGenerator
+// **************************************************************************
+
 User _$UserFromJson(Map<String, dynamic> json) => User(
-      id: json['id'] as int?,
+      id: (json['id'] as num?)?.toInt(),
       username: json['username'] as String,
       name: json['name'] as String,
       email: json['email'] as String?,

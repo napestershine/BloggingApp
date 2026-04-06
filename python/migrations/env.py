@@ -5,15 +5,17 @@ from sqlalchemy import pool
 
 from alembic import context
 
-# Import our models
-from app.models.models import Base
-from app.core.config import settings
+# Import the canonical metadata source and register all models.
+from app.database.connection import Base
+from app.core.config import get_settings
+import app.models.models  # noqa: F401
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
 
 # Set the database URL from our settings
+settings = get_settings()
 config.set_main_option("sqlalchemy.url", settings.database_url)
 
 # Interpret the config file for Python logging.

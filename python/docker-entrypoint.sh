@@ -3,10 +3,10 @@ set -e
 
 echo "🐳 Starting BloggingApp Python backend..."
 
-# Run database migrations (if using Alembic)
+# Run database migrations using the repo's canonical Alembic config.
 if [ -f "alembic.ini" ]; then
     echo "📊 Running database migrations..."
-    alembic upgrade head
+    alembic -c alembic.ini upgrade head
 fi
 
 # Optional seeding for development

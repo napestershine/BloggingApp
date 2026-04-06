@@ -1,16 +1,17 @@
 # Multi-stage Dockerfile for Next.js application
 # Stage 1: Dependencies
-FROM node:20-alpine AS deps
+FROM node:24-alpine AS deps
 
 WORKDIR /app
 
-# Copy package files and install dependencies with cache mount
+# Copy package files and install all dependencies once. The standalone
+# build contains production runtime output, so a second install in the
+# builder stage only increases memory pressure during Docker builds.
 COPY package.json package-lock.json ./
-RUN --mount=type=cache,target=/root/.npm \
-    npm ci --only=production --legacy-peer-deps
+RUN npm ci --legacy-peer-deps --no-audit --no-fund --maxsockets=1
 
 # Stage 2: Builder
-FROM node:20-alpine AS builder
+FROM node:24-alpine AS builder
 
 WORKDIR /app
 
@@ -20,16 +21,12 @@ COPY --from=deps /app/node_modules ./node_modules
 # Copy source code
 COPY . .
 
-# Install all dependencies (including dev dependencies) with cache mount
-RUN --mount=type=cache,target=/root/.npm \
-    npm ci --legacy-peer-deps
-
 # Build the application
 ENV NODE_ENV=production
 RUN npm run build
 
 # Stage 3: Production runner
-FROM node:20-alpine AS runner
+FROM node:24-alpine AS runner
 
 WORKDIR /app
 

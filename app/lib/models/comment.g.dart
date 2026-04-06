@@ -1,13 +1,16 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
-// This is a minimal stub file for testing without Flutter SDK
 
 part of 'comment.dart';
 
+// **************************************************************************
+// JsonSerializableGenerator
+// **************************************************************************
+
 Comment _$CommentFromJson(Map<String, dynamic> json) => Comment(
-      id: json['id'] as int?,
+      id: (json['id'] as num?)?.toInt(),
       content: json['content'] as String,
-      publishedDate: json['published'] == null 
-          ? null 
+      publishedDate: json['published'] == null
+          ? null
           : DateTime.parse(json['published'] as String),
       author: json['author'] == null
           ? null
@@ -21,6 +24,6 @@ Map<String, dynamic> _$CommentToJson(Comment instance) => <String, dynamic>{
       'id': instance.id,
       'content': instance.content,
       'published': instance.publishedDate?.toIso8601String(),
-      'author': instance.author?.toJson(),
-      'blogPost': instance.blogPost?.toJson(),
+      'author': instance.author,
+      'blogPost': instance.blogPost,
     };

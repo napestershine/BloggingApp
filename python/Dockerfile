@@ -1,6 +1,6 @@
 # Multi-stage Dockerfile for FastAPI backend
 # Stage 1: Base image with Python and system dependencies
-FROM python:3.12-slim AS base
+FROM python:3.13-slim AS base
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \

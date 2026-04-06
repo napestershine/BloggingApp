@@ -48,7 +48,7 @@ docker compose up --build
 
 ### Manual Setup
 
-1. Install Python 3.12+ and create a virtual environment:
+1. Install Python 3.13+ and create a virtual environment:
 ```bash
 python3 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate

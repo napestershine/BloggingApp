@@ -1,7 +1,7 @@
 """Add social features: UserFollow, Notification, Bookmark models
 
 Revision ID: 89462033364e
-Revises: 
+Revises: 472c34150ac4
 Create Date: 2025-09-06 12:07:43.722571
 
 """
@@ -13,7 +13,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision: str = '89462033364e'
-down_revision: Union[str, Sequence[str], None] = None
+down_revision: Union[str, Sequence[str], None] = '472c34150ac4'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -48,7 +48,16 @@ def upgrade() -> None:
         'notifications',
         sa.Column('id', sa.Integer(), nullable=False),
         sa.Column('user_id', sa.Integer(), nullable=False),
-        sa.Column('type', notification_type_enum, nullable=False),
+        sa.Column(
+            'type',
+            postgresql.ENUM(
+                'follow', 'post_like', 'post_comment', 'comment_reply',
+                'post_mention', 'comment_mention',
+                name='notificationtype',
+                create_type=False,
+            ),
+            nullable=False,
+        ),
         sa.Column('title', sa.String(length=255), nullable=False),
         sa.Column('message', sa.Text(), nullable=False),
         sa.Column('related_user_id', sa.Integer(), nullable=True),
