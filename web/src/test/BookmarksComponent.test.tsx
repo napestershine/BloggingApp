@@ -1,23 +1,27 @@
- 
 // @ts-nocheck - Test file with interface mismatches
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import BookmarksComponent from '@/components/BookmarksComponent'
 
-// Mock the API module
-vi.mock('@/lib/api', () => ({
+const bookmarkApiMocks = vi.hoisted(() => ({
   getUserBookmarks: vi.fn(),
-  removeBookmark: vi.fn()
+  getUserStats: vi.fn(),
+  removeBookmark: vi.fn(),
+  bookmarkPost: vi.fn(),
+  getPostBookmarkStats: vi.fn(),
 }))
 
-import { getUserBookmarks, removeBookmark } from '@/lib/api'
+vi.mock('@/lib/api', () => ({
+  ...bookmarkApiMocks,
+}))
 
 describe('BookmarksComponent', () => {
   const mockUserId = 1
 
   beforeEach(() => {
     vi.clearAllMocks()
+    bookmarkApiMocks.getUserStats.mockResolvedValue({ total_bookmarks: 1, is_bookmarked: false })
   })
 
   it('renders bookmarks list correctly', async () => {
@@ -43,12 +47,12 @@ describe('BookmarksComponent', () => {
       offset: 0
     }
 
-    vi.mocked(getUserBookmarks).mockResolvedValue(mockBookmarks)
+    vi.mocked(bookmarkApiMocks.getUserBookmarks).mockResolvedValue(mockBookmarks)
 
     render(<BookmarksComponent userId={mockUserId} />)
 
     await waitFor(() => {
-      expect(getUserBookmarks).toHaveBeenCalledWith(mockUserId, 0, 10)
+      expect(bookmarkApiMocks.getUserBookmarks).toHaveBeenCalledWith(mockUserId, 0, 10)
     })
 
     await waitFor(() => {
@@ -65,7 +69,7 @@ describe('BookmarksComponent', () => {
       offset: 0
     }
 
-    vi.mocked(getUserBookmarks).mockResolvedValue(mockEmptyBookmarks)
+    vi.mocked(bookmarkApiMocks.getUserBookmarks).mockResolvedValue(mockEmptyBookmarks)
 
     render(<BookmarksComponent userId={mockUserId} />)
 
@@ -75,7 +79,7 @@ describe('BookmarksComponent', () => {
   })
 
   it('displays loading state initially', () => {
-    vi.mocked(getUserBookmarks).mockImplementation(() => new Promise(() => {})) // Never resolves
+    vi.mocked(bookmarkApiMocks.getUserBookmarks).mockImplementation(() => new Promise(() => {})) // Never resolves
 
     render(<BookmarksComponent userId={mockUserId} />)
 
@@ -105,8 +109,8 @@ describe('BookmarksComponent', () => {
       offset: 0
     }
 
-    vi.mocked(getUserBookmarks).mockResolvedValue(mockBookmarks)
-    vi.mocked(removeBookmark).mockResolvedValue({ message: 'Bookmark removed successfully' })
+    vi.mocked(bookmarkApiMocks.getUserBookmarks).mockResolvedValue(mockBookmarks)
+    vi.mocked(bookmarkApiMocks.removeBookmark).mockResolvedValue({ message: 'Bookmark removed successfully' })
 
     const user = userEvent.setup()
     render(<BookmarksComponent userId={mockUserId} />)
@@ -124,7 +128,7 @@ describe('BookmarksComponent', () => {
     await user.click(confirmButton)
 
     await waitFor(() => {
-      expect(removeBookmark).toHaveBeenCalledWith(1, 1)
+      expect(bookmarkApiMocks.removeBookmark).toHaveBeenCalledWith(1, 1)
     })
   })
 
@@ -173,7 +177,7 @@ describe('BookmarksComponent', () => {
       offset: 1
     }
 
-    vi.mocked(getUserBookmarks)
+    vi.mocked(bookmarkApiMocks.getUserBookmarks)
       .mockResolvedValueOnce(mockBookmarksPage1)
       .mockResolvedValueOnce(mockBookmarksPage2)
 
@@ -189,7 +193,7 @@ describe('BookmarksComponent', () => {
     await user.click(loadMoreButton)
 
     await waitFor(() => {
-      expect(getUserBookmarks).toHaveBeenCalledWith(mockUserId, 1, 10)
+      expect(bookmarkApiMocks.getUserBookmarks).toHaveBeenCalledWith(mockUserId, 1, 10)
     })
 
     await waitFor(() => {
@@ -198,7 +202,7 @@ describe('BookmarksComponent', () => {
   })
 
   it('handles API errors gracefully', async () => {
-    vi.mocked(getUserBookmarks).mockRejectedValue(new Error('Failed to fetch bookmarks'))
+    vi.mocked(bookmarkApiMocks.getUserBookmarks).mockRejectedValue(new Error('Failed to fetch bookmarks'))
 
     render(<BookmarksComponent userId={mockUserId} />)
 
@@ -230,7 +234,7 @@ describe('BookmarksComponent', () => {
       offset: 0
     }
 
-    vi.mocked(getUserBookmarks).mockResolvedValue(mockBookmarks)
+    vi.mocked(bookmarkApiMocks.getUserBookmarks).mockResolvedValue(mockBookmarks)
 
     render(<BookmarksComponent userId={mockUserId} />)
 

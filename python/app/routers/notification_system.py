@@ -68,7 +68,10 @@ def get_notifications(
             related_user_obj = FollowerUser(
                 id=notif.related_user.id,
                 username=notif.related_user.username,
-                name=notif.related_user.name
+                name=notif.related_user.name,
+                bio=notif.related_user.bio,
+                avatar_url=notif.related_user.avatar_url,
+                created_at=notif.related_user.created_at,
             )
         
         # Build related post dict if available
@@ -180,7 +183,10 @@ def update_notification(
         related_user_obj = FollowerUser(
             id=notification.related_user.id,
             username=notification.related_user.username,
-            name=notification.related_user.name
+            name=notification.related_user.name,
+            bio=notification.related_user.bio,
+            avatar_url=notification.related_user.avatar_url,
+            created_at=notification.related_user.created_at,
         )
     
     related_post = None
@@ -292,18 +298,29 @@ def delete_all_notifications(
     if read_only:
         query = query.filter(Notification.is_read.is_(True))
     
-    # Apply limit if specified
+    # `Query.delete()` does not support `limit()`, so materialize the capped ID set first.
+    notification_ids = None
     if limit:
-        query = query.limit(limit)
-    
-    # Count notifications to be deleted
-    delete_count = query.count()
+        notification_ids = [
+            notification_id
+            for (notification_id,) in query.with_entities(Notification.id)
+            .order_by(Notification.id)
+            .limit(limit)
+            .all()
+        ]
+        delete_count = len(notification_ids)
+    else:
+        delete_count = query.count()
     
     # Log bulk operation for safety/auditing
     logger.info(f"User {current_user.id} deleting {delete_count} notification(s)")
     
     # Delete notifications with proper session synchronization
-    query.delete(synchronize_session=False)
+    if delete_count:
+        delete_query = query
+        if notification_ids is not None:
+            delete_query = db.query(Notification).filter(Notification.id.in_(notification_ids))
+        delete_query.delete(synchronize_session=False)
     db.commit()
     
     return {

@@ -35,6 +35,7 @@ export default function SearchComponent({ onPostSelect }: SearchComponentProps) 
   const [selectedAuthor, setSelectedAuthor] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Load filters on component mount
   useEffect(() => {
@@ -73,6 +74,7 @@ export default function SearchComponent({ onPostSelect }: SearchComponentProps) 
   const handleQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newQuery = e.target.value;
     setQuery(newQuery);
+    setError(null);
     debouncedGetSuggestions(newQuery);
   };
 
@@ -91,9 +93,11 @@ export default function SearchComponent({ onPostSelect }: SearchComponentProps) 
         author: selectedAuthor || undefined,
       });
       setResults(searchResults);
+      setError(null);
     } catch (error) {
       console.error('Search failed:', error);
       setResults([]);
+      setError('Error occurred while searching');
     } finally {
       setLoading(false);
     }
@@ -162,6 +166,7 @@ export default function SearchComponent({ onPostSelect }: SearchComponentProps) 
             />
             <button
               type="submit"
+              aria-label="Search"
               className="absolute right-3 top-1/2 transform -translate-y-1/2
                        text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
             >
@@ -171,6 +176,7 @@ export default function SearchComponent({ onPostSelect }: SearchComponentProps) 
             {query && (
               <button
                 type="button"
+                aria-label="Clear search"
                 onClick={() => {
                   setQuery('');
                   setResults([]);
@@ -213,63 +219,71 @@ export default function SearchComponent({ onPostSelect }: SearchComponentProps) 
 
           {/* Filters */}
           {filters && (
-            <div className="flex flex-wrap gap-3">
-              {/* Category Filter */}
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
-                         bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              >
-                <option value="">All Categories</option>
-                {filters.categories.map((category) => (
-                  <option key={category.slug} value={category.name}>
-                    {category.name}
-                  </option>
-                ))}
-              </select>
-
-              {/* Tag Filter */}
-              <select
-                value={selectedTag}
-                onChange={(e) => setSelectedTag(e.target.value)}
-                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
-                         bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              >
-                <option value="">All Tags</option>
-                {filters.tags.slice(0, 10).map((tag) => (
-                  <option key={tag.name} value={tag.name}>
-                    {tag.name} ({tag.post_count})
-                  </option>
-                ))}
-              </select>
-
-              {/* Author Filter */}
-              <select
-                value={selectedAuthor}
-                onChange={(e) => setSelectedAuthor(e.target.value)}
-                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
-                         bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              >
-                <option value="">All Authors</option>
-                {filters.authors.slice(0, 10).map((author) => (
-                  <option key={author.username} value={author.username}>
-                    {author.username} ({author.post_count})
-                  </option>
-                ))}
-              </select>
-
-              {/* Clear Filters */}
-              {(selectedCategory || selectedTag || selectedAuthor) && (
-                <button
-                  type="button"
-                  onClick={clearFilters}
-                  className="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300
-                           rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors"
+            <div className="space-y-3">
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Filters
+              </p>
+              <div className="flex flex-wrap gap-3">
+                {/* Category Filter */}
+                <select
+                  aria-label="Category"
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
+                           bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 >
-                  Clear Filters
-                </button>
-              )}
+                  <option value="">All Categories</option>
+                  {filters.categories.map((category) => (
+                    <option key={category.slug} value={category.name}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+
+                {/* Tag Filter */}
+                <select
+                  aria-label="Tag"
+                  value={selectedTag}
+                  onChange={(e) => setSelectedTag(e.target.value)}
+                  className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
+                           bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                >
+                  <option value="">All Tags</option>
+                  {filters.tags.slice(0, 10).map((tag) => (
+                    <option key={tag.name} value={tag.name}>
+                      {tag.name} ({tag.post_count})
+                    </option>
+                  ))}
+                </select>
+
+                {/* Author Filter */}
+                <select
+                  aria-label="Author"
+                  value={selectedAuthor}
+                  onChange={(e) => setSelectedAuthor(e.target.value)}
+                  className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
+                           bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                >
+                  <option value="">All Authors</option>
+                  {filters.authors.slice(0, 10).map((author) => (
+                    <option key={author.username} value={author.username}>
+                      {author.username} ({author.post_count})
+                    </option>
+                  ))}
+                </select>
+
+                {/* Clear Filters */}
+                {(selectedCategory || selectedTag || selectedAuthor) && (
+                  <button
+                    type="button"
+                    onClick={clearFilters}
+                    className="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300
+                             rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors"
+                  >
+                    Clear Filters
+                  </button>
+                )}
+              </div>
             </div>
           )}
         </form>
@@ -278,8 +292,13 @@ export default function SearchComponent({ onPostSelect }: SearchComponentProps) 
       {/* Search Results */}
       <div className="space-y-6">
         {loading ? (
-          <div className="flex justify-center py-12">
+          <div className="flex justify-center items-center gap-3 py-12" role="status" aria-live="polite">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+            <span className="text-gray-700 dark:text-gray-300">Searching...</span>
+          </div>
+        ) : error ? (
+          <div role="alert" className="text-center py-12 text-red-600 dark:text-red-400">
+            {error}
           </div>
         ) : results.length > 0 ? (
           <>

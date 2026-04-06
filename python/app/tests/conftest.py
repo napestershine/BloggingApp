@@ -5,12 +5,20 @@ os.environ.setdefault("SECRET_KEY", "test-secret")
 
 import pytest
 import tempfile
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker
 from fastapi.testclient import TestClient
 
 from app.main import app
 from app.database.connection import get_db, Base
+
+
+def _enable_sqlite_foreign_keys(engine):
+    @event.listens_for(engine, "connect")
+    def _set_sqlite_pragma(dbapi_connection, _connection_record):
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA foreign_keys=ON")
+        cursor.close()
 
 
 @pytest.fixture(scope="function")
@@ -26,7 +34,12 @@ def test_db():
         Base.metadata.create_all(bind=engine)
         
         # Create session
-        SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+        SessionLocal = sessionmaker(
+            autocommit=False,
+            autoflush=False,
+            bind=engine,
+            expire_on_commit=False,
+        )
         
         def override_get_db():
             db = SessionLocal()
@@ -51,12 +64,18 @@ def test_db():
         # Create engine for test database
         test_database_url = f"sqlite:///{db_path}"
         engine = create_engine(test_database_url, connect_args={"check_same_thread": False})
+        _enable_sqlite_foreign_keys(engine)
         
         # Create all tables
         Base.metadata.create_all(bind=engine)
         
         # Create session
-        SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+        SessionLocal = sessionmaker(
+            autocommit=False,
+            autoflush=False,
+            bind=engine,
+            expire_on_commit=False,
+        )
         
         def override_get_db():
             db = SessionLocal()
@@ -80,3 +99,13 @@ def client(test_db):
     """Create a test client with isolated database"""
     with TestClient(app) as test_client:
         yield test_client
+
+
+@pytest.fixture(scope="function")
+def db(test_db):
+    """Provide a concrete SQLAlchemy session for tests that expect `db`."""
+    session = test_db()
+    try:
+        yield session
+    finally:
+        session.close()

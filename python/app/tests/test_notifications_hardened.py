@@ -303,9 +303,17 @@ class TestBulkOperationSafety:
         
         # Delete with limit=10
         limit = 10
-        deleted = db.query(Notification).filter_by(user_id=user1.id).limit(limit).delete(
-            synchronize_session=False
-        )
+        notification_ids = [
+            notification_id
+            for (notification_id,) in db.query(Notification.id)
+            .filter_by(user_id=user1.id)
+            .order_by(Notification.id)
+            .limit(limit)
+            .all()
+        ]
+        deleted = db.query(Notification).filter(
+            Notification.id.in_(notification_ids)
+        ).delete(synchronize_session=False)
         db.commit()
         
         # Verify only 10 were deleted

@@ -208,11 +208,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         case 'dark':
           newMode = 'light';
           break;
-        case 'system':
+        case 'system': {
           // Toggle to opposite of current system setting
           const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
           newMode = prefersDark ? 'light' : 'dark';
           break;
+        }
         default:
           newMode = 'light';
       }

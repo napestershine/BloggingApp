@@ -436,9 +436,11 @@ class NotificationTypeEnum(str, Enum):
     FOLLOW = "follow"
     POST_LIKE = "post_like"
     POST_COMMENT = "post_comment"
+    POST_SHARE = "post_share"
+    COMMENT_LIKE = "comment_like"
     COMMENT_REPLY = "comment_reply"
-    POST_MENTION = "post_mention"
-    COMMENT_MENTION = "comment_mention"
+    MENTION = "mention"
+    SYSTEM = "system"
 
 class NotificationBase(BaseModel):
     """Base notification schema"""

@@ -1,357 +1,166 @@
-import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy.orm import Session
 
-from app.models.models import User, BlogPost, Notification, NotificationType
+from app.auth.auth import get_current_user
+from app.main import app
+from app.models.models import Notification, NotificationType, User
+
+
+def _create_notification(db, user_id, notif_type=NotificationType.FOLLOW, **overrides):
+    notification = Notification(
+        user_id=user_id,
+        type=notif_type,
+        title=overrides.pop("title", "Test notification"),
+        message=overrides.pop("message", "Test message"),
+        **overrides,
+    )
+    db.add(notification)
+    db.commit()
+    db.refresh(notification)
+    return notification
 
 
 class TestNotificationSystemEndpoints:
-    """Test suite for the enhanced notification system."""
+    def setup_method(self):
+        app.dependency_overrides.pop(get_current_user, None)
 
-    def create_test_data(self, db):
-        """Helper to create test users and posts."""
-        user1 = User(
-            username="testuser1",
-            email="test1@example.com",
-            name="Test User 1",
-            hashed_password="hashed"
-        )
-        user2 = User(
-            username="testuser2",
-            email="test2@example.com",
-            name="Test User 2",
-            hashed_password="hashed"
-        )
-        db.add(user1)
-        db.add(user2)
-        db.commit()
-        db.refresh(user1)
-        db.refresh(user2)
+    def teardown_method(self):
+        app.dependency_overrides.pop(get_current_user, None)
 
-        post = BlogPost(
-            title="Test Blog Post",
-            content="This is a test blog post for notifications",
-            slug="test-blog-post",
-            author_id=user1.id
-        )
-        db.add(post)
-        db.commit()
-        db.refresh(post)
-        
-        return user1, user2, post
-
-    def test_create_notification_success(self, client: TestClient, test_db):
-        """Test creating a notification successfully."""
+    def _setup_authenticated_user(self, test_db):
         db = test_db()
-        user1, user2, post = self.create_test_data(db)
-        db.close()
+        user = User(
+            username="notif_user",
+            email="notif_user@example.com",
+            name="Notification User",
+            hashed_password="hashed",
+        )
+        other_user = User(
+            username="notif_other",
+            email="notif_other@example.com",
+            name="Other User",
+            hashed_password="hashed",
+        )
+        db.add_all([user, other_user])
+        db.commit()
+        db.refresh(user)
+        db.refresh(other_user)
 
-        # Create a follow notification
-        notification_data = {
-            "user_id": user1.id,
-            "type": "follow",
-            "title": "New Follower",
-            "message": f"{user2.username} started following you",
-            "related_user_id": user2.id
-        }
+        def override_get_current_user():
+            return db.get(User, user.id)
 
-        response = client.post("/notifications/", json=notification_data)
+        app.dependency_overrides[get_current_user] = override_get_current_user
+        return db, user, other_user
+
+    def test_get_notifications_returns_only_current_user_notifications(self, client: TestClient, test_db):
+        db, user, other_user = self._setup_authenticated_user(test_db)
+
+        first = _create_notification(db, user.id, title="First")
+        second = _create_notification(db, user.id, notif_type=NotificationType.POST_LIKE, title="Second")
+        _create_notification(db, other_user.id, title="Other user")
+
+        response = client.get("/notifications/?limit=10")
+
         assert response.status_code == 200
         data = response.json()
-        assert data["title"] == "New Follower"
-        assert data["type"] == "follow"
-        assert data["is_read"] == False
-        assert data["user_id"] == user1.id
-        assert data["related_user_id"] == user2.id
+        returned_ids = {item["id"] for item in data}
+        assert returned_ids == {first.id, second.id}
+        assert {item["user_id"] for item in data} == {user.id}
 
-    def test_create_notification_invalid_type(self, client: TestClient, test_db):
-        """Test creating notification with invalid type."""
-        db = test_db()
-        user1, user2, _ = self.create_test_data(db)
-        db.close()
+    def test_get_notifications_supports_unread_only_and_type_filter(self, client: TestClient, test_db):
+        db, user, _ = self._setup_authenticated_user(test_db)
 
-        notification_data = {
-            "user_id": user1.id,
-            "type": "invalid_type",
-            "title": "Test Notification",
-            "message": "Test message"
-        }
+        _create_notification(db, user.id, notif_type=NotificationType.FOLLOW, title="Unread follow", is_read=False)
+        _create_notification(db, user.id, notif_type=NotificationType.FOLLOW, title="Read follow", is_read=True)
+        _create_notification(db, user.id, notif_type=NotificationType.POST_LIKE, title="Unread like", is_read=False)
 
-        response = client.post("/notifications/", json=notification_data)
-        assert response.status_code == 422  # Validation error
+        unread_response = client.get("/notifications/?unread_only=true")
+        assert unread_response.status_code == 200
+        unread_titles = {item["title"] for item in unread_response.json()}
+        assert unread_titles == {"Unread follow", "Unread like"}
 
-    def test_get_user_notifications(self, client: TestClient, test_db):
-        """Test getting notifications for a user."""
-        db = test_db()
-        user1, user2, post = self.create_test_data(db)
-        
-        # Create multiple notifications
-        notifications = [
-            Notification(
-                user_id=user1.id,
-                type=NotificationType.FOLLOW,
-                title="New Follower",
-                message=f"{user2.username} started following you",
-                related_user_id=user2.id
-            ),
-            Notification(
-                user_id=user1.id,
-                type=NotificationType.POST_LIKE,
-                title="Post Liked",
-                message=f"{user2.username} liked your post",
-                related_user_id=user2.id,
-                related_post_id=post.id
-            )
-        ]
-        
-        for notification in notifications:
-            db.add(notification)
-        db.commit()
-        db.close()
+        follow_response = client.get("/notifications/?type_filter=follow")
+        assert follow_response.status_code == 200
+        follow_titles = {item["title"] for item in follow_response.json()}
+        assert follow_titles == {"Unread follow", "Read follow"}
 
-        # Get user notifications
-        response = client.get(f"/notifications/users/{user1.id}")
+    def test_get_notification_stats_returns_total_and_unread_counts(self, client: TestClient, test_db):
+        db, user, _ = self._setup_authenticated_user(test_db)
+
+        _create_notification(db, user.id, title="Unread one", is_read=False)
+        _create_notification(db, user.id, title="Unread two", is_read=False)
+        _create_notification(db, user.id, title="Read one", is_read=True)
+
+        response = client.get("/notifications/stats")
+
         assert response.status_code == 200
-        data = response.json()
-        assert len(data["notifications"]) == 2
-        assert data["total"] == 2
-        
-        # Check notification types
-        types = [notif["type"] for notif in data["notifications"]]
-        assert "follow" in types
-        assert "post_like" in types
+        assert response.json() == {"total_count": 3, "unread_count": 2}
 
-    def test_get_user_notifications_empty(self, client: TestClient, test_db):
-        """Test getting notifications for user with no notifications."""
-        db = test_db()
-        user1, _, _ = self.create_test_data(db)
-        db.close()
+    def test_update_notification_marks_item_as_read(self, client: TestClient, test_db):
+        db, user, _ = self._setup_authenticated_user(test_db)
+        notification = _create_notification(db, user.id, is_read=False)
 
-        response = client.get(f"/notifications/users/{user1.id}")
-        assert response.status_code == 200
-        data = response.json()
-        assert len(data["notifications"]) == 0
-        assert data["total"] == 0
-        assert data["has_more"] == False
-
-    def test_get_user_notifications_nonexistent_user(self, client: TestClient, test_db):
-        """Test getting notifications for user that doesn't exist."""
-        response = client.get("/notifications/users/99999")
-        assert response.status_code == 404
-        data = response.json()
-        assert "user not found" in data["detail"].lower()
-
-    def test_mark_notification_as_read(self, client: TestClient, test_db):
-        """Test marking a notification as read."""
-        db = test_db()
-        user1, user2, _ = self.create_test_data(db)
-        
-        # Create notification
-        notification = Notification(
-            user_id=user1.id,
-            type=NotificationType.FOLLOW,
-            title="New Follower",
-            message=f"{user2.username} started following you",
-            related_user_id=user2.id,
-            is_read=False
+        response = client.put(
+            f"/notifications/{notification.id}",
+            json={"is_read": True},
         )
-        db.add(notification)
-        db.commit()
-        db.refresh(notification)
-        db.close()
 
-        # Mark as read
-        response = client.patch(f"/notifications/{notification.id}/read")
         assert response.status_code == 200
         data = response.json()
-        assert data["is_read"] == True
+        assert data["id"] == notification.id
+        assert data["is_read"] is True
         assert data["read_at"] is not None
 
-    def test_mark_notification_as_unread(self, client: TestClient, test_db):
-        """Test marking a notification as unread."""
-        db = test_db()
-        user1, user2, _ = self.create_test_data(db)
-        
-        # Create read notification
-        notification = Notification(
-            user_id=user1.id,
-            type=NotificationType.FOLLOW,
-            title="New Follower",
-            message=f"{user2.username} started following you",
-            related_user_id=user2.id,
-            is_read=True
-        )
-        db.add(notification)
-        db.commit()
-        db.refresh(notification)
-        db.close()
+    def test_mark_all_notifications_read_only_updates_current_user(self, client: TestClient, test_db):
+        db, user, other_user = self._setup_authenticated_user(test_db)
 
-        # Mark as unread
-        response = client.patch(f"/notifications/{notification.id}/unread")
+        _create_notification(db, user.id, title="User unread 1", is_read=False)
+        _create_notification(db, user.id, title="User unread 2", is_read=False)
+        _create_notification(db, other_user.id, title="Other unread", is_read=False)
+
+        response = client.patch("/notifications/read-all")
+
         assert response.status_code == 200
-        data = response.json()
-        assert data["is_read"] == False
-        assert data["read_at"] is None
+        assert response.json()["count"] == 2
+        assert db.query(Notification).filter_by(user_id=user.id, is_read=False).count() == 0
+        assert db.query(Notification).filter_by(user_id=other_user.id, is_read=False).count() == 1
 
-    def test_delete_notification(self, client: TestClient, test_db):
-        """Test deleting a notification."""
-        db = test_db()
-        user1, user2, _ = self.create_test_data(db)
-        
-        # Create notification
-        notification = Notification(
-            user_id=user1.id,
-            type=NotificationType.FOLLOW,
-            title="New Follower",
-            message=f"{user2.username} started following you",
-            related_user_id=user2.id
-        )
-        db.add(notification)
-        db.commit()
-        db.refresh(notification)
-        db.close()
+    def test_delete_notification_is_scoped_to_current_user(self, client: TestClient, test_db):
+        db, user, other_user = self._setup_authenticated_user(test_db)
+        own_notification = _create_notification(db, user.id, title="Own notification")
+        other_notification = _create_notification(db, other_user.id, title="Other notification")
 
-        # Delete notification
-        response = client.delete(f"/notifications/{notification.id}")
-        assert response.status_code == 200
-        data = response.json()
-        assert data["message"] == "Notification deleted successfully"
+        other_response = client.delete(f"/notifications/{other_notification.id}")
+        assert other_response.status_code == 404
 
-    def test_delete_nonexistent_notification(self, client: TestClient, test_db):
-        """Test deleting a notification that doesn't exist."""
-        response = client.delete("/notifications/99999")
-        assert response.status_code == 404
-        data = response.json()
-        assert "notification not found" in data["detail"].lower()
+        own_response = client.delete(f"/notifications/{own_notification.id}")
+        assert own_response.status_code == 200
+        assert own_response.json()["message"] == "Notification deleted successfully"
+        assert db.query(Notification).filter_by(id=own_notification.id).count() == 0
 
-    def test_get_notification_statistics(self, client: TestClient, test_db):
-        """Test getting notification statistics for a user."""
-        db = test_db()
-        user1, user2, post = self.create_test_data(db)
-        
-        # Create notifications with different read statuses
-        notifications = [
-            Notification(user_id=user1.id, type=NotificationType.FOLLOW, title="Test 1", message="Test", is_read=False),
-            Notification(user_id=user1.id, type=NotificationType.POST_LIKE, title="Test 2", message="Test", is_read=False),
-            Notification(user_id=user1.id, type=NotificationType.POST_COMMENT, title="Test 3", message="Test", is_read=True)
-        ]
-        
-        for notification in notifications:
-            db.add(notification)
-        db.commit()
-        db.close()
+    def test_delete_all_notifications_respects_limit_and_read_only(self, client: TestClient, test_db):
+        db, user, other_user = self._setup_authenticated_user(test_db)
 
-        # Get notification statistics
-        response = client.get(f"/notifications/users/{user1.id}/stats")
-        assert response.status_code == 200
-        data = response.json()
-        assert data["total_notifications"] == 3
-        assert data["unread_count"] == 2
-        assert data["read_count"] == 1
-        assert data["user_id"] == user1.id
-
-    def test_mark_all_notifications_as_read(self, client: TestClient, test_db):
-        """Test marking all notifications as read for a user."""
-        db = test_db()
-        user1, user2, _ = self.create_test_data(db)
-        
-        # Create multiple unread notifications
-        notifications = [
-            Notification(user_id=user1.id, type=NotificationType.FOLLOW, title="Test 1", message="Test", is_read=False),
-            Notification(user_id=user1.id, type=NotificationType.POST_LIKE, title="Test 2", message="Test", is_read=False),
-            Notification(user_id=user1.id, type=NotificationType.POST_COMMENT, title="Test 3", message="Test", is_read=False)
-        ]
-        
-        for notification in notifications:
-            db.add(notification)
-        db.commit()
-        db.close()
-
-        # Mark all as read
-        response = client.patch(f"/notifications/users/{user1.id}/mark-all-read")
-        assert response.status_code == 200
-        data = response.json()
-        assert data["marked_count"] == 3
-        assert data["message"] == "All notifications marked as read"
-
-    def test_notifications_pagination(self, client: TestClient, test_db):
-        """Test pagination for user notifications."""
-        db = test_db()
-        user1, user2, _ = self.create_test_data(db)
-        
-        # Create multiple notifications
-        for i in range(5):
-            notification = Notification(
-                user_id=user1.id,
-                type=NotificationType.FOLLOW,
-                title=f"Test Notification {i+1}",
-                message=f"Test message {i+1}",
-                related_user_id=user2.id
+        for index in range(3):
+            _create_notification(
+                db,
+                user.id,
+                title=f"Read {index}",
+                is_read=True,
             )
-            db.add(notification)
-        db.commit()
-        db.close()
+        for index in range(2):
+            _create_notification(
+                db,
+                user.id,
+                notif_type=NotificationType.POST_LIKE,
+                title=f"Unread {index}",
+                is_read=False,
+            )
+        _create_notification(db, other_user.id, title="Other read", is_read=True)
 
-        # Test first page
-        response = client.get(f"/notifications/users/{user1.id}?limit=2&offset=0")
+        response = client.delete("/notifications/?read_only=true&limit=2")
+
         assert response.status_code == 200
-        data = response.json()
-        assert len(data["notifications"]) == 2
-        assert data["total"] == 5
-        assert data["has_more"] == True
-
-        # Test second page
-        response = client.get(f"/notifications/users/{user1.id}?limit=2&offset=2")
-        assert response.status_code == 200
-        data = response.json()
-        assert len(data["notifications"]) == 2
-        assert data["offset"] == 2
-
-    def test_filter_notifications_by_type(self, client: TestClient, test_db):
-        """Test filtering notifications by type."""
-        db = test_db()
-        user1, user2, post = self.create_test_data(db)
-        
-        # Create notifications of different types
-        notifications = [
-            Notification(user_id=user1.id, type=NotificationType.FOLLOW, title="Follow", message="Follow msg"),
-            Notification(user_id=user1.id, type=NotificationType.POST_LIKE, title="Like", message="Like msg"),
-            Notification(user_id=user1.id, type=NotificationType.POST_COMMENT, title="Comment", message="Comment msg")
-        ]
-        
-        for notification in notifications:
-            db.add(notification)
-        db.commit()
-        db.close()
-
-        # Filter by follow type
-        response = client.get(f"/notifications/users/{user1.id}?type=follow")
-        assert response.status_code == 200
-        data = response.json()
-        assert len(data["notifications"]) == 1
-        assert data["notifications"][0]["type"] == "follow"
-
-    def test_filter_notifications_by_read_status(self, client: TestClient, test_db):
-        """Test filtering notifications by read/unread status."""
-        db = test_db()
-        user1, user2, _ = self.create_test_data(db)
-        
-        # Create notifications with different read statuses
-        notifications = [
-            Notification(user_id=user1.id, type=NotificationType.FOLLOW, title="Read", message="Read msg", is_read=True),
-            Notification(user_id=user1.id, type=NotificationType.POST_LIKE, title="Unread 1", message="Unread msg", is_read=False),
-            Notification(user_id=user1.id, type=NotificationType.POST_COMMENT, title="Unread 2", message="Unread msg", is_read=False)
-        ]
-        
-        for notification in notifications:
-            db.add(notification)
-        db.commit()
-        db.close()
-
-        # Filter unread notifications
-        response = client.get(f"/notifications/users/{user1.id}?unread_only=true")
-        assert response.status_code == 200
-        data = response.json()
-        assert len(data["notifications"]) == 2
-        for notif in data["notifications"]:
-            assert notif["is_read"] == False
+        assert response.json()["count"] == 2
+        assert db.query(Notification).filter_by(user_id=user.id).count() == 3
+        assert db.query(Notification).filter_by(user_id=user.id, is_read=True).count() == 1
+        assert db.query(Notification).filter_by(user_id=other_user.id).count() == 1

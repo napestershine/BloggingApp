@@ -307,10 +307,38 @@ class Bookmark(Base):
 # These would normally be in the individual model files but adding here for compatibility
 
 # Add to User model
-User.following = relationship("UserFollow", foreign_keys="UserFollow.follower_id", back_populates="follower")
-User.followers = relationship("UserFollow", foreign_keys="UserFollow.following_id", back_populates="following")
-User.notifications_received = relationship("Notification", foreign_keys="Notification.user_id")
-User.bookmarks = relationship("Bookmark", back_populates="user")
+User.following = relationship(
+    "UserFollow",
+    foreign_keys="UserFollow.follower_id",
+    back_populates="follower",
+    cascade="all, delete",
+    passive_deletes=True,
+)
+User.followers = relationship(
+    "UserFollow",
+    foreign_keys="UserFollow.following_id",
+    back_populates="following",
+    cascade="all, delete",
+    passive_deletes=True,
+)
+User.notifications_received = relationship(
+    "Notification",
+    foreign_keys="Notification.user_id",
+    back_populates="user",
+    cascade="all, delete",
+    passive_deletes=True,
+)
+User.bookmarks = relationship(
+    "Bookmark",
+    back_populates="user",
+    cascade="all, delete",
+    passive_deletes=True,
+)
 
 # Add to BlogPost model  
-BlogPost.bookmarks = relationship("Bookmark", back_populates="blog_post")
+BlogPost.bookmarks = relationship(
+    "Bookmark",
+    back_populates="blog_post",
+    cascade="all, delete",
+    passive_deletes=True,
+)

@@ -75,6 +75,8 @@ module.exports = [
     },
     rules: {
       ...js.configs.recommended.rules,
+      // TypeScript handles undefined identifiers more reliably than ESLint here.
+      'no-undef': 'off',
       // relax unused vars to avoid blocking CI; prefer fixing code incrementally
       'no-unused-vars': 'off',
       '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
@@ -113,4 +115,3 @@ module.exports = [
     },
   },
 ];
-

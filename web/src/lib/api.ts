@@ -22,8 +22,29 @@ import {
   BookmarkStats
 } from '@/types';
 
+export type {
+  BlogPost,
+  SearchSuggestion,
+  SearchFilters,
+  BookmarkResponse,
+  BookmarkStats,
+} from '@/types';
+
+export interface UserBookmarksResponse {
+  bookmarks: Array<{
+    id: number;
+    user_id: number;
+    post_id: number;
+    created_at: string;
+    post: BlogPost;
+  }>;
+  total: number;
+  has_more: boolean;
+  offset: number;
+}
+
 // Get the appropriate API base URL based on environment
-const getApiBaseUrl = (): string => {
+export const getApiBaseUrl = (): string => {
   // If we're in a browser context, use the public API URL
   if (typeof window !== 'undefined') {
     return process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
@@ -311,6 +332,49 @@ export const bookmarkAPI = {
     const response = await apiClient.get(`/bookmarks/recent?limit=${limit}`);
     return response.data;
   },
+};
+
+const toUserBookmarksResponse = (
+  posts: BlogPost[],
+  offset: number,
+  limit: number,
+): UserBookmarksResponse => ({
+  bookmarks: posts.map((post) => ({
+    id: post.id,
+    user_id: 0,
+    post_id: post.id,
+    created_at: post.created_at,
+    post,
+  })),
+  total: posts.length,
+  has_more: posts.length === limit,
+  offset,
+});
+
+export const getUserBookmarks = async (
+  _userId: number,
+  offset = 0,
+  limit = 20,
+): Promise<UserBookmarksResponse> => {
+  const posts = await bookmarkAPI.getBookmarks(offset, limit);
+  return toUserBookmarksResponse(posts, offset, limit);
+};
+
+export const getUserStats = async (_userId?: number): Promise<BookmarkStats> => (
+  bookmarkAPI.getUserStats()
+);
+
+export const getPostBookmarkStats = async (postId: number): Promise<BookmarkStats> => (
+  bookmarkAPI.getPostStats(postId)
+);
+
+export const bookmarkPost = async (postId: number): Promise<BookmarkResponse> => (
+  bookmarkAPI.bookmarkPost(postId)
+);
+
+export const removeBookmark = async (userIdOrPostId: number, maybePostId?: number): Promise<void> => {
+  const postId = maybePostId ?? userIdOrPostId;
+  await bookmarkAPI.removeBookmark(postId);
 };
 
 // Authentication API functions

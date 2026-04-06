@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { BookOpen, Twitter, Github, Mail } from 'lucide-react';
+import { BookOpen, Globe, Rss, Mail } from 'lucide-react';
 
 export function Footer() {
   return (
@@ -17,13 +17,13 @@ export function Footer() {
               and build communities around great content.
             </p>
             <div className="flex space-x-4 mt-6">
-              <a href="#" className="text-gray-400 hover:text-white">
-                <Twitter className="h-5 w-5" />
+              <a href="#" aria-label="Website" className="text-gray-400 hover:text-white">
+                <Globe className="h-5 w-5" />
               </a>
-              <a href="#" className="text-gray-400 hover:text-white">
-                <Github className="h-5 w-5" />
+              <a href="#" aria-label="RSS feed" className="text-gray-400 hover:text-white">
+                <Rss className="h-5 w-5" />
               </a>
-              <a href="#" className="text-gray-400 hover:text-white">
+              <a href="#" aria-label="Email" className="text-gray-400 hover:text-white">
                 <Mail className="h-5 w-5" />
               </a>
             </div>

@@ -1,19 +1,14 @@
- 
 // @ts-nocheck - Test file with interface mismatches
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
-import { http, HttpResponse } from 'msw'
-import { setupServer } from 'msw/node'
+import React from 'react'
 
-// Mock the API module to use actual fetch calls that MSW can intercept
+const searchAPI = {
+  searchPosts: vi.fn(),
+}
+
 vi.mock('@/lib/api', () => ({
-  searchPosts: async (query: string) => {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'}/posts/search?q=${encodeURIComponent(query)}`)
-    if (!response.ok) {
-      throw new Error('Search failed')
-    }
-    return response.json()
-  }
+  searchAPI,
 }))
 
 // Create a simple SearchResults component for testing
@@ -29,9 +24,9 @@ function SearchResults({ query }: { query: string }) {
       setLoading(true)
       setError(null)
       try {
-        const { searchPosts } = await import('@/lib/api')
-        const data = await searchPosts(query)
-        setResults(data.results || [])
+        const { searchAPI } = await import('@/lib/api')
+        const data = await searchAPI.searchPosts({ q: query })
+        setResults(data)
       } catch {
         setError('Failed to search posts')
       } finally {
@@ -60,11 +55,21 @@ function SearchResults({ query }: { query: string }) {
   )
 }
 
-// Add React import
-import React from 'react'
-
 describe('Search Integration', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
   it('loads and displays search results from API', async () => {
+    searchAPI.searchPosts.mockResolvedValue([
+      {
+        id: 1,
+        title: 'Search Result Post',
+        content: 'This post matches the search term: react',
+        author_username: 'testuser',
+      },
+    ])
+
     render(<SearchResults query="react" />)
     
     expect(screen.getByText('Loading...')).toBeInTheDocument()
@@ -87,17 +92,7 @@ describe('Search Integration', () => {
   })
 
   it('handles API errors gracefully', async () => {
-    // Mock a server error response
-    const server = setupServer(
-      http.get('*/posts/search', () => {
-        return HttpResponse.json(
-          { detail: 'Internal server error' },
-          { status: 500 }
-        )
-      })
-    )
-    
-    server.listen()
+    searchAPI.searchPosts.mockRejectedValue(new Error('Search failed'))
     
     render(<SearchResults query="error" />)
     
@@ -106,24 +101,10 @@ describe('Search Integration', () => {
     await waitFor(() => {
       expect(screen.getByRole('alert')).toHaveTextContent('Error: Failed to search posts')
     })
-    
-    server.close()
   })
 
   it('shows no results message when API returns empty results', async () => {
-    // Mock empty results
-    const server = setupServer(
-      http.get('*/posts/search', () => {
-        return HttpResponse.json({
-          results: [],
-          total: 0,
-          has_more: false,
-          offset: 0
-        })
-      })
-    )
-    
-    server.listen()
+    searchAPI.searchPosts.mockResolvedValue([])
     
     render(<SearchResults query="nonexistent" />)
     
@@ -132,7 +113,5 @@ describe('Search Integration', () => {
     await waitFor(() => {
       expect(screen.getByText('No results found')).toBeInTheDocument()
     })
-    
-    server.close()
   })
 })

@@ -1,13 +1,20 @@
- 
 // @ts-nocheck - Component with interface mismatches
 'use client';
 
 import { useState, useEffect } from 'react';
-//import { bookmarkAPI, BlogPost, BookmarkStats } from '@/lib/api';
 import * as api from '@/lib/api';
+import type { BlogPost, BookmarkStats } from '@/types';
+
+interface BookmarkedPost {
+  id: number;
+  user_id: number;
+  post_id: number;
+  created_at: string;
+  post: BlogPost;
+}
 
 export default function BookmarksComponent({ userId }: { userId: number }) {
-  const [bookmarkedPosts, setBookmarkedPosts] = useState<BlogPost[]>([]);
+  const [bookmarkedPosts, setBookmarkedPosts] = useState<BookmarkedPost[]>([]);
   const [stats, setStats] = useState<BookmarkStats | null>(null);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
@@ -60,7 +67,7 @@ export default function BookmarksComponent({ userId }: { userId: number }) {
 
   const removeBookmark = async (post: BlogPost) => {
     try {
-      await bookmarkAPI.removeBookmark(post.id);
+      await api.removeBookmark(userId, post.id);
       
       // Update local state
       setBookmarkedPosts(prev => prev.filter(p => p.id !== post.id));
@@ -78,7 +85,7 @@ export default function BookmarksComponent({ userId }: { userId: number }) {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const addBookmark = async (post: BlogPost) => {
     try {
-      await bookmarkAPI.bookmarkPost(post.id);
+      await api.bookmarkPost(post.id);
       
       // Reload bookmarks to get updated list
       loadBookmarks();
@@ -129,6 +136,11 @@ export default function BookmarksComponent({ userId }: { userId: number }) {
 
       {/* Bookmarked Posts */}
       <div className="space-y-6">
+        {error && (
+          <div role="alert" className="text-center rounded-lg bg-red-50 px-4 py-3 text-red-700 dark:bg-red-950 dark:text-red-300">
+            {error}
+          </div>
+        )}
        {loading && bookmarkedPosts.length === 0 ? (
    <p role="status" aria-live="polite" className="text-center py-12">
      Loading bookmarks...
@@ -140,6 +152,7 @@ export default function BookmarksComponent({ userId }: { userId: number }) {
                 <BookmarkPostCard
                   key={b.id}
                   post={b.post}
+                  bookmarkDate={b.created_at}
                   onRemove={() => removeBookmark(b.post)}
                   onPostClick={() => {
                     // Navigate to post detail
@@ -180,11 +193,12 @@ export default function BookmarksComponent({ userId }: { userId: number }) {
 
 interface BookmarkPostCardProps {
   post: BlogPost;
+  bookmarkDate?: string;
   onRemove: () => void;
   onPostClick: () => void;
 }
 
-function BookmarkPostCard({ post, onRemove, onPostClick }: BookmarkPostCardProps) {
+function BookmarkPostCard({ post, bookmarkDate, onRemove, onPostClick }: BookmarkPostCardProps) {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
   const handleRemove = () => {
@@ -227,13 +241,14 @@ function BookmarkPostCard({ post, onRemove, onPostClick }: BookmarkPostCardProps
             <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
               <span>by {post.author_username}</span>
               <span className="mx-2">•</span>
-              <span>📅 {formatDate(post.published ?? post.created_at)}</span>
+              <span>Bookmarked on {formatDate(bookmarkDate ?? post.published ?? post.created_at)}</span>
             </div>
           </div>
 
           {/* Remove Button */}
           <button
             onClick={handleRemove}
+            aria-label={showConfirmDialog ? 'Confirm remove bookmark' : 'Remove bookmark'}
             className={`ml-4 px-3 py-2 rounded-lg font-medium transition-all ${
               showConfirmDialog
                 ? 'bg-red-500 hover:bg-red-600 text-white'
@@ -316,7 +331,7 @@ export function BookmarkButton({ post, onBookmarkChange }: BookmarkButtonProps) 
 
   const loadBookmarkStatus = async () => {
     try {
-      const stats = await bookmarkAPI.getPostStats(post.id);
+      const stats = await api.getPostBookmarkStats(post.id);
       setIsBookmarked(stats.is_bookmarked || false);
       setBookmarkCount(stats.total_bookmarks);
     } catch (error) {
@@ -328,9 +343,9 @@ export function BookmarkButton({ post, onBookmarkChange }: BookmarkButtonProps) 
     setLoading(true);
     try {
       if (isBookmarked) {
-        await bookmarkAPI.removeBookmark(post.id);
+        await api.removeBookmark(post.id);
       } else {
-        await bookmarkAPI.bookmarkPost(post.id);
+        await api.bookmarkPost(post.id);
       }
       
       setIsBookmarked(!isBookmarked);

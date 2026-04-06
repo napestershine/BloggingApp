@@ -2,27 +2,10 @@ import { describe, it, expect, vi } from 'vitest'
 import { renderHook } from '@testing-library/react'
 import { useAuth } from '@/hooks/useAuth'
 import { ReactNode } from 'react'
-
-// Mock the AuthProvider to avoid complex dependencies
-vi.mock('@/components/AuthProvider', () => ({
-  AuthProvider: ({ children }: { children: ReactNode }) => children,
-  AuthContext: {
-    Provider: ({ children, value }: { children: ReactNode; value: any }) => 
-      <div data-testid="auth-context" data-value={JSON.stringify(value)}>{children}</div>
-  }
-}))
+import { AuthContext } from '@/components/AuthProvider'
 
 describe('useAuth', () => {
   it('throws error when used outside AuthProvider', () => {
-    // Mock useContext to return undefined (outside provider)
-    vi.doMock('react', async () => {
-      const actual = await vi.importActual('react')
-      return {
-        ...actual,
-        useContext: vi.fn(() => undefined)
-      }
-    })
-
     expect(() => {
       renderHook(() => useAuth())
     }).toThrow('useAuth must be used within an AuthProvider')
@@ -37,16 +20,13 @@ describe('useAuth', () => {
       isLoading: false
     }
 
-    // Mock useContext to return mock value
-    vi.doMock('react', async () => {
-      const actual = await vi.importActual('react')
-      return {
-        ...actual,
-        useContext: vi.fn(() => mockAuthValue)
-      }
-    })
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <AuthContext.Provider value={mockAuthValue as any}>
+        {children}
+      </AuthContext.Provider>
+    )
 
-    const { result } = renderHook(() => useAuth())
+    const { result } = renderHook(() => useAuth(), { wrapper })
     
     expect(result.current).toEqual(mockAuthValue)
   })

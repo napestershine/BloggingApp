@@ -1,61 +1,65 @@
- 
 // @ts-nocheck - Test file with interface mismatches
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import SearchComponent from '@/components/SearchComponent'
 
-// Mock the API module
-vi.mock('@/lib/api', () => ({
-  searchPosts: vi.fn(),
-  getSearchSuggestions: vi.fn(),
-  getSearchFilters: vi.fn()
+const searchApiMocks = vi.hoisted(() => ({
+  searchAPI: {
+    searchPosts: vi.fn(),
+    getSuggestions: vi.fn(),
+    getFilters: vi.fn(),
+  },
 }))
 
-import { searchPosts, getSearchSuggestions } from '@/lib/api'
+vi.mock('@/lib/api', () => ({
+  ...searchApiMocks,
+}))
 
 describe('SearchComponent', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    searchApiMocks.searchAPI.getFilters.mockResolvedValue({
+      categories: [{ name: 'Technology', slug: 'technology' }],
+      tags: [{ name: 'react', post_count: 5 }],
+      authors: [{ username: 'john_doe', post_count: 3 }],
+    })
   })
 
   it('renders search form correctly', () => {
     render(<SearchComponent />)
     
     expect(screen.getByPlaceholderText(/search posts/i)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /search/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^search$/i })).toBeInTheDocument()
   })
 
   it('performs search when form is submitted', async () => {
-    const mockSearchResults = {
-      results: [
-        {
-          id: 1,
-          title: 'Test Post',
-          content: 'Test content',
-          author_username: 'testuser',
-          published: '2024-01-01T00:00:00Z',
-          slug: 'test-post'
-        }
-      ],
-      total: 1,
-      has_more: false,
-      offset: 0
-    }
+    const mockSearchResults = [
+      {
+        id: 1,
+        title: 'Test Post',
+        content: 'Test content',
+        author_username: 'testuser',
+        published: '2024-01-01T00:00:00Z',
+        slug: 'test-post'
+      }
+    ]
 
-    vi.mocked(searchPosts).mockResolvedValue(mockSearchResults)
+    searchApiMocks.searchAPI.searchPosts.mockResolvedValue(mockSearchResults)
 
     const user = userEvent.setup()
     render(<SearchComponent />)
     
     const searchInput = screen.getByPlaceholderText(/search posts/i)
-    const searchButton = screen.getByRole('button', { name: /search/i })
+    const searchButton = screen.getByRole('button', { name: /^search$/i })
     
     await user.type(searchInput, 'test query')
     await user.click(searchButton)
     
     await waitFor(() => {
-      expect(searchPosts).toHaveBeenCalledWith('test query', {})
+      expect(searchApiMocks.searchAPI.searchPosts).toHaveBeenCalledWith(
+        expect.objectContaining({ q: 'test query' })
+      )
     })
 
     await waitFor(() => {
@@ -64,18 +68,13 @@ describe('SearchComponent', () => {
   })
 
   it('displays loading state during search', async () => {
-    vi.mocked(searchPosts).mockImplementation(() => new Promise(resolve => setTimeout(() => resolve({
-      results: [],
-      total: 0,
-      has_more: false,
-      offset: 0
-    }), 1000)))
+    searchApiMocks.searchAPI.searchPosts.mockImplementation(() => new Promise(() => {}))
 
     const user = userEvent.setup()
     render(<SearchComponent />)
     
     const searchInput = screen.getByPlaceholderText(/search posts/i)
-    const searchButton = screen.getByRole('button', { name: /search/i })
+    const searchButton = screen.getByRole('button', { name: /^search$/i })
     
     await user.type(searchInput, 'test')
     await user.click(searchButton)
@@ -84,14 +83,12 @@ describe('SearchComponent', () => {
   })
 
   it('shows suggestions when typing in search input', async () => {
-    const mockSuggestions = {
-      titles: ['React Tutorial', 'React Hooks'],
-      categories: ['Technology'],
-      tags: ['react', 'javascript'],
-      authors: ['john_doe']
-    }
+    const mockSuggestions = [
+      { text: 'React Tutorial', type: 'title', description: 'Matching title' },
+      { text: 'React Hooks', type: 'title', description: 'Matching title' },
+    ]
 
-    vi.mocked(getSearchSuggestions).mockResolvedValue(mockSuggestions)
+    searchApiMocks.searchAPI.getSuggestions.mockResolvedValue(mockSuggestions)
 
     const user = userEvent.setup()
     render(<SearchComponent />)
@@ -101,7 +98,7 @@ describe('SearchComponent', () => {
     await user.type(searchInput, 'react')
     
     await waitFor(() => {
-      expect(getSearchSuggestions).toHaveBeenCalledWith('react')
+      expect(searchApiMocks.searchAPI.getSuggestions).toHaveBeenCalledWith('react')
     })
 
     await waitFor(() => {
@@ -111,52 +108,41 @@ describe('SearchComponent', () => {
   })
 
   it('handles search errors gracefully', async () => {
-    vi.mocked(searchPosts).mockRejectedValue(new Error('Search failed'))
+    searchApiMocks.searchAPI.searchPosts.mockRejectedValue(new Error('Search failed'))
 
     const user = userEvent.setup()
     render(<SearchComponent />)
     
     const searchInput = screen.getByPlaceholderText(/search posts/i)
-    const searchButton = screen.getByRole('button', { name: /search/i })
+    const searchButton = screen.getByRole('button', { name: /^search$/i })
     
     await user.type(searchInput, 'test')
     await user.click(searchButton)
     
     await waitFor(() => {
-      expect(screen.getByText(/error occurred while searching/i)).toBeInTheDocument()
+      expect(screen.getByRole('alert')).toHaveTextContent(/error occurred while searching/i)
     })
   })
 
   it('applies filters correctly', async () => {
-    const mockSearchResults = {
-      results: [],
-      total: 0,
-      has_more: false,
-      offset: 0
-    }
-
-    vi.mocked(searchPosts).mockResolvedValue(mockSearchResults)
+    searchApiMocks.searchAPI.searchPosts.mockResolvedValue([])
 
     const user = userEvent.setup()
     render(<SearchComponent />)
     
     const searchInput = screen.getByPlaceholderText(/search posts/i)
-    
-    // Open filters
-    const filtersButton = screen.getByText(/filters/i)
-    await user.click(filtersButton)
-    
-    // Apply category filter (assuming there's a category select)
-    const categorySelect = screen.getByRole('combobox', { name: /category/i })
+    const categorySelect = await screen.findByRole('combobox', { name: /category/i })
     await user.selectOptions(categorySelect, 'Technology')
     
     await user.type(searchInput, 'test')
     
-    const searchButton = screen.getByRole('button', { name: /search/i })
+    const searchButton = screen.getByRole('button', { name: /^search$/i })
     await user.click(searchButton)
     
     await waitFor(() => {
-      expect(searchPosts).toHaveBeenCalledWith('test', { category: 'Technology' })
+      expect(searchApiMocks.searchAPI.searchPosts).toHaveBeenCalledWith(
+        expect.objectContaining({ q: 'test', category: 'Technology' })
+      )
     })
   })
 
