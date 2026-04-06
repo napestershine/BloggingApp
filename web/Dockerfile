@@ -21,6 +21,10 @@ COPY --from=deps /app/node_modules ./node_modules
 # Copy source code
 COPY . .
 
+# Next.js apps can omit the public directory entirely, but the runner
+# stage copies it unconditionally for consistency with apps that do use it.
+RUN mkdir -p public
+
 # Build the application
 ENV NODE_ENV=production
 RUN npm run build
